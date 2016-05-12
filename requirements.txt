@@ -1,0 +1,6 @@
+ipywidgets
+jupyter
+numpy
+requests
+traitlets
+webcolors
