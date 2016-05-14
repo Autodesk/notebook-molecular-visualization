@@ -1,3 +1,16 @@
+# Copyright 2016 Autodesk Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import uuid
 import numpy as np
 
@@ -59,16 +72,17 @@ def bbox(coords, padding=5., BIG=1e12):
         xmax = max(x, xmax)
         ymax = max(y, ymax)
         zmax = max(z, zmax)
-    xmin, ymin, zmin = xmin - padding, ymin - padding, zmin - padding
-    xmax, ymax, zmax = xmax + padding, ymax + padding, zmax + padding
+    xmin, ymin, zmin = xmin - padding, ymin-padding, zmin-padding
+    xmax, ymax, zmax = xmax+padding, ymax+padding, zmax+padding
     return xmin, xmax, ymin, ymax, zmin, zmax
 
+
 class VolumetricGrid(object):
-    def __init__(self,xmin,xmax,ymin,ymax,zmin,zmax,
+    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax,
                  npoints=None):
-        self.xr = (xmin,xmax)
-        self.yr = (ymin,ymax)
-        self.zr = (zmin,zmax)
+        self.xr = (xmin, xmax)
+        self.yr = (ymin, ymax)
+        self.zr = (zmin, zmax)
         if npoints is not None:
             self.make_grid(npoints)
 
