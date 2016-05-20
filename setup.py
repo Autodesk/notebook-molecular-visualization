@@ -3,16 +3,11 @@ import sys
 from os.path import relpath, join
 from setuptools import find_packages, setup
 from setuptools.command.install import install
-
+import versioneer
 
 assert sys.version_info[:2] == (2, 7), "Sorry, this package requires Python 2.7."
 
 
-########################
-__version__ = '0.3'
-VERSION = __version__
-ISRELEASED = False
-########################
 CLASSIFIERS = """\
 Development Status :: 4 - Beta
 Intended Audience :: Science/Research
@@ -52,14 +47,17 @@ class PostInstall(install):
         from nbmolviz import install
         install.widgets()
 
+cmdclass = versioneer.get_cmdclass()
+cmdclass['install'] = PostInstall
+
 setup(
     name='Notebook Molecular Visualization Library',
-    version='0.3',
+    version=versioneer.get_version(),
     packages=find_packages(),
     classifiers=CLASSIFIERS.split('\n'),
     url='http://autodeskresearch.com',
     license='Apache 2.0',
-    cmdclass={'install': PostInstall},
+    cmdclass=cmdclass,
     package_data={'nbmolviz': find_package_data()},
     install_requires=requirements,
     author='Autodesk BioNano Research',

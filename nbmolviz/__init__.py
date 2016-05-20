@@ -17,8 +17,13 @@ import os as _os
 from nbmolviz import utils
 from nbmolviz import base_widget, widget3d, interfaces3d, drivers3d, widget2d
 
-PACKAGE_PATH = _os.path.dirname(_os.path.abspath(__file__))
+# package metadata
+from nbmolviz import _version
+__version__ = _version.get_versions()['version']
+__copyright__ = "Copyright 2016 Autodesk Inc."
+__license__ = "Apache 2.0"
 
+PACKAGE_PATH = _os.path.dirname(_os.path.abspath(__file__))
 
 backend = '3dmol.js'  # default
 _BACKENDS = {'3dmol.js': drivers3d.MolViz_3DMol}
@@ -78,12 +83,3 @@ def visualize(mol,format=None,**kwargs):
     #Create an appropriate class
     class BespokeVisualizer(_BACKENDS[backend], _INTERFACES[mytype]): pass
     return BespokeVisualizer(mol,**kwargs)
-
-
-
-# Other package metadata
-__copyright__ = "Copyright 2016 Autodesk Inc."
-__license__ = "Apache 2.0"
-import os as _os
-with open(_os.path.join(PACKAGE_PATH, 'VERSION')) as versionfile:
-    __version__ = versionfile.read().strip()
