@@ -13,7 +13,6 @@
 # limitations under the License.
 import os as _os
 
-
 from nbmolviz import utils
 from nbmolviz import base_widget, widget3d, interfaces3d, drivers3d, widget2d
 
@@ -28,6 +27,15 @@ PACKAGE_PATH = _os.path.dirname(_os.path.abspath(__file__))
 backend = '3dmol.js'  # default
 _BACKENDS = {'3dmol.js': drivers3d.MolViz_3DMol}
 _INTERFACES = {}
+
+
+def _jupyter_nbextension_paths():
+    return [{
+        'section': 'notebook',
+        'src': 'static',
+        'dest': 'nbmolviz-js',
+        'require': 'nbmolviz-js/extension'
+    }]
 
 def _set_up_interfaces():
     try:
@@ -83,3 +91,4 @@ def visualize(mol,format=None,**kwargs):
     #Create an appropriate class
     class BespokeVisualizer(_BACKENDS[backend], _INTERFACES[mytype]): pass
     return BespokeVisualizer(mol,**kwargs)
+
