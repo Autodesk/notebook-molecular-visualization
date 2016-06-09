@@ -37,6 +37,8 @@ def _jupyter_nbextension_paths():
         'require': 'nbmolviz-js/extension'
     }]
 
+# TODO: all code below shouldn't be in __init__.py
+
 def _set_up_interfaces():
     try:
         import MDAnalysis as mda
@@ -60,7 +62,9 @@ def _set_up_interfaces():
         _INTERFACES[cclib.parser.data.ccData_optdone_bool] = interfaces3d.CCLibViz
         _INTERFACES[cclib.parser.data.ccData] = interfaces3d.CCLibViz
 
+
 _set_up_interfaces()
+
 
 def test3d(driver=None):
     """Construct a view of benzene"""
@@ -74,21 +78,22 @@ def test3d(driver=None):
     return view
 
 
-def visualize(mol,format=None,**kwargs):
+def visualize(mol, format=None, **kwargs):
     mytype = type(mol)
 
     if mytype == str:
-        #deal with strings as input
+        # deal with strings as input
         import pybel as pb
-        if len(mol)>40: #assume it's the content of a file
+        if len(mol) > 40:  # assume it's the content of a file
             if format is None: format = 'pdb'
-            mol = pb.readstring(format,mol).next()
+            mol = pb.readstring(format, mol).next()
         else:
             if format is None: format = mol.split('.')[-1]
-            mol = pb.readfile(format,mol).next()
+            mol = pb.readfile(format, mol).next()
         mytype = type(mol)
 
-    #Create an appropriate class
-    class BespokeVisualizer(_BACKENDS[backend], _INTERFACES[mytype]): pass
-    return BespokeVisualizer(mol,**kwargs)
+    # Create an appropriate class
+    class BespokeVisualizer(_BACKENDS[backend], _INTERFACES[mytype]):
+        pass
 
+    return BespokeVisualizer(mol, **kwargs)

@@ -61,9 +61,6 @@ PYEXT = set('.py .pyc .pyo'.split())
 versioncmds = versioneer.get_cmdclass()
 build_py = versioncmds['build_py']
 sdist = versioncmds['sdist']
-version_ns = {}
-with open(os.path.join(here, 'nbmolviz', '_version.py')) as f:
-    exec(f.read(), {}, version_ns)
 
 
 ###################################################################
@@ -193,7 +190,8 @@ args = dict(
         install_requires=requirements,
         author='Autodesk, Inc.',
         author_email='aaron.virshup [at] autodesk [dot] com',
-        description='The Notebook Molecular Visualization Library: WebGL-based molecular visualization '
+        description='The Notebook Molecular Visualization Library: '
+                    'WebGL-based molecular visualization '
                     'tools for Jupyter notebooks',
         keywords=KEYWORDS
 )

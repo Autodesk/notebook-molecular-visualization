@@ -7,5 +7,5 @@
 // already be loaded by the notebook otherwise.
 
 // Export everything from example.js and the npm package version number.
-module.exports = require('./example.js');
+module.exports = require('./molviz3d.js');
 module.exports['version'] = require('../package.json').version;

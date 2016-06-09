@@ -4,6 +4,7 @@
   "description": "Molecular visualization in Jupyter notebooks",
   "author": "Autodesk, Inc.",
   "main": "src/index.js",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/autodesk/notebook-molecular-visualization.git"

@@ -20,12 +20,11 @@ from nbmolviz.base_widget import MessageWidget
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
 
+
 class MolViz3DBaseWidget(MessageWidget):
     """
     This is our base class to communicate with an arbitrary JS backend
     """
-    _view_name = traitlets.Unicode('MolViz3DBase', sync=True)
-    _view_module = traitlets.Unicode('nbextensions/molviz/molviz3d', sync=True)
 
     _click_selection = traitlets.Dict(sync=True)
 
