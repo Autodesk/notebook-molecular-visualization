@@ -15,7 +15,7 @@
  */
 var widgets = require('jupyter-js-widgets');
 var _ = require('underscore');
-d3 = require('./d3.v3.min');
+d3 = require("./d3.v3.min");
 
 function defaultVal(test,defval){
     if(typeof(test) == 'undefined'){return defval}
@@ -61,7 +61,7 @@ var MolWidget2DView = widgets.DOMWidgetView.extend({
         this.height = this.model.get('height');
         this.id = this.model.get('uuid');
         this.charge = this.model.get('charge');
-        this.graph = this.model.get('graph');
+        this.graph = JSON.parse(JSON.stringify(this.model.get('graph')));
 
         //create the div
         this.mydiv = document.createElement('div');
@@ -198,6 +198,21 @@ var MolWidget2DView = widgets.DOMWidgetView.extend({
             else if(d.color){return d.color;}
             else{return defaultVal;}}
 
+
+        function bondWidth(d) {
+            return d.bond * 4 - 2 + "px";
+        }
+
+        function whiteWidth(d) {
+            return d.bond * 4 - 5 + "px";
+        }
+
+        var graph = this.graph;
+        console.log(JSON.stringify(graph));
+        console.log('up8date');
+
+        var color = d3.scale.category20();
+
         var radius = d3.scale.sqrt()
             .range([0, 6]);
 
@@ -222,26 +237,18 @@ var MolWidget2DView = widgets.DOMWidgetView.extend({
             .linkDistance(function(d) { return defaultVal(d.distance,20); })
             .linkStrength(function(d) { return defaultVal(d.strength,1.0); });
 
-        var graph = this.graph;
-
         force
             .nodes(graph.nodes)
             .links(graph.links)
             .on("tick", tick)
             .start();
 
-        this.force = force;
-
         var link = svg.selectAll(".link")
             .data(graph.links)
             .enter().append("g")
             .attr("class", "link");
 
-        function bondWidth(d) {
-            return d.bond*4-2 + "px"; }
-        function whiteWidth(d) {
-            return d.bond*4-5 + "px"; }
-
+        // all edges (includes both bonds and distance constraints)
         link.append("line")
             .attr('source',function (d){return d.source.index;})
             .attr('target',function (d){return d.target.index;})
@@ -255,31 +262,43 @@ var MolWidget2DView = widgets.DOMWidgetView.extend({
                 if(d.bond!=0){return undefined;}
                 else{return 0.0;}});
 
+
+        // text placeholders for all edges
         link.append("text")
             .attr('x', function(d) { return d.source.x; })
             .attr('y', function(d) { return d.source.y; })
             .attr('text-anchor', 'middle')
             .text(function(d) { return ' '; });
 
+        // double and triple bonds
         link.filter(function(d) { return d.bond > 1; }).append("line")
             .attr("class", "separator")
             .style("stroke","#FFF")
             .style("stroke-width",whiteWidth);
 
+        // triple bonds
+        link.filter(function(d) { return d.bond == 3; }).append("line")
+            .attr("class", "separator")
+            .style("stroke", function(d){
+                return chooseColor(d,'black')})
+            .style("stroke-width", function(d){bondWidth(1)});
+
         var node = svg.selectAll(".node")
-            .data(graph.nodes)
+            .data(this.graph.nodes)
             .enter().append("g")
             .on('click',atomClickCallback)
             .attr("class", "node")
             .attr("index", function(d){return d.index})
             .call(force.drag);
 
+        // circle for each atom (background color white by default)
         node.append("circle")
             .attr("r", function(d) {
                 return radius(defaultVal(d.size,1.5))})
             .style("fill", function(d){
                 return chooseColor(d,'white'); });
 
+        // atom labels
         node.append("text")
             .attr("dy", ".35em")
             .attr("text-anchor", "middle")
@@ -287,23 +306,24 @@ var MolWidget2DView = widgets.DOMWidgetView.extend({
                 defaultVal(d.textcolor,'black')})
             .text(function(d) { return d.atom; });
 
-        function tick() {
-            link.selectAll("line")
-                .attr("x1", function(d) { return d.source.x; })
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; });
+  function tick() {
+      // keep edges pinned to their nodes
+      link.selectAll("line")
+        .attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
 
-            link.selectAll("text")
-                .attr('x', function(d) {
-                    return (d.source.x+d.target.x)/2.0; })
-                .attr('y', function(d) {
-                    return (d.source.y+d.target.y)/2.0; });
+      // keep edge labels pinned to the edges
+      link.selectAll("text")
+        .attr('x', function(d) {
+            return (d.source.x+d.target.x)/2.0; })
+        .attr('y', function(d) {
+            return (d.source.y+d.target.y)/2.0; });
 
-            node.attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")"; });
+      node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  }
 
-        }
     }});
 
 

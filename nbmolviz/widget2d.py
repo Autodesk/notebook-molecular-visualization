@@ -36,23 +36,26 @@ class MolViz2DBaseWidget(MessageWidget):
     clicked_atom_index = traitlets.Int(-1).tag(sync=True)
     clicked_bond_indices = traitlets.Tuple((-1, -1)).tag(sync=True)
     _atom_colors = traitlets.Dict({}).tag(sync=True)
+    width = traitlets.Float().tag(sync=True)
+    height = traitlets.Float().tag(sync=True)
 
     def __init__(self, atoms,
                  charge=-150,
                  width=400, height=350,
                  **kwargs):
-        super(MolViz2DBaseWidget,self).__init__(width=width,
-                                                height=height,
-                                                **kwargs)
+        super(MolViz2DBaseWidget, self).__init__(width=width,
+                                                 height=height,
+                                                 **kwargs)
         try:
             self.atoms = atoms.atoms
         except AttributeError:
             self.atoms = atoms
         else:
             self.entity = atoms
+        self.width = width
+        self.height = height
         self.uuid = 'mol2d'+str(uuid.uuid4())
         self.charge = charge
-        self.height = height
         self._clicks_enabled = False
         self.graph = self.to_graph(self.atoms)
 
