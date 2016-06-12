@@ -286,7 +286,7 @@ function removePyLabel(labelId) {
 
 function drawIsosurface(dataId, shapeId, spec) {
     data = this.pyObjects[dataId];
-    shape = this.arddIsosurface(data, spec);
+    shape = this.addIsosurface(data, spec);
     this.pyObjects[shapeId] = shape;
 }
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 import os as _os
 
+
 from nbmolviz import utils
 from nbmolviz import base_widget, widget3d, interfaces3d, drivers3d, widget2d
 
@@ -38,6 +39,14 @@ def _jupyter_nbextension_paths():
     }]
 
 # TODO: all code below shouldn't be in __init__.py
+
+
+def find_static_assets():
+    from warnings import warn
+    warn("""To use the nbmolviz-js nbextension, you'll need to update
+    the Jupyter notebook to version 4.2 or later.""")
+    return []
+
 
 def _set_up_interfaces():
     try:
