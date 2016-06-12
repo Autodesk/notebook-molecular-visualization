@@ -14,12 +14,18 @@
 import numpy as np
 from StringIO import StringIO
 import webcolors
+from traitlets import Unicode
 
 from nbmolviz.utils import JSObject
 from nbmolviz.widget3d import MolViz3DBaseWidget
 
 
 class MolViz_3DMol(MolViz3DBaseWidget):
+    _view_name = Unicode('MolWidget3DView').tag(sync=True)
+    _model_name = Unicode('MolWidget3DModel').tag(sync=True)
+    _view_module = Unicode('nbmolviz-js').tag(sync=True)
+    _model_module = Unicode('nbmolviz-js').tag(sync=True)
+
     STYLE_NAMES = {'vdw': 'sphere',
                    'licorice': 'stick',
                    'line': 'line',
@@ -45,20 +51,29 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     @staticmethod
     def _translate_color(color):
+        """ Return a hex code for a given color.
+
+        Args:
+            color (int or str): can be an integer, hex code (with or without '0x' or '#'), or
+                css3 color name
+
+        Returns:
+            str: hex string of the form '0x123abc'
+        """
         if issubclass(type(color), basestring):
             if color.lower() in webcolors.css3_names_to_hex:
                 color = webcolors.css3_names_to_hex[color.lower()]
-            if len(color) == 7 and color[0] == '#':
+            if len(color) == 7 and color[0] == '#': # hex that starts with '#'
                 color = '0x' + color[1:]
-            elif len(color) == 6:
-                color = int(color, 16)
+            elif len(color) == 6:  # hex without prefix
+                color = hex(int(color, 16))
         elif type(color) == int:
             color = hex(color)
         return color
 
     # Standard view actions
     def add_molecule(self, mol, render=True):
-        "javascript: glviewer.addModel(moldata, format, {'keepH': true});"
+        # javascript: glviewer.addModel(moldata, format, {'keepH': true});
         self.mol = mol
         moldata, format = self.get_input_file()
         self.viewer('addModel', args=[moldata, format, {'keepH': True}])
@@ -333,7 +348,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.viewer('removeAllLabels', [])
         if render: self.render()
 
-    #Molecular orbitals
+    # Molecular orbitals
     def get_voldata(self, orbname, npts, _framenum=None):
         if _framenum is None: _framenum = self.current_frame
 

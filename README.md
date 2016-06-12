@@ -1,20 +1,27 @@
-#Py3DMol
-Py3DMol is a python package for dependency-free molecular visualization in iPython notebooks. Objects from MDAnalysis, MDTraj, OpenBabel, and CClib can be visualized and manipulated directly in a notebook notebook. The backend visualization library, 3DMol.js, is included, so no additional libraries are necessary - visualizations will function in any modern browser using javascript and WebGL.
+notebook-molecular-visualization
+===============================
 
-<img src="images/demo.png" width="200x" alt="Notebook image demo">
+A Python widgets library for 2D and 3D molecular visualization in Jupyter notebooks
+
+Installation
+------------
+
+To install use pip:
+
+    $ pip install nbmolviz
+    $ jupyter nbextension enable --py --sys-prefix nbmolviz
+
+
+For a development installation (requires npm),
+
+    $ git clone https://github.com/autodesk/notebook-molecular-visualization.git
+    $ cd nbmolviz
+    $ pip install -e .
+    $ jupyter nbextension install --py --symlink --user nbmolviz
+    $ jupyter nbextension enable --py --user nbmolviz
 
 ##About
-This package started as hackathon project for the <a href="http://www.cecam.org/workshop-1214.html">CECAM 2015 Macromolecular Simulation Workshop.</a>
-
-###Contributors
-**Maintained by**:
-Aaron Virshup, _Bio/Nano Research Group, Autodesk Research_<br>
-<img src="http://www.autodeskresearch.com/img/title.gif" width="60x">
-
-Kasia Ziolkowska, _Max Planck Institute_<br>
-Tom Newport, _University of Oxford_<br>
-Fiona Naughton,  _University of Oxford_<br>
-Martin Vögele, _Max Planck Institute_
+This package started life as hackathon project for the <a href="http://www.cecam.org/workshop-1214.html">CECAM 2015 Macromolecular Simulation Workshop.</a> It's since undergone a complete source rewrite, and is being released by BioNano Research at Autodesk as part of our suite of Molecular Design Toolks.
 
 ##Dependencies
 This package is designed for the Jupyter Notebook platform and requires the ```ipython[notebook]``` and ```ipywidgets``` packages.

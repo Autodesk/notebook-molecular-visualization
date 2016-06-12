@@ -1,5 +1,6 @@
-ipywidgets
-jupyter
+ipywidgets >= 5.1
+ipython >= 4.2
+notebook >= 4.2
 numpy
 requests
 traitlets

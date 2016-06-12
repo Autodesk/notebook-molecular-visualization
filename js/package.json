@@ -1,0 +1,24 @@
+{
+  "name": "nbmolviz-js",
+  "version": "0.0.1",
+  "description": "Molecular visualization in Jupyter notebooks",
+  "author": "Autodesk, Inc.",
+  "main": "src/index.js",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/autodesk/notebook-molecular-visualization.git"
+  },
+  "scripts": {
+    "prepublish": "webpack",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "json-loader": "^0.5.4",
+    "webpack": "^1.12.14"
+  },
+  "dependencies": {
+    "jupyter-js-widgets": "^1.1.1",
+    "underscore": "^1.8.3"
+  }
+}

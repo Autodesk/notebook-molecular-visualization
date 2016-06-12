@@ -30,7 +30,7 @@ class MessageWidget(widgets.DOMWidget):
     _where = traitlets.Unicode(sync=True)
     _convert_units = _identity
 
-    def __init__(self,width=500,height=350,where='inline',**kwargs):
+    def __init__(self, width=500, height=350, where='inline', **kwargs):
         super(MessageWidget, self).__init__(width=width, height=height, **kwargs)
         self.viewer_ready = False
         self.js_events = {}
