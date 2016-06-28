@@ -372,10 +372,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                                     positive_color=positive_color)
         self.current_orbital = orbname
 
-        if self.current_js_orbitals and remove_old_orbitals:
-            for orbital in self.current_js_orbitals:
-                self.remove(orbital, render=False)
-            self.current_js_orbitals = []
+        if remove_old_orbitals:
+            self.remove_orbitals(render=False)
 
         positive_color = self._translate_color(positive_color)
         negative_color = self._translate_color(negative_color)
@@ -397,6 +395,13 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                       'color': negative_color,
                       'opacity': opacity}])
         self.current_js_orbitals.extend([positive_orbital, negative_orbital])
+        if render: self.render()
+
+    def remove_orbitals(self, render=False):
+        if self.current_js_orbitals:
+            for orbital in self.current_js_orbitals:
+                self.remove(orbital, render=False)
+            self.current_js_orbitals = []
         if render: self.render()
 
     def get_orbidx(self, orbname):
