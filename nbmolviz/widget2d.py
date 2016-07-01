@@ -17,6 +17,7 @@ import ipywidgets
 import traitlets
 from traitlets import Unicode
 from nbmolviz.base_widget import MessageWidget
+from nbmolviz.utils import translate_color
 
 
 class MolViz2DBaseWidget(MessageWidget):
@@ -78,8 +79,8 @@ class MolViz2DBaseWidget(MessageWidget):
         else:
             indices = map(self.get_atom_index, atoms)
         spec = {}
-        if fill_color is not None: spec['fill'] = fill_color
-        if outline_color is not None: spec['stroke'] = outline_color
+        if fill_color is not None: spec['fill'] = translate_color(fill_color, prefix='#')
+        if outline_color is not None: spec['stroke'] = translate_color(outline_color, prefix='#')
         self.viewer('setAtomStyle', [indices, spec])
 
     def set_bond_style(self, bonds, color=None, width=None, dash_length=None, opacity=None):
@@ -139,6 +140,17 @@ class MolViz2DBaseWidget(MessageWidget):
         self._clicks_enabled = True
         self.on_trait_change(callback, 'clicked_atom_index')
         self.click_callback = callback
+
+    def set_color(self, color, atoms=None, render=None):
+        self.set_atom_style(fill_color=color, atoms=atoms)
+
+    def set_colors(self, colormap, render=True):
+        """
+        Args:
+         colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
+        """
+        for color, atoms in colormap.iteritems():
+            self.set_color(atoms=atoms, color=color)
 
 
 class AlwaysBenzene(MolViz2DBaseWidget):

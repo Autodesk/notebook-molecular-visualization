@@ -14,6 +14,8 @@
 import uuid
 import numpy as np
 
+import webcolors
+
 ANGSTROM_PER_BOHR = 0.5291772616368011
 BOHR_PER_ANGSTROM = 1.8897259434513847
 
@@ -34,6 +36,40 @@ atomic_numbers = {'Ac': 89, 'Ag': 47, 'Al': 13, 'Am': 95, 'Ar': 18, 'As': 33, 'A
                   'W': 74, 'Xe': 54, 'Y': 39, 'Yb': 70, 'Zn': 30, 'Zr': 40}
 
 elements = {atnum:el for el,atnum in atomic_numbers.iteritems()}
+
+
+def translate_color(color, prefix='0x'):
+    """ Return a normalized for a given color, specified as hex or as a CSS3 color name.
+
+    Args:
+        color (int or str): can be an integer, hex code (with or without '0x' or '#'), or
+            css3 color name
+        prefix (str): prepend the raw hex string with this (usually '#' or '0x')
+
+    Returns:
+        str: hex string of the form '0x123abc'
+    """
+    formatter = prefix + '{:06x}'
+
+    if issubclass(type(color), basestring):
+        if color.lower() in webcolors.css3_names_to_hex:
+            color = webcolors.css3_names_to_hex[color.lower()]
+
+        if len(color) == 7 and color[0] == '#':  # hex that starts with '#'
+            color = color[1:]
+
+        if len(color) == 6:  # hex without prefix
+            color = prefix + color
+        else:
+            raise ValueError('Failed to translate color %s' % color)
+
+    elif isinstance(color, int):
+        color = formatter.format(color)
+
+    else:
+        raise ValueError('Unrecognized color %s of type %s' % (color, type(color)))
+
+    return color
 
 
 class JSObject(object):
