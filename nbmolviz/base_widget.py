@@ -111,7 +111,7 @@ class MessageWidget(widgets.DOMWidget):
         call_id = message['call_id']
         if call_id in self.js_results:
             result_dict = self.js_results[call_id]
-            del result_dict['Warning']
+            result_dict.pop('Warning', None)
             if 'result' in message:
                 try:
                     result_dict.update(message['result'])

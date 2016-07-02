@@ -76,6 +76,10 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         color = translate_color(color)
         self.viewer('setAtomColor', [atom_json, color])
         if render: self.render()
+
+    def set_clipping(self, near, far, render=True):
+        self.viewer('setSlab', [float(near), float(far)])
+        if render: self.render()
  
     def set_colors(self, colormap, render=True):
         """

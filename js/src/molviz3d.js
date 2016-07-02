@@ -19,7 +19,6 @@ $3Dmol = require('./3Dmol');
 
 var DONOTSEND = ['GLViewer','GLModel'];
 
-
 var MolWidget3DModel = widgets.DOMWidgetModel.extend({
     defaults: _.extend({}, widgets.DOMWidgetModel.prototype.defaults, {
         _model_name : 'MolWidget3DModel',
@@ -101,6 +100,7 @@ var MolWidget3DView = widgets.DOMWidgetView.extend({
         glviewer.unsetAtomColor = unsetAtomColor;
         glviewer.batchCommands = batchCommands;
         glviewer.setBonds = setBonds;
+        glviewer.adjustClipping = adjustClipping;
         document.last_3dmol_viewer = glviewer;  // for debugging
         return glviewer;
     },
@@ -173,9 +173,6 @@ var MolWidget3DView = widgets.DOMWidgetView.extend({
 
 });
 
-
-
-
 module.exports = {
     MolWidget3DModel : MolWidget3DModel,
     MolWidget3DView : MolWidget3DView
@@ -223,7 +220,13 @@ function drawBond(atom1, atom2, order, spec) {
         .x = atom1.x
         .y = atom1.y
         .z = atom1.z;
+}
 
+function adjustClipping(minimum){
+    var slab = this.getSlab();
+    if (slab.near > -minimum) slab.near = -minimum;
+    if (slab.far < minimum) slab.far = minimum;
+    this.setSlab(slab.near, slab.far);
 }
 
 function setAtomColor(atom_json, color) {
