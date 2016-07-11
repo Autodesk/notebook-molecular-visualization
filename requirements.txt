@@ -4,4 +4,5 @@ notebook >= 4.2
 numpy
 requests
 traitlets
+uuid
 webcolors

@@ -57,6 +57,8 @@ def translate_color(color, prefix='0x'):
 
         if len(color) == 7 and color[0] == '#':  # hex that starts with '#'
             color = color[1:]
+        elif len(color) == 8 and color[0:2] == '0x':  # hex str that starts with '0x'
+            color = color[2:]
 
         if len(color) == 6:  # hex without prefix
             color = prefix + color

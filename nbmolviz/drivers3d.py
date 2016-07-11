@@ -35,7 +35,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def __init__(self, *args, **kwargs):
         super(MolViz_3DMol, self).__init__(*args, **kwargs)
         self.current_orbital = None
-        self._orbital_kwargs = {}
+        self.orbital_spec = {}
         self.current_js_orbitals = []
         self._cached_voldata = {}
         self._clicks_enabled = False
@@ -153,7 +153,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         if self.current_orbital is not None:
             self.draw_orbital(self.current_orbital,
                               render=False,
-                              **self._orbital_kwargs)
+                              **self.orbital_spec)
         if render: self.render()
 
     def center(self, atoms=None, render=True):
@@ -333,28 +333,41 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.viewer('removeAllLabels', [])
         if render: self.render()
 
-    # Molecular orbitals
-    def get_voldata(self, orbname, npts, _framenum=None):
-        if _framenum is None: _framenum = self.current_frame
-
-        orbital_key = (orbname, npts, _framenum)
+    def get_voldata(self, orbname, npts, framenum):
+        orbital_key = (orbname, npts, framenum)
         if orbital_key not in self._cached_voldata:
-            grid = self.calc_orb_grid(orbname, npts)
-            cubefile = self._grid_to_cube(grid)
-            volume_data = self.read_cubefile(cubefile)
-            self._cached_voldata[orbital_key] = volume_data
+            grid = self.calc_orb_grid(orbname, npts, framenum)
+            self.cache_grid(grid, orbname, npts, framenum)
         return self._cached_voldata[orbital_key]
 
+    def cache_grid(self, grid, orbname, npts, framenum):
+        orbital_key = (orbname, npts, framenum)
+        cubefile = self._grid_to_cube(grid)
+        volume_data = self.read_cubefile(cubefile)
+        self._cached_voldata[orbital_key] = volume_data
+
     def draw_orbital(self, orbname, npts=50, isoval=0.01,
-                     opacity=0.8, negative_color='red',
+                     opacity=0.8,
+                     negative_color='red',
                      positive_color='blue',
                      remove_old_orbitals=True,
                      render=True):
-        """show a molecular orbital
-        calc_orb_grid must be implemented in subclass"""
-        self._orbital_kwargs = dict(npts=npts, isoval=isoval, opacity=opacity,
-                                    negative_color=negative_color,
-                                    positive_color=positive_color)
+        """Display a molecular orbital
+
+        Args:
+            orbname: name of the orbital (interface dependent)
+            npts (int): resolution in each dimension
+            isoval (float): isosurface value to draw
+            opacity (float): opacity of the orbital (between 0 and 1)
+            positive_color (str or int): color of the positive isosurfaces
+            negative_color (str or int): color of the negative isosurfaces
+            remove_old_orbitals (bool): remove any previously drawn orbitals
+            render (bool): update the 3D scene before returning
+        """
+        self.orbital_spec = dict(npts=npts, isoval=isoval,
+                                 opacity=opacity,
+                                 negative_color=negative_color,
+                                 positive_color=positive_color)
         self.current_orbital = orbname
 
         if remove_old_orbitals:
@@ -364,7 +377,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         negative_color = translate_color(negative_color)
 
         orbidx = self.get_orbidx(orbname)
-        voldata = self.get_voldata(orbidx, npts)
+        voldata = self.get_voldata(orbidx, npts, self.current_frame)
         positive_orbital = JSObject('shape')
         self.viewer('drawIsosurface',
                     [voldata.id,
