@@ -1,3 +1,16 @@
+# Copyright 2016 Autodesk Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import threading
 from uuid import uuid4
 
@@ -17,7 +30,7 @@ class MessageWidget(widgets.DOMWidget):
     _where = traitlets.Unicode(sync=True)
     _convert_units = _identity
 
-    def __init__(self,width=500,height=350,where='inline',**kwargs):
+    def __init__(self, width=500, height=350, where='inline', **kwargs):
         super(MessageWidget, self).__init__(width=width, height=height, **kwargs)
         self.viewer_ready = False
         self.js_events = {}
@@ -98,7 +111,7 @@ class MessageWidget(widgets.DOMWidget):
         call_id = message['call_id']
         if call_id in self.js_results:
             result_dict = self.js_results[call_id]
-            del result_dict['Warning']
+            result_dict.pop('Warning', None)
             if 'result' in message:
                 try:
                     result_dict.update(message['result'])

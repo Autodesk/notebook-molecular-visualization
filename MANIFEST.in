@@ -1,0 +1,3 @@
+include versioneer.py
+include nbmolviz/_version.py
+recursive-include nbmolviz/static *.*

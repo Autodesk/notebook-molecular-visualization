@@ -1,5 +1,20 @@
+# Copyright 2016 Autodesk Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import uuid
 import numpy as np
+
+import webcolors
 
 ANGSTROM_PER_BOHR = 0.5291772616368011
 BOHR_PER_ANGSTROM = 1.8897259434513847
@@ -21,6 +36,42 @@ atomic_numbers = {'Ac': 89, 'Ag': 47, 'Al': 13, 'Am': 95, 'Ar': 18, 'As': 33, 'A
                   'W': 74, 'Xe': 54, 'Y': 39, 'Yb': 70, 'Zn': 30, 'Zr': 40}
 
 elements = {atnum:el for el,atnum in atomic_numbers.iteritems()}
+
+
+def translate_color(color, prefix='0x'):
+    """ Return a normalized for a given color, specified as hex or as a CSS3 color name.
+
+    Args:
+        color (int or str): can be an integer, hex code (with or without '0x' or '#'), or
+            css3 color name
+        prefix (str): prepend the raw hex string with this (usually '#' or '0x')
+
+    Returns:
+        str: hex string of the form '0x123abc'
+    """
+    formatter = prefix + '{:06x}'
+
+    if issubclass(type(color), basestring):
+        if color.lower() in webcolors.css3_names_to_hex:
+            color = webcolors.css3_names_to_hex[color.lower()]
+
+        if len(color) == 7 and color[0] == '#':  # hex that starts with '#'
+            color = color[1:]
+        elif len(color) == 8 and color[0:2] == '0x':  # hex str that starts with '0x'
+            color = color[2:]
+
+        if len(color) == 6:  # hex without prefix
+            color = prefix + color
+        else:
+            raise ValueError('Failed to translate color %s' % color)
+
+    elif isinstance(color, int):
+        color = formatter.format(color)
+
+    else:
+        raise ValueError('Unrecognized color %s of type %s' % (color, type(color)))
+
+    return color
 
 
 class JSObject(object):
@@ -59,16 +110,17 @@ def bbox(coords, padding=5., BIG=1e12):
         xmax = max(x, xmax)
         ymax = max(y, ymax)
         zmax = max(z, zmax)
-    xmin, ymin, zmin = xmin - padding, ymin - padding, zmin - padding
-    xmax, ymax, zmax = xmax + padding, ymax + padding, zmax + padding
+    xmin, ymin, zmin = xmin - padding, ymin-padding, zmin-padding
+    xmax, ymax, zmax = xmax+padding, ymax+padding, zmax+padding
     return xmin, xmax, ymin, ymax, zmin, zmax
 
+
 class VolumetricGrid(object):
-    def __init__(self,xmin,xmax,ymin,ymax,zmin,zmax,
+    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax,
                  npoints=None):
-        self.xr = (xmin,xmax)
-        self.yr = (ymin,ymax)
-        self.zr = (zmin,zmax)
+        self.xr = (xmin, xmax)
+        self.yr = (ymin, ymax)
+        self.zr = (zmin, zmax)
         if npoints is not None:
             self.make_grid(npoints)
 

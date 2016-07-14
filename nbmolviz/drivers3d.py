@@ -1,12 +1,31 @@
+# Copyright 2016 Autodesk Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import numpy as np
 from StringIO import StringIO
 import webcolors
+from traitlets import Unicode
 
-from nbmolviz.utils import JSObject
+from nbmolviz.utils import JSObject, translate_color
 from nbmolviz.widget3d import MolViz3DBaseWidget
 
 
 class MolViz_3DMol(MolViz3DBaseWidget):
+    _view_name = Unicode('MolWidget3DView').tag(sync=True)
+    _model_name = Unicode('MolWidget3DModel').tag(sync=True)
+    _view_module = Unicode('nbmolviz-js').tag(sync=True)
+    _model_module = Unicode('nbmolviz-js').tag(sync=True)
+
     STYLE_NAMES = {'vdw': 'sphere',
                    'licorice': 'stick',
                    'line': 'line',
@@ -16,7 +35,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def __init__(self, *args, **kwargs):
         super(MolViz_3DMol, self).__init__(*args, **kwargs)
         self.current_orbital = None
-        self._orbital_kwargs = {}
+        self.orbital_spec = {}
         self.current_js_orbitals = []
         self._cached_voldata = {}
         self._clicks_enabled = False
@@ -30,22 +49,9 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         else:
             return canonical_name
 
-    @staticmethod
-    def _translate_color(color):
-        if issubclass(type(color), basestring):
-            if color.lower() in webcolors.css3_names_to_hex:
-                color = webcolors.css3_names_to_hex[color.lower()]
-            if len(color) == 7 and color[0] == '#':
-                color = '0x' + color[1:]
-            elif len(color) == 6:
-                color = int(color, 16)
-        elif type(color) == int:
-            color = hex(color)
-        return color
-
     # Standard view actions
     def add_molecule(self, mol, render=True):
-        "javascript: glviewer.addModel(moldata, format, {'keepH': true});"
+        # javascript: glviewer.addModel(moldata, format, {'keepH': true});
         self.mol = mol
         moldata, format = self.get_input_file()
         self.viewer('addModel', args=[moldata, format, {'keepH': True}])
@@ -57,7 +63,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         if render: self.render()
 
     def set_background_color(self, color, opacity=1.0, render=True):
-        color = self._translate_color(color)
+        color = translate_color(color)
         self.viewer('setBackgroundColor', args=[color, opacity])
         if render: self.render()
 
@@ -67,23 +73,30 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     def set_color(self, color, atoms=None, render=True):
         atom_json = self._atoms_to_json(atoms)
-        color = self._translate_color(color)
+        color = translate_color(color)
         self.viewer('setAtomColor', [atom_json, color])
+        if render: self.render()
+
+    def set_clipping(self, near, far, render=True):
+        self.viewer('setSlab', [float(near), float(far)])
         if render: self.render()
  
     def set_colors(self, colormap, render=True):
         """
-        :param colormap: mapping of {colors:[list of atoms]}
-        :return:
+        Args:
+         colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
         json = {}
         for color, atoms in colormap.iteritems():
-            json[self._translate_color(color)] = self._atoms_to_json(atoms)
+            json[translate_color(color)] = self._atoms_to_json(atoms)
         self.viewer('setColorArray', [json,])
         if render: self.render()
         
     def unset_color(self, atoms=None, render=True):
-        atom_json = self._atoms_to_json(atoms)
+        if atoms is None:
+            atom_json = {}
+        else:
+            atom_json = self._atoms_to_json(atoms)
         self.viewer('unsetAtomColor', [atom_json])
         if render: self.render()
 
@@ -100,7 +113,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
         if 'color' in options:
             try:
-                options['color'] = self._translate_color(options['color'])
+                options['color'] = translate_color(options['color'])
             except AttributeError:
                 pass
 
@@ -140,7 +153,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         if self.current_orbital is not None:
             self.draw_orbital(self.current_orbital,
                               render=False,
-                              **self._orbital_kwargs)
+                              **self.orbital_spec)
         if render: self.render()
 
     def center(self, atoms=None, render=True):
@@ -189,7 +202,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         position = self._convert_units(position)
         radius = self._convert_units(radius)
         center = dict(x=position[0], y=position[1], z=position[2])
-        color = self._translate_color(color)
+        color = translate_color(color)
 
         self.viewer('renderPyShape', ['Sphere',
                                       dict(center=center, radius=radius,
@@ -235,7 +248,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def _draw3dmol_cylinder(self, color, start, end,
                             draw_start_face, draw_end_face,
                             opacity, radius, clickable, render, batch):
-        color = self._translate_color(color)
+        color = translate_color(color)
         js_shape = JSObject('shape')
         facestart = self._convert_units(start)
         faceend = self._convert_units(end)
@@ -264,7 +277,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         if end is None: end = np.array(start) + np.array(vector)
         facestart = self._convert_units(start)
         faceend = self._convert_units(end)
-        color = self._translate_color(color)
+        color = translate_color(color)
 
         spec = dict(
                 start=self._list_to_jsvec(facestart),
@@ -304,8 +317,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                    render=True):
         js_label = JSObject('label')
         position = self._convert_units(position)
-        color = self._translate_color(color)
-        background = self._translate_color(background)
+        color = translate_color(color)
+        background = translate_color(background)
         spec = dict(position=self._list_to_jsvec(position),
                     fontColor=color,
                     backgroundColor=background,
@@ -320,40 +333,51 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.viewer('removeAllLabels', [])
         if render: self.render()
 
-    #Molecular orbitals
-    def get_voldata(self, orbname, npts, _framenum=None):
-        if _framenum is None: _framenum = self.current_frame
-
-        orbital_key = (orbname, npts, _framenum)
+    def get_voldata(self, orbname, npts, framenum):
+        orbital_key = (orbname, npts, framenum)
         if orbital_key not in self._cached_voldata:
-            grid = self.calc_orb_grid(orbname, npts)
-            cubefile = self._grid_to_cube(grid)
-            volume_data = self.read_cubefile(cubefile)
-            self._cached_voldata[orbital_key] = volume_data
+            grid = self.calc_orb_grid(orbname, npts, framenum)
+            self.cache_grid(grid, orbname, npts, framenum)
         return self._cached_voldata[orbital_key]
 
+    def cache_grid(self, grid, orbname, npts, framenum):
+        orbital_key = (orbname, npts, framenum)
+        cubefile = self._grid_to_cube(grid)
+        volume_data = self.read_cubefile(cubefile)
+        self._cached_voldata[orbital_key] = volume_data
+
     def draw_orbital(self, orbname, npts=50, isoval=0.01,
-                     opacity=0.8, negative_color='red',
+                     opacity=0.8,
+                     negative_color='red',
                      positive_color='blue',
                      remove_old_orbitals=True,
                      render=True):
-        """show a molecular orbital
-        calc_orb_grid must be implemented in subclass"""
-        self._orbital_kwargs = dict(npts=npts, isoval=isoval, opacity=opacity,
-                                    negative_color=negative_color,
-                                    positive_color=positive_color)
+        """Display a molecular orbital
+
+        Args:
+            orbname: name of the orbital (interface dependent)
+            npts (int): resolution in each dimension
+            isoval (float): isosurface value to draw
+            opacity (float): opacity of the orbital (between 0 and 1)
+            positive_color (str or int): color of the positive isosurfaces
+            negative_color (str or int): color of the negative isosurfaces
+            remove_old_orbitals (bool): remove any previously drawn orbitals
+            render (bool): update the 3D scene before returning
+        """
+        self.orbital_spec = dict(npts=npts, isoval=isoval,
+                                 opacity=opacity,
+                                 negative_color=negative_color,
+                                 positive_color=positive_color)
         self.current_orbital = orbname
 
-        if self.current_js_orbitals and remove_old_orbitals:
-            for orbital in self.current_js_orbitals:
-                self.remove(orbital, render=False)
-            self.current_js_orbitals = []
+        if remove_old_orbitals:
+            self.remove_orbitals(render=False)
 
-        positive_color = self._translate_color(positive_color)
-        negative_color = self._translate_color(negative_color)
+        positive_color = translate_color(positive_color)
+        negative_color = translate_color(negative_color)
 
         orbidx = self.get_orbidx(orbname)
-        voldata = self.get_voldata(orbidx, npts)
+        voldata = self.get_voldata(orbidx, npts, self.current_frame)
         positive_orbital = JSObject('shape')
         self.viewer('drawIsosurface',
                     [voldata.id,
@@ -369,6 +393,13 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                       'color': negative_color,
                       'opacity': opacity}])
         self.current_js_orbitals.extend([positive_orbital, negative_orbital])
+        if render: self.render()
+
+    def remove_orbitals(self, render=False):
+        if self.current_js_orbitals:
+            for orbital in self.current_js_orbitals:
+                self.remove(orbital, render=False)
+            self.current_js_orbitals = []
         if render: self.render()
 
     def get_orbidx(self, orbname):
