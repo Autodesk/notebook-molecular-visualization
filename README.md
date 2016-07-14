@@ -21,11 +21,6 @@ benzene = pybel.read_string('smi','c1cccc1').next()
 nbmolviz.visualize(benzene)
 ```
 
-To draw an MDAnalysis trajectory:
-```python
-
-```
-
 
 
 ## Dev install
@@ -42,7 +37,13 @@ This will build your widgets into a folder at `notebook-molecular-visualization/
 
 During development, to see the effects of changes to any javascript files (in notebook-molecular/visualization/js/src), run `python setup.py jsdeps` and reload any notebook browser windows.
 
-##About
+
+## Contributing
+
+This project is developed and maintained by the [Molecular Design Toolkit](https://github.com/autodesk/molecular-design-toolkit) project. Please see that project's [CONTRIBUTING document](https://github.com/autodesk/molecular-design-toolkit/CONTRIBUTING.md) for details.
+
+
+## About
 This package started life as hackathon project for the <a href="http://www.cecam.org/workshop-1214.html">CECAM 2015 Macromolecular Simulation Workshop.</a> It's since undergone a complete source rewrite, and is being released by BioNano Research at Autodesk as part of our suite of Molecular Design Tools.
 
 The visualizers offered by this library were built using:
