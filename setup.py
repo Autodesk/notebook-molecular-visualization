@@ -34,7 +34,7 @@ Topic :: Scientific/Engineering :: Visualization
 Operating System :: POSIX
 Operating System :: Unix
 Operating System :: MacOS
-""".split('\n')
+""".splitlines()
 
 assert sys.version_info[:2] == (2, 7), "Sorry, this package requires Python 2.7."
 
