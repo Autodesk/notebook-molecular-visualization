@@ -4,12 +4,10 @@ from __future__ import print_function
 
 import os
 import sys
-from os.path import relpath, join
 import versioneer
 from setuptools import setup, find_packages, Command
 from setuptools.command.egg_info import egg_info
 from subprocess import check_call
-import platform
 
 from distutils import log
 
@@ -19,7 +17,7 @@ log.info('$PATH=%s' % os.environ['PATH'])
 here = os.path.dirname(os.path.abspath(__file__))
 
 PACKAGE_NAME = 'nbmolviz'
-KEYWORDS = 'jupyter notebook chemistry widget 3D molecular'.split()
+KEYWORDS = 'jupyter notebook chemistry widget 3D visualization'.split()
 LONG_DESCRIPTION = 'Molecular visualization in Jupyter notebooks'
 CLASSIFIERS = """\
 Development Status :: 4 - Beta
@@ -40,18 +38,6 @@ assert sys.version_info[:2] == (2, 7), "Sorry, this package requires Python 2.7.
 
 with open('requirements.txt', 'r') as reqfile:
     requirements = [x.strip() for x in reqfile if x.strip()]
-
-def find_package_data(pkgdir):
-    """ Just include all files that won't be included as package modules.
-    """
-    files = []
-    for root, dirnames, filenames in os.walk(pkgdir):
-        not_a_package = '__init__.py' not in filenames
-        for fn in filenames:
-            basename, fext = os.path.splitext(fn)
-            if not_a_package or (fext not in PYEXT):
-                files.append(relpath(join(root, fn), pkgdir))
-    return files
 
 PYEXT = set('.py .pyc .pyo'.split())
 
