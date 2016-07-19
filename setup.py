@@ -175,10 +175,9 @@ args = dict(
             ],
         install_requires=requirements,
         author='Autodesk, Inc.',
-        author_email='aaron.virshup [at] autodesk [dot] com',
-        description='The Notebook Molecular Visualization Library: '
-                    'WebGL-based molecular visualization '
-                    'tools for Jupyter notebooks',
+        author_email='moleculardesigntoolkit@autodesk.com',
+        description='Notebook Molecular Visualization: '
+                    'ipywidgets-based molecular visualization for molecular structures',
         keywords=KEYWORDS
 )
 
