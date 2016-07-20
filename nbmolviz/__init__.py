@@ -29,23 +29,6 @@ backend = '3dmol.js'  # default
 _BACKENDS = {'3dmol.js': drivers3d.MolViz_3DMol}
 _INTERFACES = {}
 
-
-def _enable_nbextension():
-    """ Try to automatically install the necessary jupyter extensions. Catches all errors
-    """
-    import warnings
-    try:
-        import notebook
-        if not notebook.nbextensions.check_nbextension('widgetsnbextension'):
-            notebook.nbextensions.enable_nbextension_python('widgetsnbextension')
-        if not notebook.nbextensions.enable_nbextension_python('nbmolviz'):
-            notebook.nbextensions.enable_nbextension_python('nbmolviz')
-    except Exception as e:
-        warnings.warn('Exception while trying to enable nbmolviz extensions')
-
-_enable_nbextension()
-
-
 def _jupyter_nbextension_paths():
     return [{
         'section': 'notebook',
@@ -122,3 +105,19 @@ def visualize(mol, format=None, **kwargs):
         pass
 
     return BespokeVisualizer(mol, **kwargs)
+
+
+def _enable_nbextension():
+    """ Try to automatically install the necessary jupyter extensions. Catches all errors
+    """
+    import warnings
+    try:
+        import notebook
+        if not notebook.nbextensions.check_nbextension('widgetsnbextension'):
+            notebook.nbextensions.enable_nbextension_python('widgetsnbextension')
+        if not notebook.nbextensions.check_nbextension('nbmolviz-js'):
+            notebook.nbextensions.enable_nbextension_python('nbmolviz')
+    except Exception as e:
+        warnings.warn('Exception while trying to enable nbmolviz extensions')
+
+_enable_nbextension()
