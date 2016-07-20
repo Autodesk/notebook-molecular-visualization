@@ -30,6 +30,22 @@ _BACKENDS = {'3dmol.js': drivers3d.MolViz_3DMol}
 _INTERFACES = {}
 
 
+def _enable_nbextension():
+    """ Try to automatically install the necessary jupyter extensions. Catches all errors
+    """
+    import warnings
+    try:
+        import notebook
+        if not notebook.nbextensions.check_nbextension('widgetsnbextension'):
+            notebook.nbextensions.enable_nbextension_python('widgetsnbextension')
+        if not notebook.nbextensions.enable_nbextension_python('nbmolviz'):
+            notebook.nbextensions.enable_nbextension_python('nbmolviz')
+    except Exception as e:
+        warnings.warn('Exception while trying to enable nbmolviz extensions')
+
+_enable_nbextension()
+
+
 def _jupyter_nbextension_paths():
     return [{
         'section': 'notebook',
@@ -76,7 +92,7 @@ _set_up_interfaces()
 
 
 def test3d(driver=None):
-    """Construct a view of benzene"""
+    """Construct a view of benzene to test the widget"""
     if driver is None:
         driver = backend
 
