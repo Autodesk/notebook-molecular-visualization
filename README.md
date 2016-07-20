@@ -1,5 +1,6 @@
 notebook-molecular-visualization
 ===============================
+[![PyPI version](https://badge.fury.io/py/nbmolviz.svg)](https://badge.fury.io/py/nbmolviz)
 
 A Python widgets library for 2D and 3D molecular visualization in Jupyter notebooks
 
