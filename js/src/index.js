@@ -11,7 +11,6 @@ __webpack_public_path__ = document.querySelector('body').getAttribute('data-base
     'nbextensions/nbmolviz-js/';
 
 require('./3Dmol'); // todo: don't include the built version of this
-require('./d3.v3.min'); // todo: unvendor this
 
 module.exports = {};
 
