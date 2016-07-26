@@ -4,6 +4,14 @@ var version = require('./package.json').version;
 // stored in a separate local variable.
 var loaders = [
     { test: /\.json$/, loader: 'json-loader' },
+    {
+      test: /\.js$/,
+      exclude: /(node_modules|bower_components)/,
+      loader: 'babel', // 'babel-loader' is also a legal name to reference
+      query: {
+        presets: ['es2015']
+      }
+    },
 ];
 
 
@@ -29,7 +37,7 @@ module.exports = [
      // custom widget.
      // It must be an amd module
      //
-        entry: './src/index.js',
+        entry: ['babel-polyfill', './src/index.js'],
         output: {
             filename: 'index.js',
             path: '../nbmolviz/static',
@@ -39,7 +47,7 @@ module.exports = [
         module: {
             loaders: loaders
         },
-        externals: ['jupyter-js-widgets']
+        externals: ['jupyter-js-widgets'],
     },
     {// Embeddable nbmolviz-js bundle
      //
