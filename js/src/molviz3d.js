@@ -15,7 +15,7 @@
  **/
 var widgets = require('jupyter-js-widgets');
 var _ = require('underscore');
-$3Dmol = require('./3Dmol');
+var $3Dmol = require('./3Dmol');
 
 var DONOTSEND = ['GLViewer','GLModel'];
 
