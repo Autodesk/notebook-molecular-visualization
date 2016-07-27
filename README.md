@@ -28,7 +28,7 @@ nbmolviz.visualize(benzene)
 Requires npm.
 
     $ git clone https://github.com/autodesk/notebook-molecular-visualization.git
-    $ cd notebook-molecular-visualization/nbmolviz
+    $ cd notebook-molecular-visualization
     $ python setup.py jsdeps
     $ pip install -e .
     $ jupyter nbextension install --py --symlink --user nbmolviz
