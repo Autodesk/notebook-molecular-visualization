@@ -18,6 +18,7 @@ import {
   MolWidget2DModel as MolModel,
   MolWidget2DView as MolView
 } from 'molecular-visualization';
+import widgetUtils from './utils/widget_utils';
 
 let molModelPrototype = Object.assign({}, MolModel.prototype);
 delete molModelPrototype.constructor;
@@ -26,8 +27,15 @@ const MolWidget2DModel = widgets.DOMWidgetModel.extend(
   Object.assign({}, molModelPrototype)
 );
 
+// Call both initialize functions for model and view below
+const molViewPrototype = Object.assign({}, MolView.prototype);
+molViewPrototype.initialize = widgetUtils.getMultiFunction(
+  molViewPrototype.initialize,
+  widgets.DOMWidgetView.prototype.initialize
+);
+
 const MolWidget2DView = widgets.DOMWidgetView.extend(
-  Object.assign({}, MolView.prototype)
+  Object.assign({}, molViewPrototype)
 );
 
 module.exports = {
