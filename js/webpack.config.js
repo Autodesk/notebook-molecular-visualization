@@ -6,7 +6,7 @@ var loaders = [
     { test: /\.json$/, loader: 'json-loader' },
     {
       test: /\.js$/,
-      exclude: /(node_modules|bower_components|3Dmol.js)/,
+      exclude: /(node_modules|bower_components)/,
       loader: 'babel', // 'babel-loader' is also a legal name to reference
       query: {
         presets: ['es2015']

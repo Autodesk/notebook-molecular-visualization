@@ -24,6 +24,7 @@
   "dependencies": {
     "jupyter-js-widgets": "^1.1.1",
     "nbmolviz2d": "^0.0.3",
+    "molecular-visualization-3d": "^0.0.1",
     "underscore": "^1.8.3"
   }
 }
