@@ -15,12 +15,12 @@
  */
 import widgets from 'jupyter-js-widgets';
 import {
-  MolWidget2DModel as MolModel,
-  MolWidget2DView as MolView
-} from 'molecular-visualization';
+  Nbmolviz2dModel,
+  Nbmolviz2dView,
+} from 'nbmolviz2d';
 import widgetUtils from './utils/widget_utils';
 
-let molModelPrototype = Object.assign({}, MolModel.prototype);
+let molModelPrototype = Object.assign({}, Nbmolviz2dModel.prototype);
 delete molModelPrototype.constructor;
 
 const MolWidget2DModel = widgets.DOMWidgetModel.extend(
@@ -28,7 +28,7 @@ const MolWidget2DModel = widgets.DOMWidgetModel.extend(
 );
 
 // Call both initialize functions for model and view below
-const molViewPrototype = Object.assign({}, MolView.prototype);
+const molViewPrototype = Object.assign({}, Nbmolviz2dView.prototype);
 molViewPrototype.initialize = widgetUtils.getMultiFunction(
   molViewPrototype.initialize,
   widgets.DOMWidgetView.prototype.initialize
