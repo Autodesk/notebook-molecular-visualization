@@ -17,7 +17,7 @@ import widgets from 'jupyter-js-widgets';
 import {
   MolWidget3DModel as MolModel,
   MolWidget3DView as MolView,
-} from 'molecular-visualization-3d';
+} from 'nbmolviz3d';
 import widgetUtils from './utils/widget_utils';
 
 const molModelPrototype = Object.assign({}, MolModel.prototype);
