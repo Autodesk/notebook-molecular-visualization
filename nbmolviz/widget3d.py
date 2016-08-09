@@ -73,22 +73,22 @@ class MolViz3DBaseWidget(MessageWidget):
     invisible = hide
 
     #Abstract methods below
-    def append_frame(self, positions=None, annotation=None, render=True):
+    def append_frame(self, positions=None, annotation=None):
         """
         :param positions: array in angstroms, otherwise just pulled from the molecule
         :param framenum: frame number to set (otherwise, append)
         :param annotation:
-        :param render: render now?
         :return: frame index
         """
         raise NotImplementedError("This method must be implemented by the backend visualization class")
 
-    def add_molecule(self, molecule, render=True):
+    def add_molecule(self, molecule):
         raise NotImplementedError("This method must be implemented by the backend visualization class")
 
-    def set_background_color(self,color):
+    def set_background_color(self, color, opacity):
         """
         :param color: a name or hex value
+        :param opacity: a float between 0.0 and 1.0 inclusive
         :return:
         """
         raise NotImplementedError("This method must be implemented by the backend visualization class")
@@ -108,7 +108,7 @@ class MolViz3DBaseWidget(MessageWidget):
         """
         raise NotImplementedError("This method must be implemented by the backend visualization class")
 
-    def set_style(self, style, atoms=None, render=True, color=None, radius=None, bondradius=None):
+    def set_style(self, style, atoms=None, color=None, radius=None, bondradius=None):
         """
         Sets an atom's style to be exactly this, removing any other representations
         :param style: choose from keys in STYLE_SYNONYMS
@@ -117,12 +117,11 @@ class MolViz3DBaseWidget(MessageWidget):
         :param radius: EITHER A) a radius (in angstroms), or B) list of radii
         :param radius: EITHER A) a radius (in angstroms), or B) list of radii
         :param bondradius: width to draw radius in angstroms
-        :param render: render these changes immediately? True or False
         :return:
         """
         raise NotImplementedError("This method must be implemented by the backend visualization class")
 
-    def add_style(self, style, atoms=None, render=True, color=None, radius=None, bondradius=None):
+    def add_style(self, style, atoms=None, color=None, radius=None, bondradius=None):
         """
         Adds this representation to an atom without removing any other representations
         :param style: choose from keys in STYLE_SYNONYMS
@@ -131,29 +130,24 @@ class MolViz3DBaseWidget(MessageWidget):
         :param radius: EITHER A) a radius (in angstroms), or B) list of radii
         :param radius: EITHER A) a radius (in angstroms), or B) list of radii
         :param bondradius: width to draw radius in angstroms
-        :param render: render these changes immediately? True or False
         :return:
         """
         raise NotImplementedError("This method must be implemented by the backend visualization class")
 
     def draw_orbital(self, orbname, npts=50, isoval=0.01,
                      opacity=0.95, negative_color='red',
-                     positive_color='blue',
-                     render=True):
+                     positive_color='blue'):
         self.current_orbital = orbname
         raise NotImplementedError("This method must be implemented by the backend visualization class")
 
-    def draw_sphere(self,position_or_atom,radius=2.0,color='red',opacity=1.0,render=True):
+    def draw_sphere(self,position_or_atom,radius=2.0,color='red',opacity=1.0):
         """
         Draw a sphere centered at passed atom or at the passed position
         :return: jsobject
         """
         raise NotImplementedError("This method must be implemented by the backend visualization class")
 
-    def render(self):
-        raise NotImplementedError("This method must be implemented by the backend visualization class")
-
-    def show_frame(self,framenum,render=True):
+    def show_frame(self,framenum):
         raise NotImplementedError("This method must be implemented by the backend visualization class")
 
     def get_input_file(self):
