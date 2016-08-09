@@ -25,6 +25,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     _model_name = Unicode('MolWidget3DModel').tag(sync=True)
     _view_module = Unicode('nbmolviz-js').tag(sync=True)
     _model_module = Unicode('nbmolviz-js').tag(sync=True)
+    model_data = Unicode('').tag(sync=True)
+    model_data_format = Unicode('').tag(sync=True)
 
     STYLE_NAMES = {'vdw': 'sphere',
                    'licorice': 'stick',
@@ -51,10 +53,10 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     # Standard view actions
     def add_molecule(self, mol, render=True):
-        # javascript: glviewer.addModel(moldata, format, {'keepH': true});
         self.mol = mol
         moldata, format = self.get_input_file()
-        self.viewer('addModel', args=[moldata, format, {'keepH': True}])
+        self.model_data_format = format
+        self.model_data = moldata
         self.set_style('sphere', render=False)
         self.set_background_color('#73757C', render=False)
         self.center(render=False)
@@ -80,7 +82,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def set_clipping(self, near, far, render=True):
         self.viewer('setSlab', [float(near), float(far)])
         if render: self.render()
- 
+
     def set_colors(self, colormap, render=True):
         """
         Args:
@@ -91,7 +93,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             json[translate_color(color)] = self._atoms_to_json(atoms)
         self.viewer('setColorArray', [json,])
         if render: self.render()
-        
+
     def unset_color(self, atoms=None, render=True):
         if atoms is None:
             atom_json = {}
