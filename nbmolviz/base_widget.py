@@ -27,10 +27,9 @@ class MessageWidget(widgets.DOMWidget):
     viewerId = traitlets.Unicode(sync=True)
     _width = traitlets.Unicode(sync=True)
     _height = traitlets.Unicode(sync=True)
-    _where = traitlets.Unicode(sync=True)
     _convert_units = _identity
 
-    def __init__(self, width=500, height=350, where='inline', **kwargs):
+    def __init__(self, width=500, height=350, **kwargs):
         super(MessageWidget, self).__init__(width=width, height=height, **kwargs)
         self.viewer_ready = False
         self.js_events = {}
@@ -40,7 +39,6 @@ class MessageWidget(widgets.DOMWidget):
         self.messages_received = []
         self._width = str(Measure(width))
         self._height = str(Measure(height))
-        self._where = where
         self.sent_messages = []
         self.num_calls = 0
         self.viewerId = 'molviz'+str(uuid4())
