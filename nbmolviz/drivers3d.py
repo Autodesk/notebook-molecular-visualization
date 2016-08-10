@@ -59,7 +59,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.model_data_format = format
         self.model_data = moldata
         self.set_style('sphere')
-        self.center()
         if self.click_callback is not None:
             self.viewer('makeAtomsClickable', [])
 
@@ -146,13 +145,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.current_frame = framenum
         if self.current_orbital is not None:
             self.draw_orbital(self.current_orbital, **self.orbital_spec)
-
-    def center(self, atoms=None,):
-        if atoms is not None:
-            args = [self._atoms_to_json(atoms)]
-        else:
-            args = []
-        self.viewer('zoomTo', args)
 
     # Interaction
     def set_click_callback(self, callback=None, enabled=True):
