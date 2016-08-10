@@ -4,4 +4,5 @@
 /build
 *.egg-info
 /dist
-
+.DS_Store
+npm-debug.log

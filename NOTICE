@@ -11,9 +11,10 @@ License file: nbmolviz/static/3dmol/LICENSE
     D3.js
 ---------------------
 D3.js is copyright (c) 2010-2016 Mike Bostock
-Source file: nbmolviz/static/d3.v3.min.js
-Description: This is an unmodified, minified version of the d3 library.
-License file: nbmolviz/static/d3/LICENSE
+Source file: js/node_modules/nbmolviz2d/node_modules/d3/build/d3.node.js
+Description: This is the official version distributed via npm.
+Project: https://github.com/d3/d3
+License file: js/node_modules/nbmolviz2d/node_modules/d3/LICENSE
 
     PyQuante2
 ---------------------
