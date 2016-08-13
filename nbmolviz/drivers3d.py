@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import numpy as np
 from StringIO import StringIO
 from traitlets import Float, Unicode
@@ -25,7 +26,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     _view_module = Unicode('nbmolviz-js').tag(sync=True)
     _model_module = Unicode('nbmolviz-js').tag(sync=True)
     model_data = Unicode('').tag(sync=True)
-    model_data_format = Unicode('').tag(sync=True)
     background_color = Unicode('0x73757C').tag(sync=True)
     background_opacity = Float(1.0).tag(sync=True)
 
@@ -55,10 +55,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     # Standard view actions
     def add_molecule(self, mol):
         self.mol = mol
-        moldata, format = self.get_input_file()
-        self.model_data_format = format
-        self.model_data = moldata
-        self.set_style('sphere')
+        self.model_data = json.dumps(self.mol.to_json())
         if self.click_callback is not None:
             self.viewer('makeAtomsClickable', [])
 
