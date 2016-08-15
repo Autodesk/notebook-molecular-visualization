@@ -14,7 +14,7 @@
 import json
 import numpy as np
 from StringIO import StringIO
-from traitlets import Float, Unicode
+from traitlets import Float, List, Unicode
 
 from nbmolviz.utils import JSObject, translate_color
 from nbmolviz.widget3d import MolViz3DBaseWidget
@@ -28,12 +28,15 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     model_data = Unicode('').tag(sync=True)
     background_color = Unicode('0x73757C').tag(sync=True)
     background_opacity = Float(1.0).tag(sync=True)
+    styles = List([]).tag(sync=True)
 
     STYLE_NAMES = {'vdw': 'sphere',
                    'licorice': 'stick',
                    'line': 'line',
                    'ribbon': 'cartoon',
                    None: None}
+
+    DEFAULT_STYLE = 'stick'
 
     def __init__(self, *args, **kwargs):
         super(MolViz_3DMol, self).__init__(*args, **kwargs)
@@ -56,6 +59,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def add_molecule(self, mol):
         self.mol = mol
         self.model_data = json.dumps(self.mol.to_json())
+        self.styles = [self.DEFAULT_STYLE] * len(mol.atoms)
         if self.click_callback is not None:
             self.viewer('makeAtomsClickable', [])
 
@@ -63,10 +67,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         color = translate_color(color)
         self.background_color = color
         self.background_opacity = opacity
-
-    def set_style(self, style, atoms=None, **options):
-        backend_call = 'setStyle'
-        self._change_style(backend_call, style, atoms, options)
 
     def set_color(self, color, atoms=None):
         atom_json = self._atoms_to_json(atoms)
@@ -93,30 +93,33 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             atom_json = self._atoms_to_json(atoms)
         self.viewer('unsetAtomColor', [atom_json])
 
+    def set_style(self, style, atoms=None, **options):
+        self._change_style(style, atoms, True, options)
+
     def add_style(self, style, atoms=None, **options):
-        backend_call = 'addStyle'
-        self._change_style(backend_call, style, atoms, options)
+        self._change_style(style, atoms, False, options)
 
-    def _change_style(self, backend_call, style_string,
-                      atoms, options):
-        if atoms is None:
-            atom_json = {}
-        else:
-            atom_json = self._atoms_to_json(atoms)
+    def _change_style(self, style_string,
+                      atoms, replace, options):
+      style = self.convert_style_name(style_string)
 
-        if 'color' in options:
-            try:
-                options['color'] = translate_color(options['color'])
-            except AttributeError:
-                pass
+      # No atoms passed means all atoms
+      if atoms is None:
+          atoms = list(self.mol.atoms)
 
-        style = self.convert_style_name(style_string)
-        if style is None:
-            style_spec = {}
-        else:
-            style_spec = {style: options}
+      if replace:
+          styles = [self.DEFAULT_STYLE] * len(self.mol.atoms)
+      else:
+          styles = list(self.styles)
 
-        self.viewer(backend_call, [atom_json, style_spec])
+      for i, atom in enumerate(self.mol.atoms):
+          for j in range(0, len(atoms)):
+              if (atoms[j] is atom):
+                  styles[i] = style
+                  atoms.remove(atoms[j])
+                  break
+
+      self.styles = styles
 
     def append_frame(self, positions=None):
         if positions is None:
