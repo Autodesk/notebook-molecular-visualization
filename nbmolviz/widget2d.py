@@ -13,7 +13,6 @@
 # limitations under the License.
 import uuid
 
-import ipywidgets
 import traitlets
 from traitlets import Unicode
 from nbmolviz.base_widget import MessageWidget
@@ -39,6 +38,7 @@ class MolViz2DBaseWidget(MessageWidget):
     _atom_colors = traitlets.Dict({}).tag(sync=True)
     width = traitlets.Float().tag(sync=True)
     height = traitlets.Float().tag(sync=True)
+    selected_atoms = traitlets.List([]).tag(sync=True)
 
     def __init__(self, atoms,
                  charge=-150,
