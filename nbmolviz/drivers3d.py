@@ -24,9 +24,10 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     _model_name = Unicode('MolWidget3DModel').tag(sync=True)
     _view_module = Unicode('nbmolviz-js').tag(sync=True)
     _model_module = Unicode('nbmolviz-js').tag(sync=True)
-    model_data = Dict({}).tag(sync=True)
     background_color = Unicode('0x73757C').tag(sync=True)
     background_opacity = Float(1.0).tag(sync=True)
+    selected_atoms = List([]).tag(sync=True)
+    model_data = Dict({}).tag(sync=True)
     styles = List([]).tag(sync=True)
 
     STYLE_NAMES = {'vdw': 'sphere',
@@ -156,7 +157,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         if not enabled: return  # TODO: FIX THIS
         assert callable(callback)
         self._clicks_enabled = True
-        self.on_trait_change(callback, '_click_selection')
         self.click_callback = callback
         self.viewer('makeAtomsClickable', [])
 

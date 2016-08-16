@@ -26,8 +26,6 @@ class MolViz3DBaseWidget(MessageWidget):
     This is our base class to communicate with an arbitrary JS backend
     """
 
-    _click_selection = traitlets.Dict(sync=True)
-
     STYLE_SYNONYMS = {'vdw': 'vdw', 'sphere': 'vdw', 'cpk': 'vdw',
                       'licorice': 'licorice', 'stick': 'licorice', 'tube':'licorice',
                       'ball_and_stick': 'ball_and_stick',
