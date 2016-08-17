@@ -36,8 +36,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                    'ribbon': 'cartoon',
                    None: None}
 
-    DEFAULT_STYLE = 'stick'
-
     def __init__(self, *args, **kwargs):
         super(MolViz_3DMol, self).__init__(*args, **kwargs)
         self.current_orbital = None
@@ -59,7 +57,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def add_molecule(self, mol):
         self.mol = mol
         self.model_data = self.mol.to_json()
-        self.styles = [self.DEFAULT_STYLE] * len(mol.atoms)
+        self.styles = [None] * len(mol.atoms)
         if self.click_callback is not None:
             self.viewer('makeAtomsClickable', [])
 
@@ -108,14 +106,16 @@ class MolViz_3DMol(MolViz3DBaseWidget):
           atoms = list(self.mol.atoms)
 
       if replace:
-          styles = [self.DEFAULT_STYLE] * len(self.mol.atoms)
+          styles = [None] * len(self.mol.atoms)
       else:
           styles = list(self.styles)
 
       for i, atom in enumerate(self.mol.atoms):
           for j in range(0, len(atoms)):
               if (atoms[j] is atom):
-                  styles[i] = style
+                  newStyle = styles[i].copy() if styles[i] else {}
+                  newStyle['visualization_type'] = style
+                  styles[i] = newStyle
                   atoms.remove(atoms[j])
                   break
 
