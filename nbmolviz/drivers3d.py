@@ -103,7 +103,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
       # No atoms passed means all atoms
       if atoms is None:
-          atoms = list(self.mol.atoms)
+          atoms = self.mol.atoms
+      atoms = list(atoms)
 
       if replace:
           styles = [None] * len(self.mol.atoms)
