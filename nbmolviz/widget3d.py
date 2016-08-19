@@ -49,25 +49,25 @@ class MolViz3DBaseWidget(MessageWidget):
 
     #some convenience synonyms
     def sphere(self, **kwargs):
-        return self.set_style('vdw', **kwargs)
+        return self.add_style('vdw', **kwargs)
     vdw = cpk = sphere
 
     def ball_and_stick(self, **kwargs):
-        return self.set_style('ball_and_stick', **kwargs)
+        return self.add_style('ball_and_stick', **kwargs)
 
     def licorice(self, **kwargs):
-        return self.set_style('licorice', **kwargs)
+        return self.add_style('licorice', **kwargs)
     stick = tube = licorice
 
     def line(self, **kwargs):
-        return self.set_style('line', **kwargs)
+        return self.add_style('line', **kwargs)
 
     def ribbon(self, **kwargs):
-        return self.set_style('cartoon', **kwargs)
+        return self.add_style('cartoon', **kwargs)
     cartoon = ribbon
 
     def hide(self, atoms=None):
-        return self.set_style(None,atoms=atoms)
+        return self.add_style(None,atoms=atoms)
     invisible = hide
 
     #Abstract methods below

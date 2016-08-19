@@ -24,7 +24,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     _model_name = Unicode('MolWidget3DModel').tag(sync=True)
     _view_module = Unicode('nbmolviz-js').tag(sync=True)
     _model_module = Unicode('nbmolviz-js').tag(sync=True)
-    background_color = Unicode('0x73757C').tag(sync=True)
+    background_color = Unicode('#73757C').tag(sync=True)
     background_opacity = Float(1.0).tag(sync=True)
     selected_atoms = List([]).tag(sync=True)
     model_data = Dict({}).tag(sync=True)
@@ -79,10 +79,13 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         Args:
          colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
-        json = {}
+        styles = list(self.styles)
         for color, atoms in colormap.iteritems():
-            json[translate_color(color)] = self._atoms_to_json(atoms)
-        self.viewer('setColorArray', [json,])
+            for atom in atoms:
+                style = styles[atom.index] or {}
+                style['color'] = color
+
+        self.styles = styles
 
     def unset_color(self, atoms=None):
         if atoms is None:
