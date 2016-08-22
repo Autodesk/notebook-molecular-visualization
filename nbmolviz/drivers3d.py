@@ -29,6 +29,13 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     selected_atoms = List([]).tag(sync=True)
     model_data = Dict({}).tag(sync=True)
     styles = List([]).tag(sync=True)
+    shape = Dict({}).tag(sync=True)
+
+    SHAPE_NAMES = {
+        'SPHERE': 'Sphere',
+        'ARROW': 'Arrow',
+        'CYLINDER': 'Cylinder',
+    }
 
     STYLE_NAMES = {'vdw': 'sphere',
                    'licorice': 'stick',
@@ -170,6 +177,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         assert len(vec) == 3
         return dict(x=vec[0], y=vec[1], z=vec[2])
 
+    # TODO this contains unused parameters and code due to removed functionality, is it needed?
     def draw_sphere(self, position,
                     radius=2.0, color='red',
                     opacity=1.0, clickable=False):
@@ -179,11 +187,11 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         center = dict(x=position[0], y=position[1], z=position[2])
         color = translate_color(color)
 
-        self.viewer('renderPyShape', ['Sphere',
-                                      dict(center=center, radius=radius,
-                                           color=color, alpha=opacity),
-                                      js_shape.id,
-                                      clickable])
+        self.shape = {
+            'type': self.SHAPE_NAMES['SPHERE'],
+            'center': center,
+        }
+
         return js_shape
 
     def draw_circle(self, center, normal, radius,
@@ -219,6 +227,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                                         opacity,
                                         radius, clickable, batch)
 
+    # TODO this contains unused parameters and code due to removed functionality, is it needed?
     def _draw3dmol_cylinder(self, color, start, end,
                             draw_start_face, draw_end_face,
                             opacity, radius, clickable, batch):
@@ -234,13 +243,15 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 color=color,
                 alpha=opacity,
                 fromCap=draw_start_face, toCap=draw_end_face)
-        args = ['Cylinder', spec, js_shape.id, clickable]
-        if batch:
-            self.batch_message('renderPyShape', args)
-        else:
-            self.viewer('renderPyShape', args)
+
+        self.shape = {
+            'type': self.SHAPE_NAMES['CYLINDER'],
+            'start': self._list_to_jsvec(facestart),
+            'end': self._list_to_jsvec(faceend),
+        }
         return js_shape
 
+    # TODO this contains unused parameters and code due to removed functionality, is it needed?
     def draw_arrow(self, start, end=None, vector=None,
                    radius=0.15, color='red',
                    opacity=1.0, clickable=False):
@@ -258,10 +269,12 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 color=color,
                 alpha=opacity)
         js_shape = JSObject('shape')
-        self.viewer('renderPyShape', ['Arrow',
-                                      spec,
-                                      js_shape.id,
-                                      clickable])
+
+        self.shape = {
+            'type': self.SHAPE_NAMES['ARROW'],
+            'start': self._list_to_jsvec(facestart),
+            'end': self._list_to_jsvec(faceend),
+        }
         return js_shape
 
     def remove_all_shapes(self):
