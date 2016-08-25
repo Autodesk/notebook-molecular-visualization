@@ -13,7 +13,7 @@
 # limitations under the License.
 import numpy as np
 from StringIO import StringIO
-from traitlets import Dict, Float, List, Unicode
+from traitlets import Dict, Float, List, Set, Unicode
 
 from nbmolviz.utils import JSObject, translate_color
 from nbmolviz.widget3d import MolViz3DBaseWidget
@@ -26,7 +26,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     _model_module = Unicode('nbmolviz-js').tag(sync=True)
     background_color = Unicode('#73757C').tag(sync=True)
     background_opacity = Float(1.0).tag(sync=True)
-    selected_atoms = List([]).tag(sync=True)
+    selected_atoms = Set(set()).tag(sync=True)
+    selection_type = Unicode('Atom').tag(sync=True)
     model_data = Dict({}).tag(sync=True)
     styles = List([]).tag(sync=True)
     shape = Dict({}).tag(sync=True)
