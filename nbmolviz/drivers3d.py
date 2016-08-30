@@ -313,6 +313,16 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def remove_all_labels(self):
         self.viewer('removeAllLabels', [])
 
+    def get_selected_bonds(self, *args, **kwargs):
+        atomIndices = kwargs.get('atomIndices', self.selected_atoms);
+        bonds = set()
+
+        for bond in self.mol.bonds:
+            if bond.a1.index in atomIndices and bond.a2.index in atomIndices:
+                bonds.add(bond)
+
+        return bonds
+
     def get_voldata(self, orbname, npts, framenum):
         orbital_key = (orbname, npts, framenum)
         if orbital_key not in self._cached_voldata:
