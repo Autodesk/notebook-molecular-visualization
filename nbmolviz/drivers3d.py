@@ -148,9 +148,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.show_frame(self.num_frames - 1)
 
     def set_positions(self, positions=None):
-        if positions is None:
-            positions = self.get_positions()
-        self.viewer('setPositions',[positions])
+        self.model_data = self.mol.to_json()
 
     def show_frame(self, framenum):
         self.viewer('setFrame', [framenum])
