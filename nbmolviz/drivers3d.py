@@ -27,11 +27,12 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     atom_labels_shown = Bool(False).tag(sync=True)
     background_color = Unicode('#73757C').tag(sync=True)
     background_opacity = Float(1.0).tag(sync=True)
+    model_data = Dict({}).tag(sync=True)
+    orbital = Dict({}).tag(sync=True)
     selected_atoms = Set(set()).tag(sync=True)
     selection_type = Unicode('Atom').tag(sync=True)
-    model_data = Dict({}).tag(sync=True)
-    styles = List([]).tag(sync=True)
     shape = Dict({}).tag(sync=True)
+    styles = List([]).tag(sync=True)
 
     SHAPE_NAMES = {
         'SPHERE': 'Sphere',
@@ -348,6 +349,12 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
         orbidx = self.get_orbidx(orbname)
         voldata = self.get_voldata(orbidx, npts, self.current_frame)
+        self.orbital = {
+            'cube_file': self.cubefile,
+            'iso_val': isoval,
+            'opacity': opacity
+        }
+
         positive_orbital = JSObject('shape')
         self.viewer('drawIsosurface',
                     [voldata.id,
@@ -385,6 +392,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     def read_cubefile(self, cubefile):
         volume_data = JSObject('shape')
+        self.cubefile = cubefile
         self.viewer('processCubeFile', [cubefile, volume_data.id])
         return volume_data
 
