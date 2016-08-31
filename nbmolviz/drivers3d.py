@@ -52,7 +52,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.current_js_orbitals = []
         self._cached_voldata = {}
         self._clicks_enabled = False
-        self.click_callback = None
 
     # Utilities
     def convert_style_name(self, name):
@@ -67,8 +66,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.mol = mol
         self.model_data = self.mol.to_json()
         self.styles = [None] * len(mol.atoms)
-        if self.click_callback is not None:
-            self.viewer('makeAtomsClickable', [])
 
     def set_background_color(self, color, opacity=1.0):
         color = translate_color(color)
@@ -156,20 +153,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.current_frame = framenum
         if self.current_orbital is not None:
             self.draw_orbital(self.current_orbital, **self.orbital_spec)
-
-    # Interaction
-    def set_click_callback(self, callback=None, enabled=True):
-        """
-        :param callback: Callback can have signature (), (trait_name), (trait_name,old), or (trait_name,old,new)
-        :type callback: callable
-        :param enabled:
-        :return:
-        """
-        if not enabled: return  # TODO: FIX THIS
-        assert callable(callback)
-        self._clicks_enabled = True
-        self.click_callback = callback
-        self.viewer('makeAtomsClickable', [])
 
     #Shapes
     @staticmethod

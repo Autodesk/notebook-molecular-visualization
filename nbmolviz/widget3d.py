@@ -42,7 +42,6 @@ class MolViz3DBaseWidget(MessageWidget):
         self.num_frames = 1
         self.current_frame = 0
         self.current_orbital = None
-        self.click_callback = None
 
         #add the new molecule if necessary
         if mol is not None: self.add_molecule(mol)
@@ -87,15 +86,6 @@ class MolViz3DBaseWidget(MessageWidget):
         """
         :param color: a name or hex value
         :param opacity: a float between 0.0 and 1.0 inclusive
-        :return:
-        """
-        raise NotImplementedError("This method must be implemented by the backend visualization class")
-
-    def set_click_callback(self,callback=None,enabled=True):
-        """
-        Connect a function to clicks on the graphical interface
-        :param callback: callback function
-        :param enabled: True to turn on callbacks
         :return:
         """
         raise NotImplementedError("This method must be implemented by the backend visualization class")
