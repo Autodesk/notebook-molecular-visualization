@@ -50,7 +50,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         super(MolViz_3DMol, self).__init__(*args, **kwargs)
         self.current_orbital = None
         self.orbital_spec = {}
-        self.current_js_orbitals = []
         self._cached_voldata = {}
         self._clicks_enabled = False
 
@@ -265,12 +264,10 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.viewer('removeAllShapes', [])
 
     def remove(self, obj, batch=False):
-        if batch: viewer_call = self.batch_message
-        else: viewer_call = self.viewer
         if obj.type == 'shape':
-            viewer_call('removePyShape', [obj.id])
+            self.shape = {}
         elif obj.type == 'label':
-            viewer_call('removePyLabel', [obj.id])
+            self.atom_labels_shown = False
         else:
             raise ValueError('Unknown object type %s' % obj.type)
 
@@ -315,15 +312,14 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     def cache_grid(self, grid, orbname, npts, framenum):
         orbital_key = (orbname, npts, framenum)
-        cubefile = self._grid_to_cube(grid)
-        volume_data = self.read_cubefile(cubefile)
+        self.cubefile = self._grid_to_cube(grid)
+        volume_data = JSObject('shape')
         self._cached_voldata[orbital_key] = volume_data
 
     def draw_orbital(self, orbname, npts=50, isoval=0.01,
                      opacity=0.8,
                      negative_color='red',
-                     positive_color='blue',
-                     remove_old_orbitals=True):
+                     positive_color='blue'):
         """Display a molecular orbital
 
         Args:
@@ -333,16 +329,12 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             opacity (float): opacity of the orbital (between 0 and 1)
             positive_color (str or int): color of the positive isosurfaces
             negative_color (str or int): color of the negative isosurfaces
-            remove_old_orbitals (bool): remove any previously drawn orbitals
         """
         self.orbital_spec = dict(npts=npts, isoval=isoval,
                                  opacity=opacity,
                                  negative_color=negative_color,
                                  positive_color=positive_color)
         self.current_orbital = orbname
-
-        if remove_old_orbitals:
-            self.remove_orbitals()
 
         positive_color = translate_color(positive_color)
         negative_color = translate_color(negative_color)
@@ -354,28 +346,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             'iso_val': isoval,
             'opacity': opacity
         }
-
-        positive_orbital = JSObject('shape')
-        self.viewer('drawIsosurface',
-                    [voldata.id,
-                     positive_orbital.id,
-                     {'isoval': isoval,
-                      'color': positive_color,
-                      'opacity': opacity}])
-        negative_orbital = JSObject('shape')
-        self.viewer('drawIsosurface',
-                    [voldata.id,
-                     negative_orbital.id,
-                     {'isoval': -isoval,
-                      'color': negative_color,
-                      'opacity': opacity}])
-        self.current_js_orbitals.extend([positive_orbital, negative_orbital])
-
-    def remove_orbitals(self):
-        if self.current_js_orbitals:
-            for orbital in self.current_js_orbitals:
-                self.remove(orbital)
-            self.current_js_orbitals = []
 
     def get_orbidx(self, orbname):
         try:
@@ -389,12 +359,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     def get_orbnames(self):
         raise NotImplementedError
-
-    def read_cubefile(self, cubefile):
-        volume_data = JSObject('shape')
-        self.cubefile = cubefile
-        self.viewer('processCubeFile', [cubefile, volume_data.id])
-        return volume_data
 
     @staticmethod
     def _grid_to_cube(grid,f=None):
