@@ -52,7 +52,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         super(MolViz_3DMol, self).__init__(*args, **kwargs)
         self.current_orbital = None
         self.orbital_spec = {}
-        self._cached_voldata = {}
+        self._cached_cubefiles= {}
         self._clicks_enabled = False
 
     # Utilities
@@ -310,18 +310,17 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
         return bonds
 
-    def get_voldata(self, orbname, npts, framenum):
+    def get_cubefile(self, orbname, npts, framenum):
         orbital_key = (orbname, npts, framenum)
-        if orbital_key not in self._cached_voldata:
-            grid = self.calc_orb_grid(orbname, npts, framenum)
-            self.cache_grid(grid, orbname, npts, framenum)
-        return self._cached_voldata[orbital_key]
 
-    def cache_grid(self, grid, orbname, npts, framenum):
-        orbital_key = (orbname, npts, framenum)
-        self.cubefile = self._grid_to_cube(grid)
-        volume_data = JSObject('shape')
-        self._cached_voldata[orbital_key] = volume_data
+        if orbital_key not in self._cached_cubefiles:
+            grid = self.calc_orb_grid(orbname, npts, framenum)
+            cubefile = self._grid_to_cube(grid)
+            self._cached_cubefiles[orbital_key] = cubefile
+        else:
+            cubefile = self._cached_cubefiles[orbital_key]
+
+        return cubefile
 
     def draw_orbital(self, orbname, npts=50, isoval=0.01,
                      opacity=0.8,
@@ -347,9 +346,9 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         negative_color = translate_color(negative_color)
 
         orbidx = self.get_orbidx(orbname)
-        voldata = self.get_voldata(orbidx, npts, self.current_frame)
+        cubefile = self.get_cubefile(orbidx, npts, self.current_frame)
         self.orbital = {
-            'cube_file': self.cubefile,
+            'cube_file': cubefile,
             'iso_val': isoval,
             'opacity': opacity
         }
