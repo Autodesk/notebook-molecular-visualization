@@ -31,7 +31,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     background_opacity = Float(1.0).tag(sync=True)
     model_data = Dict({}).tag(sync=True)
     orbital = Dict({}).tag(sync=True)
-    selected_atoms = Set(set()).tag(sync=True)
+    selected_atom_indices = Set(set()).tag(sync=True)
     selection_type = Unicode('Atom').tag(sync=True)
     shape = Dict({}).tag(sync=True)
     styles = List([]).tag(sync=True)
@@ -301,7 +301,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.viewer('removeAllLabels', [])
 
     def get_selected_bonds(self, *args, **kwargs):
-        atomIndices = kwargs.get('atomIndices', self.selected_atoms);
+        atomIndices = kwargs.get('atomIndices', self.selected_atom_indices);
         bonds = set()
 
         for bond in self.mol.bonds:
