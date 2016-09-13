@@ -10,8 +10,6 @@
 __webpack_public_path__ = document.querySelector('body').getAttribute('data-base-url') +
     'nbextensions/nbmolviz-js/';
 
-require('./3Dmol'); // todo: don't include the built version of this
-
 module.exports = {};
 
 var exportAllFrom = [

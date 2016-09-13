@@ -39,6 +39,6 @@ const MolWidget2DView = widgets.DOMWidgetView.extend(
 );
 
 module.exports = {
-    MolWidget2DModel : MolWidget2DModel,
-    MolWidget2DView : MolWidget2DView,
+  MolWidget2DModel : MolWidget2DModel,
+  MolWidget2DView : MolWidget2DView,
 };

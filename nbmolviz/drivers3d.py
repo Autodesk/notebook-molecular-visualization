@@ -13,8 +13,9 @@
 # limitations under the License.
 import numpy as np
 from StringIO import StringIO
-import webcolors
-from traitlets import Unicode
+from traitlets import Bool, Dict, Float, List, Set, Unicode
+
+from moldesign import units as u
 
 from nbmolviz.utils import JSObject, translate_color
 from nbmolviz.widget3d import MolViz3DBaseWidget
@@ -25,6 +26,21 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     _model_name = Unicode('MolWidget3DModel').tag(sync=True)
     _view_module = Unicode('nbmolviz-js').tag(sync=True)
     _model_module = Unicode('nbmolviz-js').tag(sync=True)
+    atom_labels_shown = Bool(False).tag(sync=True)
+    background_color = Unicode('#73757C').tag(sync=True)
+    background_opacity = Float(1.0).tag(sync=True)
+    model_data = Dict({}).tag(sync=True)
+    orbital = Dict({}).tag(sync=True)
+    selected_atom_indices = Set(set()).tag(sync=True)
+    selection_type = Unicode('Atom').tag(sync=True)
+    shape = Dict({}).tag(sync=True)
+    styles = List([]).tag(sync=True)
+
+    SHAPE_NAMES = {
+        'SPHERE': 'Sphere',
+        'ARROW': 'Arrow',
+        'CYLINDER': 'Cylinder',
+    }
 
     STYLE_NAMES = {'vdw': 'sphere',
                    'licorice': 'stick',
@@ -36,10 +52,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         super(MolViz_3DMol, self).__init__(*args, **kwargs)
         self.current_orbital = None
         self.orbital_spec = {}
-        self.current_js_orbitals = []
-        self._cached_voldata = {}
+        self._cached_cubefiles= {}
         self._clicks_enabled = False
-        self.click_callback = None
 
     # Utilities
     def convert_style_name(self, name):
@@ -50,83 +64,76 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             return canonical_name
 
     # Standard view actions
-    def add_molecule(self, mol, render=True):
-        # javascript: glviewer.addModel(moldata, format, {'keepH': true});
+    def add_molecule(self, mol):
         self.mol = mol
-        moldata, format = self.get_input_file()
-        self.viewer('addModel', args=[moldata, format, {'keepH': True}])
-        self.set_style('sphere', render=False)
-        self.set_background_color('#73757C', render=False)
-        self.center(render=False)
-        if self.click_callback is not None:
-            self.viewer('makeAtomsClickable', [])
-        if render: self.render()
+        self.model_data = self.mol.to_json()
+        self.styles = [None] * len(mol.atoms)
 
-    def set_background_color(self, color, opacity=1.0, render=True):
+    def set_background_color(self, color, opacity=1.0):
         color = translate_color(color)
-        self.viewer('setBackgroundColor', args=[color, opacity])
-        if render: self.render()
+        self.background_color = color
+        self.background_opacity = opacity
 
-    def set_style(self, style, atoms=None, render=True, **options):
-        backend_call = 'setStyle'
-        self._change_style(backend_call, style, atoms, options, render)
-
-    def set_color(self, color, atoms=None, render=True):
+    def set_color(self, color, atoms=None):
         atom_json = self._atoms_to_json(atoms)
         color = translate_color(color)
         self.viewer('setAtomColor', [atom_json, color])
-        if render: self.render()
 
-    def set_clipping(self, near, far, render=True):
+    def set_clipping(self, near, far):
         self.viewer('setSlab', [float(near), float(far)])
-        if render: self.render()
- 
-    def set_colors(self, colormap, render=True):
+
+    def set_colors(self, colormap):
         """
         Args:
          colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
-        json = {}
+        styles = list(self.styles)
         for color, atoms in colormap.iteritems():
-            json[translate_color(color)] = self._atoms_to_json(atoms)
-        self.viewer('setColorArray', [json,])
-        if render: self.render()
-        
-    def unset_color(self, atoms=None, render=True):
+            for atom in atoms:
+                style = styles[atom.index] or {}
+                style['color'] = color
+
+        self.styles = styles
+
+    def unset_color(self, atoms=None):
         if atoms is None:
             atom_json = {}
         else:
             atom_json = self._atoms_to_json(atoms)
         self.viewer('unsetAtomColor', [atom_json])
-        if render: self.render()
 
-    def add_style(self, style, atoms=None, render=True, **options):
-        backend_call = 'addStyle'
-        self._change_style(backend_call, style, atoms, options, render)
+    def set_style(self, style, atoms=None, **options):
+        self._change_style(style, atoms, True, options)
 
-    def _change_style(self, backend_call, style_string,
-                      atoms, options, render):
-        if atoms is None:
-            atom_json = {}
-        else:
-            atom_json = self._atoms_to_json(atoms)
+    def add_style(self, style, atoms=None, **options):
+        self._change_style(style, atoms, False, options)
 
-        if 'color' in options:
-            try:
-                options['color'] = translate_color(options['color'])
-            except AttributeError:
-                pass
+    def _change_style(self, style_string,
+                      atoms, replace, options):
+      style = self.convert_style_name(style_string)
 
-        style = self.convert_style_name(style_string)
-        if style is None:
-            style_spec = {}
-        else:
-            style_spec = {style: options}
+      # No atoms passed means all atoms
+      if atoms is None:
+          atoms = self.mol.atoms
+      atoms = list(atoms)
 
-        self.viewer(backend_call, [atom_json, style_spec])
-        if render: self.render()
+      if replace:
+          styles = [None] * len(self.mol.atoms)
+      else:
+          styles = list(self.styles)
 
-    def append_frame(self, positions=None, render=True):
+      for i, atom in enumerate(self.mol.atoms):
+          for j in range(0, len(atoms)):
+              if (atoms[j] is atom):
+                  newStyle = styles[i].copy() if styles[i] else {}
+                  newStyle['visualization_type'] = style
+                  styles[i] = newStyle
+                  atoms.remove(atoms[j])
+                  break
+
+      self.styles = styles
+
+    def append_frame(self, positions=None):
         if positions is None:
             positions = self.get_positions()
 
@@ -139,55 +146,20 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.num_frames += 1
         self.viewer('addFrameFromList', args=[positions])
         self.show_frame(self.num_frames - 1)
-        if render: self.render()
 
-    def set_positions(self, positions=None, render=True):
-        if positions is None:
-            positions = self.get_positions()
-        self.viewer('setPositions',[positions])
-        if render: self.render()
+    def set_positions(self, positions=None):
+        if positions is not None:
+            for i, atom in enumerate(self.mol.atoms):
+                atom.position[0] = positions[i][0] * u.angstrom
+                atom.position[1] = positions[i][1] * u.angstrom
+                atom.position[2] = positions[i][2] * u.angstrom
+        self.model_data = self.mol.to_json()
 
-    def show_frame(self, framenum, render=True):
+    def show_frame(self, framenum):
         self.viewer('setFrame', [framenum])
         self.current_frame = framenum
         if self.current_orbital is not None:
-            self.draw_orbital(self.current_orbital,
-                              render=False,
-                              **self.orbital_spec)
-        if render: self.render()
-
-    def center(self, atoms=None, render=True):
-        if atoms is not None:
-            args = [self._atoms_to_json(atoms)]
-        else:
-            args = []
-        self.viewer('zoomTo', args)
-        if render: self.render()
-
-    def render(self):
-        if self._batched:
-            self.batch_message('render', [])
-            self.send_batch()
-        else:
-            self.viewer('render', args=[])
-
-    # Interaction
-    def set_click_callback(self, callback=None, enabled=True,
-                           render=True):
-        """
-        :param callback: Callback can have signature (), (trait_name), (trait_name,old), or (trait_name,old,new)
-        :type callback: callable
-        :param enabled:
-        :return:
-        """
-        if not enabled: return  # TODO: FIX THIS
-        assert callable(callback)
-        self._clicks_enabled = True
-        self.on_trait_change(callback, '_click_selection')
-        self.click_callback = callback
-        self.viewer('makeAtomsClickable', [])
-        if render: self.render()
-
+            self.draw_orbital(self.current_orbital, **self.orbital_spec)
 
     #Shapes
     @staticmethod
@@ -195,59 +167,60 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         assert len(vec) == 3
         return dict(x=vec[0], y=vec[1], z=vec[2])
 
+    # TODO this contains unused parameters and code due to removed functionality, is it needed?
     def draw_sphere(self, position,
                     radius=2.0, color='red',
-                    opacity=1.0, clickable=False, render=True):
+                    opacity=1.0, clickable=False):
         js_shape = JSObject('shape')
         position = self._convert_units(position)
         radius = self._convert_units(radius)
         center = dict(x=position[0], y=position[1], z=position[2])
         color = translate_color(color)
 
-        self.viewer('renderPyShape', ['Sphere',
-                                      dict(center=center, radius=radius,
-                                           color=color, alpha=opacity),
-                                      js_shape.id,
-                                      clickable])
-        if render: self.render()
+        self.shape = {
+            'type': self.SHAPE_NAMES['SPHERE'],
+            'center': center,
+        }
+
         return js_shape
 
     def draw_circle(self, center, normal, radius,
                     color='red', opacity=0.8, clickable=False,
-                    render=True, batch=False):
+                    batch=False):
         # TODO: this doesn't work! appears to be a bug in 3dmol.js
         # return self._draw3dmol_cylinder(color, center,
         #                                np.array(center) + np.array(normal) * 0.01,
         #                                True, False,
         #                                opacity,
-        #                                radius, render)
+        #                                radius)
         return self._draw3dmol_cylinder(color, center,
                                         np.array(center) + np.array(normal) * 0.01,
                                         True, True,
                                         opacity,
-                                        radius, clickable, render, batch)
+                                        radius, clickable, batch)
 
     def draw_cylinder(self, start, end, radius,
                       color='red', opacity=1.0, clickable=False,
-                      render=True, batch=False):
+                      batch=False):
         return self._draw3dmol_cylinder(color, start,
                                         end,
                                         True, True,
                                         opacity,
-                                        radius, clickable, render, batch)
+                                        radius, clickable, batch)
 
     def draw_tube(self, start, end, radius,
                   color='red', opacity=1.0, clickable=False,
-                  render=True, batch=False):
+                  batch=False):
         return self._draw3dmol_cylinder(color, start,
                                         end,
                                         False, False,
                                         opacity,
-                                        radius, clickable, render, batch)
+                                        radius, clickable, batch)
 
+    # TODO this contains unused parameters and code due to removed functionality, is it needed?
     def _draw3dmol_cylinder(self, color, start, end,
                             draw_start_face, draw_end_face,
-                            opacity, radius, clickable, render, batch):
+                            opacity, radius, clickable, batch):
         color = translate_color(color)
         js_shape = JSObject('shape')
         facestart = self._convert_units(start)
@@ -260,18 +233,18 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 color=color,
                 alpha=opacity,
                 fromCap=draw_start_face, toCap=draw_end_face)
-        args = ['Cylinder', spec, js_shape.id, clickable]
-        if batch:
-            self.batch_message('renderPyShape', args)
-        else:
-            self.viewer('renderPyShape', args)
-        if render: self.render()
+
+        self.shape = {
+            'type': self.SHAPE_NAMES['CYLINDER'],
+            'start': self._list_to_jsvec(facestart),
+            'end': self._list_to_jsvec(faceend),
+        }
         return js_shape
 
+    # TODO this contains unused parameters and code due to removed functionality, is it needed?
     def draw_arrow(self, start, end=None, vector=None,
                    radius=0.15, color='red',
-                   opacity=1.0, clickable=False,
-                   render=True):
+                   opacity=1.0, clickable=False):
         if (end is None) == (vector is None):
             raise ValueError("Either 'end' or 'vector' should be passed, but not both.")
         if end is None: end = np.array(start) + np.array(vector)
@@ -286,35 +259,31 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 color=color,
                 alpha=opacity)
         js_shape = JSObject('shape')
-        self.viewer('renderPyShape', ['Arrow',
-                                      spec,
-                                      js_shape.id,
-                                      clickable])
-        if render: self.render()
+
+        self.shape = {
+            'type': self.SHAPE_NAMES['ARROW'],
+            'start': self._list_to_jsvec(facestart),
+            'end': self._list_to_jsvec(faceend),
+        }
         return js_shape
 
-    def remove_all_shapes(self, render=True):
+    def remove_all_shapes(self):
         self.viewer('removeAllShapes', [])
-        if render: self.render()
 
-    def remove(self, obj, render=True, batch=False):
-        if batch: viewer_call = self.batch_message
-        else: viewer_call = self.viewer
+    def remove(self, obj, batch=False):
         if obj.type == 'shape':
-            viewer_call('removePyShape', [obj.id])
+            self.shape = {}
         elif obj.type == 'label':
-            viewer_call('removePyLabel', [obj.id])
+            self.atom_labels_shown = False
         else:
             raise ValueError('Unknown object type %s' % obj.type)
-        if render: self.render()
 
     # Labels
     def draw_label(self, position, text,
                    background='black',
                    border='black',
                    color='white',
-                   fontsize=14, opacity=1.0,
-                   render=True):
+                   fontsize=14, opacity=1.0):
         js_label = JSObject('label')
         position = self._convert_units(position)
         color = translate_color(color)
@@ -326,32 +295,37 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                     fontSize=fontsize,
                     backgroundOpacity=opacity)
         self.viewer('renderPyLabel', [text, spec, js_label.id])
-        if render: self.render()
         return js_label
 
-    def remove_all_labels(self, render=True):
+    def remove_all_labels(self):
         self.viewer('removeAllLabels', [])
-        if render: self.render()
 
-    def get_voldata(self, orbname, npts, framenum):
+    def get_selected_bonds(self, *args, **kwargs):
+        atomIndices = kwargs.get('atomIndices', self.selected_atom_indices);
+        bonds = set()
+
+        for bond in self.mol.bonds:
+            if bond.a1.index in atomIndices and bond.a2.index in atomIndices:
+                bonds.add(bond)
+
+        return bonds
+
+    def get_cubefile(self, orbname, npts, framenum):
         orbital_key = (orbname, npts, framenum)
-        if orbital_key not in self._cached_voldata:
+
+        if orbital_key not in self._cached_cubefiles:
             grid = self.calc_orb_grid(orbname, npts, framenum)
-            self.cache_grid(grid, orbname, npts, framenum)
-        return self._cached_voldata[orbital_key]
+            cubefile = self._grid_to_cube(grid)
+            self._cached_cubefiles[orbital_key] = cubefile
+        else:
+            cubefile = self._cached_cubefiles[orbital_key]
 
-    def cache_grid(self, grid, orbname, npts, framenum):
-        orbital_key = (orbname, npts, framenum)
-        cubefile = self._grid_to_cube(grid)
-        volume_data = self.read_cubefile(cubefile)
-        self._cached_voldata[orbital_key] = volume_data
+        return cubefile
 
     def draw_orbital(self, orbname, npts=50, isoval=0.01,
                      opacity=0.8,
                      negative_color='red',
-                     positive_color='blue',
-                     remove_old_orbitals=True,
-                     render=True):
+                     positive_color='blue'):
         """Display a molecular orbital
 
         Args:
@@ -361,8 +335,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             opacity (float): opacity of the orbital (between 0 and 1)
             positive_color (str or int): color of the positive isosurfaces
             negative_color (str or int): color of the negative isosurfaces
-            remove_old_orbitals (bool): remove any previously drawn orbitals
-            render (bool): update the 3D scene before returning
         """
         self.orbital_spec = dict(npts=npts, isoval=isoval,
                                  opacity=opacity,
@@ -370,37 +342,16 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                                  positive_color=positive_color)
         self.current_orbital = orbname
 
-        if remove_old_orbitals:
-            self.remove_orbitals(render=False)
-
         positive_color = translate_color(positive_color)
         negative_color = translate_color(negative_color)
 
         orbidx = self.get_orbidx(orbname)
-        voldata = self.get_voldata(orbidx, npts, self.current_frame)
-        positive_orbital = JSObject('shape')
-        self.viewer('drawIsosurface',
-                    [voldata.id,
-                     positive_orbital.id,
-                     {'isoval': isoval,
-                      'color': positive_color,
-                      'opacity': opacity}])
-        negative_orbital = JSObject('shape')
-        self.viewer('drawIsosurface',
-                    [voldata.id,
-                     negative_orbital.id,
-                     {'isoval': -isoval,
-                      'color': negative_color,
-                      'opacity': opacity}])
-        self.current_js_orbitals.extend([positive_orbital, negative_orbital])
-        if render: self.render()
-
-    def remove_orbitals(self, render=False):
-        if self.current_js_orbitals:
-            for orbital in self.current_js_orbitals:
-                self.remove(orbital, render=False)
-            self.current_js_orbitals = []
-        if render: self.render()
+        cubefile = self.get_cubefile(orbidx, npts, self.current_frame)
+        self.orbital = {
+            'cube_file': cubefile,
+            'iso_val': isoval,
+            'opacity': opacity
+        }
 
     def get_orbidx(self, orbname):
         try:
@@ -414,11 +365,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     def get_orbnames(self):
         raise NotImplementedError
-
-    def read_cubefile(self, cubefile):
-        volume_data = JSObject('shape')
-        self.viewer('processCubeFile', [cubefile, volume_data.id])
-        return volume_data
 
     @staticmethod
     def _grid_to_cube(grid,f=None):
@@ -444,7 +390,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         # Next, indicate that there's just one orbital
         print >> fobj, 1, 1
         # finally, write out all the grid values
-        ival = 0
+        # ival = 0
         for ix in xrange(grid.npoints):
             for iy in xrange(grid.npoints):
                 for iz in xrange(grid.npoints):

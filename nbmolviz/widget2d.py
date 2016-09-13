@@ -13,7 +13,6 @@
 # limitations under the License.
 import uuid
 
-import ipywidgets
 import traitlets
 from traitlets import Unicode
 from nbmolviz.base_widget import MessageWidget
@@ -34,11 +33,11 @@ class MolViz2DBaseWidget(MessageWidget):
     charge = traitlets.Float().tag(sync=True)
     uuid = traitlets.Unicode().tag(sync=True)
     graph = traitlets.Dict().tag(sync=True)
-    clicked_atom_index = traitlets.Int(-1).tag(sync=True)
     clicked_bond_indices = traitlets.Tuple((-1, -1)).tag(sync=True)
     _atom_colors = traitlets.Dict({}).tag(sync=True)
     width = traitlets.Float().tag(sync=True)
     height = traitlets.Float().tag(sync=True)
+    selected_atom_indices = traitlets.Set(set()).tag(sync=True)
 
     def __init__(self, atoms,
                  charge=-150,
@@ -138,7 +137,7 @@ class MolViz2DBaseWidget(MessageWidget):
         if not enabled: return  # TODO: FIX THIS
         assert callable(callback)
         self._clicks_enabled = True
-        self.on_trait_change(callback, 'clicked_atom_index')
+        self.on_trait_change(callback, 'selected_atom_indices')
         self.click_callback = callback
 
     def set_color(self, color, atoms=None, render=None):
