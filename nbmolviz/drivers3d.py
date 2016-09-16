@@ -34,7 +34,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     selected_atom_indices = Set(set()).tag(sync=True)
     selection_type = Unicode('Atom').tag(sync=True)
     shape = Dict({}).tag(sync=True)
-    styles = List([]).tag(sync=True)
+    styles = Dict({}).tag(sync=True)
 
     SHAPE_NAMES = {
         'SPHERE': 'Sphere',
@@ -67,17 +67,24 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def add_molecule(self, mol):
         self.mol = mol
         self.model_data = self.mol.to_json()
-        self.styles = [None] * len(mol.atoms)
 
     def set_background_color(self, color, opacity=1.0):
         color = translate_color(color)
         self.background_color = color
         self.background_opacity = opacity
 
-    def set_color(self, color, atoms=None):
-        atom_json = self._atoms_to_json(atoms)
-        color = translate_color(color)
-        self.viewer('setAtomColor', [atom_json, color])
+    def set_color(self, color, atoms):
+        if not atoms:
+            return
+
+        styles = dict(self.styles)
+
+        for atom in atoms:
+            if str(atom.index) not in styles:
+                styles[str(atom.index)] = {}
+            styles[str(atom.index)]['color'] = color
+
+        self.styles = styles
 
     def set_clipping(self, near, far):
         self.viewer('setSlab', [float(near), float(far)])
@@ -87,13 +94,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         Args:
          colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
-        styles = list(self.styles)
         for color, atoms in colormap.iteritems():
-            for atom in atoms:
-                style = styles[atom.index] or {}
-                style['color'] = color
-
-        self.styles = styles
+            self.set_color(color, atoms)
 
     def unset_color(self, atoms=None):
         if atoms is None:
@@ -118,16 +120,16 @@ class MolViz_3DMol(MolViz3DBaseWidget):
       atoms = list(atoms)
 
       if replace:
-          styles = [None] * len(self.mol.atoms)
+          styles = dict()
       else:
-          styles = list(self.styles)
+          styles = dict(self.styles)
 
       for i, atom in enumerate(self.mol.atoms):
           for j in range(0, len(atoms)):
               if (atoms[j] is atom):
-                  newStyle = styles[i].copy() if styles[i] else {}
+                  newStyle = styles[str(atom.index)].copy() if i in styles else {}
                   newStyle['visualization_type'] = style
-                  styles[i] = newStyle
+                  styles[str(atom.index)] = newStyle
                   atoms.remove(atoms[j])
                   break
 
