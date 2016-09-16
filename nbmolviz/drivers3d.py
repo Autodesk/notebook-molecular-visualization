@@ -300,6 +300,27 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def remove_all_labels(self):
         self.viewer('removeAllLabels', [])
 
+    def select_residues(self, residues):
+        selected_atom_indices = set()
+
+        for residue in residues:
+            for atom in residues.atoms:
+                selected_atom_indices.add(atom.index)
+
+        self.selected_atom_indices = selected_atom_indices
+
+    def toggle_residues(self, residues):
+        selected_atom_indices = set(self.selected_atom_indices)
+
+        for residue in residues:
+            for atom in residue.atoms:
+                if atom.index in selected_atom_indices:
+                    selected_atom_indices.remove(atom.index)
+                else:
+                    selected_atom_indices.add(atom.index)
+
+        self.selected_atom_indices = selected_atom_indices
+
     def get_selected_bonds(self, *args, **kwargs):
         atomIndices = kwargs.get('atomIndices', self.selected_atom_indices);
         bonds = set()
