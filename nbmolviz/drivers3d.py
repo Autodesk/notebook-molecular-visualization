@@ -181,6 +181,9 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         shape = {
             'type': self.SHAPE_NAMES['SPHERE'],
             'center': center,
+            'radius': radius,
+            'color': color,
+            'opacity': opacity,
         }
         shapes = list(self.shapes)
         shapes.append(shape)
@@ -240,6 +243,9 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             'type': self.SHAPE_NAMES['CYLINDER'],
             'start': self._list_to_jsvec(facestart),
             'end': self._list_to_jsvec(faceend),
+            'radius': radius,
+            'color': color,
+            'opacity': opacity,
         }
         shapes = list(self.shapes)
         shapes.append(shape)
@@ -268,6 +274,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             'type': self.SHAPE_NAMES['ARROW'],
             'start': self._list_to_jsvec(facestart),
             'end': self._list_to_jsvec(faceend),
+            'color': color,
+            'opacity': opacity,
         }
         shapes = list(self.shapes)
         shapes.append(shape)
