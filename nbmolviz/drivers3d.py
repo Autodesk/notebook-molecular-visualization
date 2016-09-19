@@ -33,7 +33,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     orbital = Dict({}).tag(sync=True)
     selected_atom_indices = Set(set()).tag(sync=True)
     selection_type = Unicode('Atom').tag(sync=True)
-    shape = Dict({}).tag(sync=True)
+    shapes = List([]).tag(sync=True)
     styles = Dict({}).tag(sync=True)
 
     SHAPE_NAMES = {
@@ -173,18 +173,19 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def draw_sphere(self, position,
                     radius=2.0, color='red',
                     opacity=1.0, clickable=False):
-        js_shape = JSObject('shape')
         position = self._convert_units(position)
         radius = self._convert_units(radius)
         center = dict(x=position[0], y=position[1], z=position[2])
         color = translate_color(color)
 
-        self.shape = {
+        shape = {
             'type': self.SHAPE_NAMES['SPHERE'],
             'center': center,
         }
-
-        return js_shape
+        shapes = list(self.shapes)
+        shapes.append(shape)
+        self.shapes = shapes
+        return shape
 
     def draw_circle(self, center, normal, radius,
                     color='red', opacity=0.8, clickable=False,
@@ -224,7 +225,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                             draw_start_face, draw_end_face,
                             opacity, radius, clickable, batch):
         color = translate_color(color)
-        js_shape = JSObject('shape')
         facestart = self._convert_units(start)
         faceend = self._convert_units(end)
         radius = self._convert_units(radius)
@@ -236,12 +236,15 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 alpha=opacity,
                 fromCap=draw_start_face, toCap=draw_end_face)
 
-        self.shape = {
+        shape = {
             'type': self.SHAPE_NAMES['CYLINDER'],
             'start': self._list_to_jsvec(facestart),
             'end': self._list_to_jsvec(faceend),
         }
-        return js_shape
+        shapes = list(self.shapes)
+        shapes.append(shape)
+        self.shapes = shapes
+        return shape
 
     # TODO this contains unused parameters and code due to removed functionality, is it needed?
     def draw_arrow(self, start, end=None, vector=None,
@@ -260,25 +263,29 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 radius=radius,
                 color=color,
                 alpha=opacity)
-        js_shape = JSObject('shape')
 
-        self.shape = {
+        shape = {
             'type': self.SHAPE_NAMES['ARROW'],
             'start': self._list_to_jsvec(facestart),
             'end': self._list_to_jsvec(faceend),
         }
-        return js_shape
+        shapes = list(self.shapes)
+        shapes.append(shape)
+        self.shapes = shapes
+        return shape
 
     def remove_all_shapes(self):
-        self.viewer('removeAllShapes', [])
+        self.shapes = list()
 
     def remove(self, obj, batch=False):
-        if obj.type == 'shape':
-            self.shape = {}
-        elif obj.type == 'label':
+        if obj in self.shapes:
+            shapes = list(self.shapes)
+            shapes.remove(obj)
+            self.shapes = shapes
+        elif obj['type'] == 'label':
             self.atom_labels_shown = False
         else:
-            raise ValueError('Unknown object type %s' % obj.type)
+            raise ValueError('Unknown object type %s' % obj['type'])
 
     # Labels
     def draw_label(self, position, text,
