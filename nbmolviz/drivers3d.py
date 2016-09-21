@@ -112,28 +112,30 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     def _change_style(self, style_string,
                       atoms, replace, options):
-      style = self.convert_style_name(style_string)
+        style = self.convert_style_name(style_string)
 
-      # No atoms passed means all atoms
-      if atoms is None:
-          atoms = self.mol.atoms
-      atoms = list(atoms)
+        # No atoms passed means all atoms
+        if atoms is None:
+            atoms = self.mol.atoms
+        atoms = list(atoms)
 
-      if replace:
-          styles = dict()
-      else:
-          styles = dict(self.styles)
+        if replace:
+            styles = dict()
+        else:
+            styles = dict(self.styles)
 
-      for i, atom in enumerate(self.mol.atoms):
-          for j in range(0, len(atoms)):
-              if (atoms[j] is atom):
-                  newStyle = styles[str(atom.index)].copy() if i in styles else {}
-                  newStyle['visualization_type'] = style
-                  styles[str(atom.index)] = newStyle
-                  atoms.remove(atoms[j])
-                  break
+        for i, atom in enumerate(self.mol.atoms):
+            for j in range(0, len(atoms)):
+                if (atoms[j] is atom):
+                    newStyle = styles[str(atom.index)].copy() if i in styles else {}
+                    newStyle['visualization_type'] = style
+                    if 'color' in options:
+                        newStyle['color'] = options['color']
+                    styles[str(atom.index)] = newStyle
+                    atoms.remove(atoms[j])
+                    break
 
-      self.styles = styles
+        self.styles = styles
 
     def append_frame(self, positions=None):
         if positions is None:
