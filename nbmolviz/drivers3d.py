@@ -78,9 +78,10 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             return
 
         styles = dict(self.styles)
-
         for atom in atoms:
-            if str(atom.index) not in styles:
+            if str(atom.index) in styles:
+                styles[str(atom.index)] = dict(styles[str(atom.index)])
+            else:
                 styles[str(atom.index)] = {}
             styles[str(atom.index)]['color'] = color
 
