@@ -24,7 +24,7 @@
   "dependencies": {
     "jupyter-js-widgets": "^1.1.1",
     "nbmolviz2d": "^0.1.0",
-    "nbmolviz3d": "^0.1.2",
+    "nbmolviz3d": "^0.1.3",
     "underscore": "^1.8.3"
   }
 }
