@@ -13,32 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import widgets from 'jupyter-js-widgets';
-import {
-  Nbmolviz2dModel,
-  Nbmolviz2dView,
-} from 'nbmolviz2d';
-import widgetUtils from './utils/widget_utils';
-
-let molModelPrototype = Object.assign({}, Nbmolviz2dModel.prototype);
-delete molModelPrototype.constructor;
-
-const MolWidget2DModel = widgets.DOMWidgetModel.extend(
-  Object.assign({}, molModelPrototype)
-);
-
-// Call both initialize functions for model and view below
-const molViewPrototype = Object.assign({}, Nbmolviz2dView.prototype);
-molViewPrototype.initialize = widgetUtils.getMultiFunction(
-  molViewPrototype.initialize,
-  widgets.DOMWidgetView.prototype.initialize
-);
-
-const MolWidget2DView = widgets.DOMWidgetView.extend(
-  Object.assign({}, molViewPrototype)
-);
+import Nbmolviz2dModel from './nbmolviz_2d_model';
+import Nbmolviz2dView from './nbmolviz_2d_view';
 
 module.exports = {
-  MolWidget2DModel : MolWidget2DModel,
-  MolWidget2DView : MolWidget2DView,
+  MolWidget2DModel: Nbmolviz2dModel,
+  MolWidget2DView: Nbmolviz2dView,
 };
