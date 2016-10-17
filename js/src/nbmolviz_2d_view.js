@@ -15,28 +15,16 @@
  */
 import React from 'react';
 import { render } from 'react-dom';
-import ReactMolecule2D from 'nbmolviz2d';
 import widgets from 'jupyter-js-widgets';
+import Nbmolviz2dComponent from './nbmolviz_2d_component.jsx';
 
 const Nbmolviz2dView = widgets.DOMWidgetView.extend({
 
   tagName: 'div',
 
-  initialize() {
-    this.model.on('change', this.render.bind(this));
-  },
-
-  onChangeSelection(selectedAtomIds) {
-    this.model.set('selected_atom_indices', selectedAtomIds);
-  },
-
   render() {
-    render(React.createElement(ReactMolecule2D, {
-      width: this.model.get('width'),
-      height: this.model.get('height'),
-      modelData: this.model.get('graph'),
-      selectedAtomIds: this.model.get('selected_atom_indices'),
-      onChangeSelection: this.onChangeSelection,
+    render(React.createElement(Nbmolviz2dComponent, {
+      model: this.model,
     }), this.el);
   },
 });
