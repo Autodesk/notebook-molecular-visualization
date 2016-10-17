@@ -33,8 +33,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     orbital = Dict({}).tag(sync=True)
     selected_atom_indices = Set(set()).tag(sync=True)
     selection_type = Unicode('Atom').tag(sync=True)
-    shape = Dict({}).tag(sync=True)
-    styles = List([]).tag(sync=True)
+    shapes = List([]).tag(sync=True)
+    styles = Dict({}).tag(sync=True)
 
     SHAPE_NAMES = {
         'SPHERE': 'Sphere',
@@ -67,17 +67,25 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def add_molecule(self, mol):
         self.mol = mol
         self.model_data = self.mol.to_json()
-        self.styles = [None] * len(mol.atoms)
 
     def set_background_color(self, color, opacity=1.0):
         color = translate_color(color)
         self.background_color = color
         self.background_opacity = opacity
 
-    def set_color(self, color, atoms=None):
-        atom_json = self._atoms_to_json(atoms)
-        color = translate_color(color)
-        self.viewer('setAtomColor', [atom_json, color])
+    def set_color(self, color, atoms):
+        if not atoms:
+            return
+
+        styles = dict(self.styles)
+        for atom in atoms:
+            if str(atom.index) in styles:
+                styles[str(atom.index)] = dict(styles[str(atom.index)])
+            else:
+                styles[str(atom.index)] = {}
+            styles[str(atom.index)]['color'] = color
+
+        self.styles = styles
 
     def set_clipping(self, near, far):
         self.viewer('setSlab', [float(near), float(far)])
@@ -87,13 +95,8 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         Args:
          colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
-        styles = list(self.styles)
         for color, atoms in colormap.iteritems():
-            for atom in atoms:
-                style = styles[atom.index] or {}
-                style['color'] = color
-
-        self.styles = styles
+            self.set_color(color, atoms)
 
     def unset_color(self, atoms=None):
         if atoms is None:
@@ -110,28 +113,30 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     def _change_style(self, style_string,
                       atoms, replace, options):
-      style = self.convert_style_name(style_string)
+        style = self.convert_style_name(style_string)
 
-      # No atoms passed means all atoms
-      if atoms is None:
-          atoms = self.mol.atoms
-      atoms = list(atoms)
+        # No atoms passed means all atoms
+        if atoms is None:
+            atoms = self.mol.atoms
+        atoms = list(atoms)
 
-      if replace:
-          styles = [None] * len(self.mol.atoms)
-      else:
-          styles = list(self.styles)
+        if replace:
+            styles = dict()
+        else:
+            styles = dict(self.styles)
 
-      for i, atom in enumerate(self.mol.atoms):
-          for j in range(0, len(atoms)):
-              if (atoms[j] is atom):
-                  newStyle = styles[i].copy() if styles[i] else {}
-                  newStyle['visualization_type'] = style
-                  styles[i] = newStyle
-                  atoms.remove(atoms[j])
-                  break
+        for i, atom in enumerate(self.mol.atoms):
+            for j in range(0, len(atoms)):
+                if (atoms[j] is atom):
+                    newStyle = styles[str(atom.index)].copy() if i in styles else {}
+                    newStyle['visualization_type'] = style
+                    if 'color' in options:
+                        newStyle['color'] = options['color']
+                    styles[str(atom.index)] = newStyle
+                    atoms.remove(atoms[j])
+                    break
 
-      self.styles = styles
+        self.styles = styles
 
     def append_frame(self, positions=None):
         if positions is None:
@@ -171,18 +176,22 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     def draw_sphere(self, position,
                     radius=2.0, color='red',
                     opacity=1.0, clickable=False):
-        js_shape = JSObject('shape')
         position = self._convert_units(position)
         radius = self._convert_units(radius)
         center = dict(x=position[0], y=position[1], z=position[2])
         color = translate_color(color)
 
-        self.shape = {
+        shape = {
             'type': self.SHAPE_NAMES['SPHERE'],
             'center': center,
+            'radius': radius,
+            'color': color,
+            'opacity': opacity,
         }
-
-        return js_shape
+        shapes = list(self.shapes)
+        shapes.append(shape)
+        self.shapes = shapes
+        return shape
 
     def draw_circle(self, center, normal, radius,
                     color='red', opacity=0.8, clickable=False,
@@ -222,7 +231,6 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                             draw_start_face, draw_end_face,
                             opacity, radius, clickable, batch):
         color = translate_color(color)
-        js_shape = JSObject('shape')
         facestart = self._convert_units(start)
         faceend = self._convert_units(end)
         radius = self._convert_units(radius)
@@ -234,12 +242,18 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 alpha=opacity,
                 fromCap=draw_start_face, toCap=draw_end_face)
 
-        self.shape = {
+        shape = {
             'type': self.SHAPE_NAMES['CYLINDER'],
             'start': self._list_to_jsvec(facestart),
             'end': self._list_to_jsvec(faceend),
+            'radius': radius,
+            'color': color,
+            'opacity': opacity,
         }
-        return js_shape
+        shapes = list(self.shapes)
+        shapes.append(shape)
+        self.shapes = shapes
+        return shape
 
     # TODO this contains unused parameters and code due to removed functionality, is it needed?
     def draw_arrow(self, start, end=None, vector=None,
@@ -258,25 +272,31 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 radius=radius,
                 color=color,
                 alpha=opacity)
-        js_shape = JSObject('shape')
 
-        self.shape = {
+        shape = {
             'type': self.SHAPE_NAMES['ARROW'],
             'start': self._list_to_jsvec(facestart),
             'end': self._list_to_jsvec(faceend),
+            'color': color,
+            'opacity': opacity,
         }
-        return js_shape
+        shapes = list(self.shapes)
+        shapes.append(shape)
+        self.shapes = shapes
+        return shape
 
     def remove_all_shapes(self):
-        self.viewer('removeAllShapes', [])
+        self.shapes = list()
 
     def remove(self, obj, batch=False):
-        if obj.type == 'shape':
-            self.shape = {}
-        elif obj.type == 'label':
+        if obj in self.shapes:
+            shapes = list(self.shapes)
+            shapes.remove(obj)
+            self.shapes = shapes
+        elif obj['type'] == 'label':
             self.atom_labels_shown = False
         else:
-            raise ValueError('Unknown object type %s' % obj.type)
+            raise ValueError('Unknown object type %s' % obj['type'])
 
     # Labels
     def draw_label(self, position, text,
@@ -299,6 +319,27 @@ class MolViz_3DMol(MolViz3DBaseWidget):
 
     def remove_all_labels(self):
         self.viewer('removeAllLabels', [])
+
+    def select_residues(self, residues):
+        selected_atom_indices = set()
+
+        for residue in residues:
+            for atom in residues.atoms:
+                selected_atom_indices.add(atom.index)
+
+        self.selected_atom_indices = selected_atom_indices
+
+    def toggle_residues(self, residues):
+        selected_atom_indices = set(self.selected_atom_indices)
+
+        for residue in residues:
+            for atom in residue.atoms:
+                if atom.index in selected_atom_indices:
+                    selected_atom_indices.remove(atom.index)
+                else:
+                    selected_atom_indices.add(atom.index)
+
+        self.selected_atom_indices = selected_atom_indices
 
     def get_selected_bonds(self, *args, **kwargs):
         atomIndices = kwargs.get('atomIndices', self.selected_atom_indices);
