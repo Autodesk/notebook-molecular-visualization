@@ -17,8 +17,8 @@ import widgets from 'jupyter-js-widgets';
 
 const Nbmolviz2dModel = widgets.DOMWidgetModel.extend({
   defaults: {
-    _model_name: 'Nbmolviz2dModel',
-    _view_name: 'Nbmolviz2dView',
+    _model_name: 'MolWidget2DModel',
+    _view_name: 'MolWidget2DView',
     _model_module: 'nbmolviz-js',
     _view_module: 'nbmolviz-js',
     charge: 0.0,

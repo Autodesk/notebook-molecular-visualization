@@ -15,29 +15,18 @@
  */
 import React from 'react';
 import { render } from 'react-dom';
-import ReactMolecule3D from 'nbmolviz3d';
 import widgets from 'jupyter-js-widgets';
+import Nbmolviz3dComponent from './nbmolviz_3d_component.jsx';
 
 const Nbmolviz3dView = widgets.DOMWidgetView.extend({
 
   tagName: 'div',
 
-  initialize() {
-    this.model.on('change', this.render.bind(this));
-  },
-
-  onChangeSelection(selectedAtomIds) {
-    this.model.set('selected_atom_indices', selectedAtomIds);
-  },
-
   render() {
     this.el.innerHTML = '';
-    render(React.createElement(ReactMolecule3D, {
-      width: this.model.get('width'),
-      height: this.model.get('height'),
-      modelData: this.model.get('model_data'),
-      selectedAtomIds: this.model.get('selected_atom_indices'),
-      onChangeSelection: this.onChangeSelection,
+
+    render(React.createElement(Nbmolviz3dComponent, {
+      model: this.model,
     }), this.el);
   },
 });

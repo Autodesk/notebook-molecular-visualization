@@ -3,7 +3,7 @@ import ReactMolecule2D from 'nbmolviz2d';
 import widgets from 'jupyter-js-widgets';
 
 class Nbmolviz2dComponent extends React.Component {
-  static getStateFromModel(model = this.props.model) {
+  static getStateFromModel(model) {
     const links = model.get('graph').links.map((link, index) =>
       Object.assign({}, link, { id: typeof link.id === 'number' ? link.id : index })
     );
@@ -36,10 +36,11 @@ class Nbmolviz2dComponent extends React.Component {
 
   onChangeSelection(selectedAtomIds) {
     this.props.model.set('selected_atom_indices', selectedAtomIds);
+    this.props.model.save();
   }
 
   componenWillReceiveProps(nextProps) {
-    this.setState(this.getStateFromModel(nextProps.model));
+    this.setState(Nbmolviz2dComponent.getStateFromModel(nextProps.model));
   }
 
   render() {
