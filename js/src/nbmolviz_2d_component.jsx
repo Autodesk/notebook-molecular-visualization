@@ -4,9 +4,11 @@ import widgets from 'jupyter-js-widgets';
 
 class Nbmolviz2dComponent extends React.Component {
   static getStateFromModel(model = this.props.model) {
-    const links = model.get('graph').links;
+    const links = model.get('graph').links.map((link, index) =>
+      Object.assign({}, link, { id: typeof link.id === 'number' ? link.id : index })
+    );
     const nodes = model.get('graph').nodes.map(node =>
-      Object.assign({}, node, { id: node.index })
+      Object.assign({}, node, { id: typeof node.id === 'number' ? node.id : node.index })
     );
 
     return {
