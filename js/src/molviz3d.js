@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 import Nbmolviz3dModel from './nbmolviz_3d_model';
-import Nbmolviz2dModel from './nbmolviz_2d_model';
+import Nbmolviz3dView from './nbmolviz_3d_view';
 
 module.exports = {
   MolWidget3DModel: Nbmolviz3dModel,

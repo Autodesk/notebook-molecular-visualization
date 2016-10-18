@@ -23,6 +23,8 @@ const Nbmolviz2dView = widgets.DOMWidgetView.extend({
   tagName: 'div',
 
   render() {
+    this.el.innerHTML = '';
+
     render(React.createElement(Nbmolviz2dComponent, {
       model: this.model,
     }), this.el);

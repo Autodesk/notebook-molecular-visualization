@@ -15,7 +15,7 @@
  */
 import widgets from 'jupyter-js-widgets';
 
-const Nbmolviz3dModel = widgets.Model.extend({
+const Nbmolviz3dModel = widgets.DOMWidgetModel.extend({
   defaults: {
     atom_labels_shown: false,
     background_color: '#73757C',

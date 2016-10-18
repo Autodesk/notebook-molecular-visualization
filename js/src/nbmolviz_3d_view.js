@@ -31,6 +31,7 @@ const Nbmolviz3dView = widgets.DOMWidgetView.extend({
   },
 
   render() {
+    this.el.innerHTML = '';
     render(React.createElement(ReactMolecule3D, {
       width: this.model.get('width'),
       height: this.model.get('height'),
