@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "jupyter-js-widgets": "^1.1.1",
-    "nbmolviz2d": "^0.1.0",
-    "nbmolviz3d": "^0.1.4",
+    "molecule-2d-for-react": "^0.2.0",
+    "molecule-3d-for-react": "^0.2.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "underscore": "^1.8.3"

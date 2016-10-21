@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactMolecule2D from 'nbmolviz2d';
+import Molecule2D from 'molecule-2d-for-react';
 import widgets from 'jupyter-js-widgets';
 
 class Nbmolviz2dComponent extends React.Component {
@@ -46,7 +46,7 @@ class Nbmolviz2dComponent extends React.Component {
   render() {
     return (
       <div>
-        <ReactMolecule2D
+        <Molecule2D
           width={this.state.width}
           height={this.state.height}
           modelData={this.state.modelData}
