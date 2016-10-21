@@ -13,10 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import Nbmolviz2dModel from './nbmolviz_2d_model';
-import Nbmolviz2dView from './nbmolviz_2d_view';
+import React from 'react';
+import { render } from 'react-dom';
+import widgets from 'jupyter-js-widgets';
+import Nbmolviz3dComponent from './nbmolviz_3d_component.jsx';
 
-module.exports = {
-  MolWidget2DModel: Nbmolviz2dModel,
-  MolWidget2DView: Nbmolviz2dView,
-};
+const Nbmolviz3dView = widgets.DOMWidgetView.extend({
+
+  tagName: 'div',
+
+  render() {
+    this.el.innerHTML = '';
+
+    render(React.createElement(Nbmolviz3dComponent, {
+      model: this.model,
+    }), this.el);
+  },
+});
+
+export default Nbmolviz3dView;

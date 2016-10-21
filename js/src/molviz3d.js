@@ -13,30 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import widgets from 'jupyter-js-widgets';
-import {
-  MolWidget3DModel as MolModel,
-  MolWidget3DView as MolView,
-} from 'nbmolviz3d';
-import widgetUtils from './utils/widget_utils';
-
-const molModelPrototype = Object.assign({}, MolModel.prototype);
-delete molModelPrototype.constructor;
-const MolWidget3DModel = widgets.DOMWidgetModel.extend(
-  Object.assign({}, molModelPrototype)
-);
-
-// Call both initialize functions
-const molViewPrototype = Object.assign({}, MolView.prototype);
-molViewPrototype.initialize = widgetUtils.getMultiFunction(
-  molViewPrototype.initialize,
-  widgets.DOMWidgetView.prototype.initialize
-);
-const MolWidget3DView = widgets.DOMWidgetView.extend(
-  Object.assign({}, molViewPrototype)
-);
+import Nbmolviz3dModel from './nbmolviz_3d_model';
+import Nbmolviz3dView from './nbmolviz_3d_view';
 
 module.exports = {
-  MolWidget3DModel,
-  MolWidget3DView,
+  MolWidget3DModel: Nbmolviz3dModel,
+  MolWidget3DView: Nbmolviz3dView,
 };
