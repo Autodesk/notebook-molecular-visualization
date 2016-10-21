@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nbmolviz3dReact } from 'nbmolviz3d';
+import Molecule3d from 'molecule-3d-for-react';
 import widgets from 'jupyter-js-widgets';
 
 class Nbmolviz3dComponent extends React.Component {
@@ -35,7 +35,7 @@ class Nbmolviz3dComponent extends React.Component {
 
   render() {
     return (
-      <Nbmolviz3dReact
+      <Molecule3d
         width={this.state.width}
         height={this.state.height}
         modelData={this.state.modelData}
