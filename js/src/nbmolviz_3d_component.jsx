@@ -44,6 +44,7 @@ class Nbmolviz3dComponent extends React.Component {
     return (
       <Molecule3d
         {...this.state}
+        onChangeSelection={this.onChangeSelection}
       />
     );
   }
