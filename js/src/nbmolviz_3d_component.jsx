@@ -5,10 +5,17 @@ import widgets from 'jupyter-js-widgets';
 class Nbmolviz3dComponent extends React.Component {
   static getStateFromModel(model) {
     return {
-      width: model.get('width'),
+      atomLabelsShown: model.get('atom_labels_shown'),
+      backgroundColor: model.get('background_color'),
+      backgroundOpacity: model.get('background_opacity'),
       height: model.get('height'),
       modelData: model.get('model_data'),
+      orbital: model.get('orbital'),
       selectedAtomIds: model.get('selected_atom_indices'),
+      selectionType: model.get('selection_type'),
+      shapes: model.get('shapes'),
+      styles: model.get('styles'),
+      width: model.get('width'),
     };
   }
 
@@ -36,11 +43,7 @@ class Nbmolviz3dComponent extends React.Component {
   render() {
     return (
       <Molecule3d
-        width={this.state.width}
-        height={this.state.height}
-        modelData={this.state.modelData}
-        selectedAtomIds={this.state.selectedAtomIds}
-        onChangeSelection={this.onChangeSelection}
+        {...this.state}
       />
     );
   }
