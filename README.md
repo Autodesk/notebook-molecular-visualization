@@ -38,6 +38,10 @@ This will build your widgets into a folder at `notebook-molecular-visualization/
 
 During development, to see the effects of changes to any javascript files (in notebook-molecular/visualization/js/src), run `python setup.py jsdeps` and reload any notebook browser windows.
 
+## Tests
+Run tests with:
+
+    pytest nbmolviz/_tests
 
 ## Contributing
 
