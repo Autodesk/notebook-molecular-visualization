@@ -43,6 +43,14 @@ Run tests with:
 
     pytest nbmolviz/_tests
 
+## Releasing a new version
+Travis automatically releases commits that are tagged, so to trigger a new release, just do:
+
+    git tag <new tag version>
+    git push origin --tags
+
+If you want to see what will be included in a release, run `check-manifest`.  You could also manually build a release with `python setup.py sdist` and manually release with `python setup.py sdist upload -r pypi`.
+
 ## Contributing
 
 This project is developed and maintained by the [Molecular Design Toolkit](https://github.com/autodesk/molecular-design-toolkit) project. Please see that project's [CONTRIBUTING document](https://github.com/autodesk/molecular-design-toolkit/CONTRIBUTING.md) for details.
