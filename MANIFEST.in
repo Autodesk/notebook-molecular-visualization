@@ -5,3 +5,4 @@ include requirements.txt
 include LICENSE
 include README.md
 global-exclude *.py[cod] __pycache__ *~ *.bak
+exclude js/**/*
