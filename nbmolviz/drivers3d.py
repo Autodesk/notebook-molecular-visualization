@@ -15,8 +15,6 @@ import numpy as np
 from StringIO import StringIO
 from traitlets import Bool, Dict, Float, List, Set, Unicode
 
-from moldesign import units as u
-
 from nbmolviz.utils import JSObject, translate_color
 from nbmolviz.widget3d import MolViz3DBaseWidget
 
@@ -153,6 +151,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.show_frame(self.num_frames - 1)
 
     def set_positions(self, positions=None):
+        from moldesign import units as u
         if positions is not None:
             for i, atom in enumerate(self.mol.atoms):
                 atom.position[0] = positions[i][0] * u.angstrom

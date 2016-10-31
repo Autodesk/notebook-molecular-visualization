@@ -38,6 +38,18 @@ This will build your widgets into a folder at `notebook-molecular-visualization/
 
 During development, to see the effects of changes to any javascript files (in notebook-molecular/visualization/js/src), run `python setup.py jsdeps` and reload any notebook browser windows.
 
+## Tests
+Run tests with:
+
+    pytest nbmolviz/_tests
+
+## Releasing a new version
+Travis automatically releases commits that are tagged, so to trigger a new release, just do:
+
+    git tag <new tag version>
+    git push origin --tags
+
+If you want to see what will be included in a release, run `check-manifest`.  You could also manually build a release with `python setup.py sdist` and manually release with `python setup.py sdist upload -r pypi`.
 
 ## Contributing
 
