@@ -1,4 +1,4 @@
-ipywidgets >= 5.1
+ipywidgets >= 6.0.0b1
 ipython >= 4.2
 IPython >= 4.2
 notebook >= 4.2
