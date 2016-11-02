@@ -29,7 +29,7 @@ const Nbmolviz3dModel = widgets.DOMWidgetModel.extend({
     },
     styles: {},
     selected_atom_indices: [],
-    selection_type: 'atom',
+    selection_type: 'Atom',
     shapes: [],
     width: '500px',
   },
