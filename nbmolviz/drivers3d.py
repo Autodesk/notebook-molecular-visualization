@@ -75,12 +75,13 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.viewer('setSlab', [float(near), float(far)])
 
     def set_color(self, color, atoms):
-        self.styles = self.get_styles_for_color(
+        self.styles = MolViz_3DMol.get_styles_for_color(
                 color, atoms, self.styles
         )
 
     # Returns new styles after updating the given atoms with the given color
-    def get_styles_for_color(self, color, atoms, styles):
+    @staticmethod
+    def get_styles_for_color(color, atoms, styles):
         styles = dict(styles)
 
         if not atoms:
@@ -102,7 +103,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         """
         styles = dict(self.styles)
         for color, atoms in colormap.iteritems():
-            styles = self.get_styles_for_color(color, atoms, styles)
+            styles = MolViz_3DMol.get_styles_for_color(color, atoms, styles)
 
         self.styles = styles
 
