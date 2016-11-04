@@ -72,11 +72,22 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.background_color = color
         self.background_opacity = opacity
 
-    def set_color(self, color, atoms):
-        if not atoms:
-            return
+    def set_clipping(self, near, far):
+        self.viewer('setSlab', [float(near), float(far)])
 
-        styles = dict(self.styles)
+    def set_color(self, color, atoms):
+        self.styles = MolViz_3DMol.get_styles_for_color(
+                color, atoms, self.styles
+        )
+
+    # Returns new styles after updating the given atoms with the given color
+    @staticmethod
+    def get_styles_for_color(color, atoms, styles):
+        styles = dict(styles)
+
+        if not atoms:
+            return styles
+
         for atom in atoms:
             if str(atom.index) in styles:
                 styles[str(atom.index)] = dict(styles[str(atom.index)])
@@ -84,18 +95,18 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 styles[str(atom.index)] = {}
             styles[str(atom.index)]['color'] = color
 
-        self.styles = styles
-
-    def set_clipping(self, near, far):
-        self.viewer('setSlab', [float(near), float(far)])
+        return styles
 
     def set_colors(self, colormap):
         """
         Args:
          colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
+        styles = dict(self.styles)
         for color, atoms in colormap.iteritems():
-            self.set_color(color, atoms)
+            styles = MolViz_3DMol.get_styles_for_color(color, atoms, styles)
+
+        self.styles = styles
 
     def unset_color(self, atoms=None):
         if atoms is None:
