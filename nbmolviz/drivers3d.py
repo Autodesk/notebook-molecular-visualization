@@ -15,8 +15,9 @@ import numpy as np
 from StringIO import StringIO
 from traitlets import Bool, Dict, Float, List, Set, Unicode
 
-from nbmolviz.utils import JSObject, translate_color
-from nbmolviz.widget3d import MolViz3DBaseWidget
+from .utils import JSObject, translate_color
+from .widget3d import MolViz3DBaseWidget
+from .mdt2json import convert as convert_to_json
 
 
 class MolViz_3DMol(MolViz3DBaseWidget):
@@ -64,7 +65,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
     # Standard view actions
     def add_molecule(self, mol):
         self.mol = mol
-        self.model_data = self.mol.to_json()
+        self.model_data = convert_to_json(self.mol)
 
     def set_background_color(self, color, opacity=1.0):
         color = translate_color(color)
