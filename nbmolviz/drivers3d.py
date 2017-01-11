@@ -169,7 +169,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                 atom.position[0] = positions[i][0] * u.angstrom
                 atom.position[1] = positions[i][1] * u.angstrom
                 atom.position[2] = positions[i][2] * u.angstrom
-        self.model_data = self.mol.to_json()
+        self.model_data = convert_to_json(self.mol)
 
     def show_frame(self, framenum):
         self.viewer('setFrame', [framenum])
