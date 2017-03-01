@@ -38,6 +38,21 @@ atomic_numbers = {'Ac': 89, 'Ag': 47, 'Al': 13, 'Am': 95, 'Ar': 18, 'As': 33, 'A
 elements = {atnum:el for el,atnum in atomic_numbers.iteritems()}
 
 
+
+def make_layout(layout=None, **kwargs):
+    from ipywidgets import Layout
+    import traitlets
+
+    if layout is None:
+        layout = Layout()
+    for key, val in kwargs.iteritems():
+        # note that this is the type of the class descriptor, not the instance attribute
+        if isinstance(getattr(Layout, key), traitlets.Unicode):
+            val = in_pixels(val)
+        setattr(layout, key, val)
+    return layout
+
+
 def translate_color(color, prefix='0x'):
     """ Return a normalized for a given color, specified as hex or as a CSS3 color name.
 
@@ -176,6 +191,13 @@ def calc_orbvals(grid,orb,bfs):
                           y*BOHR_PER_ANGSTROM,
                           z*BOHR_PER_ANGSTROM)
     return grid
+
+
+def in_pixels(x):
+    if isinstance(x, basestring):
+        return x
+    else:
+        return str(x) + 'px'
 
 
 class Measure(object):

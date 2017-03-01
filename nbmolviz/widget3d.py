@@ -13,9 +13,9 @@
 # limitations under the License.
 import os
 import traitlets
-from ipywidgets import register
 
-from nbmolviz.base_widget import MessageWidget
+from .base_widget import MessageWidget
+from .utils import in_pixels
 
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
@@ -26,6 +26,9 @@ class MolViz3DBaseWidget(MessageWidget):
     This is our base class to communicate with an arbitrary JS backend
     """
 
+    height = traitlets.Unicode(sync=True)
+    width = traitlets.Unicode(sync=True)
+
     STYLE_SYNONYMS = {'vdw': 'vdw', 'sphere': 'vdw', 'cpk': 'vdw',
                       'licorice': 'licorice', 'stick': 'licorice', 'tube':'licorice',
                       'ball_and_stick': 'ball_and_stick',
@@ -34,10 +37,12 @@ class MolViz3DBaseWidget(MessageWidget):
                       None: None, 'hide': None, 'invisible': None, 'remove': None}
 
     def __init__(self, mol=None,
-                 width=500, height=400,
+                 width=500, height=350,
                  **kwargs):
-        super(MolViz3DBaseWidget, self).__init__(width=width, height=height,
-                                                 **kwargs)
+        kwargs.update(width=width, height=height)
+        super(MolViz3DBaseWidget, self).__init__(**kwargs)
+        self.height = in_pixels(height)
+        self.width = in_pixels(width)
         # current state
         self.num_frames = 1
         self.current_frame = 0

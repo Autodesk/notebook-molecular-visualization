@@ -13,10 +13,12 @@
 # limitations under the License.
 import uuid
 
+from ipywidgets import Layout
+
 import traitlets
 from traitlets import Unicode
-from nbmolviz.base_widget import MessageWidget
-from nbmolviz.utils import translate_color
+from .base_widget import MessageWidget
+from .utils import translate_color
 
 
 class MolViz2DBaseWidget(MessageWidget):
@@ -43,9 +45,10 @@ class MolViz2DBaseWidget(MessageWidget):
                  charge=-150,
                  width=400, height=350,
                  **kwargs):
-        super(MolViz2DBaseWidget, self).__init__(width=width,
-                                                 height=height,
-                                                 **kwargs)
+
+        kwargs.update(width=width, height=height)
+        super(MolViz2DBaseWidget, self).__init__(**kwargs)
+
         try:
             self.atoms = atoms.atoms
         except AttributeError:
@@ -58,6 +61,7 @@ class MolViz2DBaseWidget(MessageWidget):
         self.charge = charge
         self._clicks_enabled = False
         self.graph = self.to_graph(self.atoms)
+
 
     def to_graph(self, atoms):
         """Turn a set of atoms into a graph
