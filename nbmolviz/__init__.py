@@ -47,33 +47,6 @@ def find_static_assets():
     return []
 
 
-def _set_up_interfaces():
-    try:
-        import MDAnalysis as mda
-    except ImportError:
-        pass
-    else:
-        _INTERFACES[mda.Universe] = interfaces3d.MdaViz
-
-    try:
-        import pybel as pb
-    except ImportError:
-        pass
-    else:
-        _INTERFACES[pb.Molecule] = interfaces3d.PybelViz
-
-    try:
-        import cclib.parser.data
-    except ImportError:
-        pass
-    else:
-        _INTERFACES[cclib.parser.data.ccData_optdone_bool] = interfaces3d.CCLibViz
-        _INTERFACES[cclib.parser.data.ccData] = interfaces3d.CCLibViz
-
-
-_set_up_interfaces()
-
-
 def test3d(driver=None):
     """Construct a view of benzene to test the widget"""
     if driver is None:
