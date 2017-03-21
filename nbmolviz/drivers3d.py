@@ -304,7 +304,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             shapes = list(self.shapes)
             shapes.remove(obj)
             self.shapes = shapes
-        elif obj['type'] == 'label':
+        elif obj.type == 'label':
             self.atom_labels_shown = False
         else:
             raise ValueError('Unknown object type %s' % obj['type'])
