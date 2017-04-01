@@ -14,7 +14,6 @@
 # TODO: catch and log event exceptions
 import ipywidgets as ipy
 
-import moldesign as mdt
 from moldesign import utils
 
 from .. import viewer
@@ -71,9 +70,9 @@ class SelectionGroup(ipy.Box):
             listeners = [element]
             element.selection_group = self
             element.selection_id = self.num_listeners
-            if issubclass(element.__class__, mdt.viewer.GeometryViewer):
+            if issubclass(element.__class__, viewer.GeometryViewer):
                 self.viewer = element
-            if issubclass(element.__class__, mdt.viewer.ChemicalGraphViewer):
+            if issubclass(element.__class__, viewer.ChemicalGraphViewer):
                 self.graphviewer = element
         else:
             listeners = []

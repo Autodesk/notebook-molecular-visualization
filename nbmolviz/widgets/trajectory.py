@@ -16,10 +16,12 @@ import time
 import ipywidgets as ipy
 
 import moldesign as mdt
+from moldesign import utils
 
 from ..uibase.components import AtomInspector
 from ..uibase import selector
-from moldesign import utils
+
+from ..widget_utils import process_widget_kwargs
 
 
 class TrajectoryViewer(selector.SelectionGroup):
@@ -46,7 +48,7 @@ class TrajectoryViewer(selector.SelectionGroup):
         self.make_controls()
         self.pane.children = [self.view_container, self.controls]
         super(TrajectoryViewer, self).__init__([self.pane, AtomInspector()],
-                                               **utils.process_widget_kwargs(kwargs))
+                                               **process_widget_kwargs(kwargs))
         self.update_selections('initialization', {'framenum': 0})
         if display:
             displaynow(self)
@@ -100,7 +102,7 @@ class TrajectoryOrbViewer(TrajectoryViewer):
 class FrameInspector(ipy.HTML, selector.Selector):
     def __init__(self, traj, **kwargs):
         self.traj = traj
-        super(FrameInspector, self).__init__(**utils.process_widget_kwargs(kwargs))
+        super(FrameInspector, self).__init__(**process_widget_kwargs(kwargs))
 
     def handle_selection_event(self, selection):
         if 'framenum' not in selection:

@@ -18,6 +18,9 @@ import IPython.display
 from moldesign import data, utils
 from moldesign import units as u
 
+from .. import widgets as mdtwidgets
+from .. import viewer, uibase
+
 
 class AtomNotebookMixin(object):
     """ Notebook-specific methods for atoms.
@@ -374,21 +377,6 @@ class MolNotebookMixin(object):
                 counts['unknown'] = ','.join(unk)
             table.add_line(counts)
         return table
-
-    def get_stoichiometry(self, html=False):
-        """ Return this molecule's stoichiometry
-
-        Returns:
-            str
-        """
-        counts = {}
-        for atom in self.atoms:
-            counts[atom.symbol] = counts.get(atom.symbol, 0) + 1
-
-        my_elements = sorted(counts.keys())
-        if html: template = '%s<sub>%d</sub>'
-        else: template = '%s%d'
-        return ''.join([template % (k, counts[k]) for k in my_elements])
 
 
 class TrajNotebookMixin(object):

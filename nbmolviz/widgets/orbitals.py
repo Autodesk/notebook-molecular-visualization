@@ -19,6 +19,7 @@ import ipywidgets as ipy
 from ..uibase.selector import SelectionGroup, Selector, create_value_selector
 from ..viewer import GeometryViewer
 from .. import utils
+from ..widget_utils import process_widget_kwargs
 
 
 class OrbitalViewer(SelectionGroup):
@@ -31,7 +32,7 @@ class OrbitalViewer(SelectionGroup):
         **kwargs (dict): kwargs for the viewer
     """
     def __init__(self, mol, **kwargs):
-        self.viewer = GeometryViewer(mol=mol, **utils.process_widget_kwargs(kwargs))
+        self.viewer = GeometryViewer(mol=mol, **process_widget_kwargs(kwargs))
         self.viewer.wfns = [mol.wfn]
         self.uipane = OrbitalUIPane(self, hostheight=self.viewer.layout.height)
         hb = ipy.HBox([self.viewer, self.uipane])
@@ -75,7 +76,7 @@ class OrbitalUIPane(Selector, ipy.Box):
         self.orb_resolution.on_submit(self.change_resolution)
 
         children = [self.type_dropdown, self.orblist, self.isoval_selector, self.orb_resolution]
-        super(OrbitalUIPane, self).__init__(children, **utils.process_widget_kwargs(kwargs))
+        super(OrbitalUIPane, self).__init__(children, **process_widget_kwargs(kwargs))
         self.new_orb_type()
         self.orblist.observe(self.new_orbital_selection, 'value')
 

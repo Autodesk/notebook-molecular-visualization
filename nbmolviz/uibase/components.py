@@ -21,6 +21,7 @@ from moldesign import units as u
 
 from .. import viewer
 from .selector import Selector
+from ..widget_utils import process_widget_kwargs
 
 
 class StyledTab(ipy.Tab):
@@ -31,7 +32,7 @@ class StyledTab(ipy.Tab):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('font_size', 9)
-        super(StyledTab, self).__init__(*args, **utils.process_widget_kwargs(kwargs))
+        super(StyledTab, self).__init__(*args, **process_widget_kwargs(kwargs))
 
 
 class AtomInspector(ipy.HTML, Selector):
@@ -149,7 +150,7 @@ class ReadoutFloatSlider(ipy.Box):
         self.readout.on_submit(self.parse_value)
 
         kwargs.setdefault('readout', False)
-        self.slider = ipy.FloatSlider(*args, **utils.process_widget_kwargs(kwargs))
+        self.slider = ipy.FloatSlider(*args, **process_widget_kwargs(kwargs))
         self.minlabel = ipy.HTML(u'<font size=1.5>{}</font>'.format(self.formatstring.format(min)))
         self.maxlabel = ipy.HTML(u'<font size=1.5>{}</font>'.format(self.formatstring.format(max)))
         self.sliderbox = ipy.HBox([self.minlabel, self.slider, self.maxlabel])
@@ -192,7 +193,7 @@ class ReadOnlyRepr(ipy.Box):
     """ When a value is assigned, displays its __repr__ instead
     """
     def __init__(self, *args, **kwargs):
-        super(ReadOnlyRepr, self).__init__(*args, **utils.process_widget_kwargs(kwargs))
+        super(ReadOnlyRepr, self).__init__(*args, **process_widget_kwargs(kwargs))
         self.textbox = ipy.Text()
         self.textbox.disabled = True
         self.children = [self.textbox]
@@ -227,7 +228,7 @@ class UnitText(ipy.Box):
         kwargs.setdefault('display', 'flex')
         kwargs.setdefault('flex_flow','row wrap')
         super(UnitText, self).__init__(layout=ipy.Layout(display='flex', flex_flow='row wrap'),
-                                       **utils.process_widget_kwargs(kwargs))
+                                       **process_widget_kwargs(kwargs))
         self.textbox = ipy.Text()
         self.textbox.observe(self._validate, 'value')
         self._error_msg = None

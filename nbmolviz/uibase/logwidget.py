@@ -20,6 +20,8 @@ import ipywidgets as ipy
 
 import moldesign as mdt
 from moldesign import utils
+
+from .. import widget_utils as wu
 from .components import StyledTab
 
 STANDARD = 25  # logging level between INFO and WARN
@@ -34,7 +36,7 @@ _prev_tabs = None
 _current_tabs = None
 _capture_enabled = False
 
-widgets_enabled = utils.can_use_widgets()
+widgets_enabled = wu.can_use_widgets()
 
 
 def display_log(obj, title=None, show=False):
@@ -130,7 +132,7 @@ if widgets_enabled:
             """
             self.objs = OrderedDict(objects)
             super(LoggingTabs, self).__init__(objects.values(),
-                                              **utils.process_widget_kwargs(kwargs))
+                                              **wu.process_widget_kwargs(kwargs))
             self.selected_index = -1
             for ikey, key in enumerate(objects.iterkeys()):
                 self.set_title(ikey, key)
@@ -165,7 +167,7 @@ class Logger(ipy.Textarea if widgets_enabled else object):
         kwargs.setdefault('font_family', 'monospace')
         self.title = title
         if widgets_enabled:  # try to intialize widget
-            super(Logger, self).__init__(**utils.process_widget_kwargs(kwargs))
+            super(Logger, self).__init__(**wu.process_widget_kwargs(kwargs))
             self._is_widget = True
         else:
             self._is_widget = False
@@ -190,7 +192,7 @@ def _capture_logging_displays(display=False, **kwargs):
     _prev_tabs = _current_tabs
     if widgets_enabled:
         _current_tabs = LoggingTabs(OrderedDict(x=ipy.Box()), display=display,
-                                    **utils.process_widget_kwargs(kwargs))
+                                    **wu.process_widget_kwargs(kwargs))
     else:
         _current_tabs = None
         enable_logging_widgets(False)
