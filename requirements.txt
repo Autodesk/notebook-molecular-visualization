@@ -1,6 +1,7 @@
 ipywidgets >= 6.0
 ipython >= 4.2
 IPython >= 4.2
+moldesign >= 0.8
 notebook >= 4.2
 numpy
 requests
