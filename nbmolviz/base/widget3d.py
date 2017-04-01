@@ -15,7 +15,7 @@ import os
 import traitlets
 
 from .base_widget import MessageWidget
-from .utils import in_pixels
+from ..utils import in_pixels
 
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)

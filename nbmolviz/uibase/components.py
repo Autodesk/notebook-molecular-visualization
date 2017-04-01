@@ -16,9 +16,10 @@ import collections
 import ipywidgets as ipy
 import traitlets
 
-from moldesign import utils, viewer
+from moldesign import utils
 from moldesign import units as u
 
+from .. import viewer
 from .selector import Selector
 
 

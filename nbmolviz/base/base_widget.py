@@ -16,7 +16,7 @@ from uuid import uuid4
 
 import ipywidgets as widgets
 import traitlets
-from .utils import Measure, make_layout
+from ..utils import Measure, make_layout
 
 
 def _identity(x): return x

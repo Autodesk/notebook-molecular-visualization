@@ -20,7 +20,8 @@ import moldesign as mdt
 from moldesign import units as u
 from moldesign import utils
 from moldesign.helpers import VolumetricGrid, colormap
-from nbmolviz.drivers3d import MolViz_3DMol
+
+from ..base.drivers3d import MolViz_3DMol
 from . import toplevel, ColorMixin
 
 
@@ -72,7 +73,8 @@ class GeometryViewer(MolViz_3DMol, ColorMixin):
                 self.autostyle()
             else:
                 self.set_style(style)
-        if display: dsp.display(self)
+        if display:
+            dsp.display(self)
 
     @property
     def wfn(self):

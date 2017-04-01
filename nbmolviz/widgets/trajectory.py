@@ -17,8 +17,8 @@ import ipywidgets as ipy
 
 import moldesign as mdt
 
-from moldesign.uibase.components import AtomInspector
-from moldesign.uibase import selector
+from ..uibase.components import AtomInspector
+from ..uibase import selector
 from moldesign import utils
 
 

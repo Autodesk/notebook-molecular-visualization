@@ -19,7 +19,8 @@ from moldesign import utils
 from moldesign import units as u
 
 from moldesign.utils import exports
-from moldesign.uibase import ViewerToolBase, ReadoutFloatSlider
+
+from ..uibase import ViewerToolBase, ReadoutFloatSlider
 
 @exports
 class GeometryBuilder(ViewerToolBase):

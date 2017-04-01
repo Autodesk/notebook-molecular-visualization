@@ -15,7 +15,9 @@
 import ipywidgets as ipy
 
 import moldesign as mdt
-from moldesign import utils, viewer
+from moldesign import utils
+
+from .. import viewer
 
 
 class Selector(object):

@@ -15,7 +15,7 @@ import numpy as np
 from StringIO import StringIO
 from traitlets import Bool, Dict, Float, List, Set, Unicode
 
-from .utils import JSObject, translate_color
+from ..utils import JSObject, translate_color
 from .widget3d import MolViz3DBaseWidget
 from .mdt2json import convert as convert_to_json
 

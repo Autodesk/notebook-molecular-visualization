@@ -13,9 +13,7 @@
 # limitations under the License.
 import os as _os
 
-
-from nbmolviz import utils
-from nbmolviz import base_widget, widget3d, interfaces3d, drivers3d, widget2d
+from . import base, uibase, viewer, widgets
 
 # package metadata
 from nbmolviz import _version
@@ -25,9 +23,6 @@ __license__ = "Apache 2.0"
 
 PACKAGE_PATH = _os.path.dirname(_os.path.abspath(__file__))
 
-backend = '3dmol.js'  # default
-_BACKENDS = {'3dmol.js': drivers3d.MolViz_3DMol}
-_INTERFACES = {}
 
 def _jupyter_nbextension_paths():
     return [{
@@ -45,39 +40,6 @@ def find_static_assets():
     warn("""To use the nbmolviz-js nbextension, you'll need to update
     the Jupyter notebook to version 4.2 or later.""")
     return []
-
-
-def test3d(driver=None):
-    """Construct a view of benzene to test the widget"""
-    if driver is None:
-        driver = backend
-
-    class NewClass(interfaces3d.AlwaysBenzene, _BACKENDS[driver]):
-        pass
-
-    view = NewClass()
-    return view
-
-
-def visualize(mol, format=None, **kwargs):
-    mytype = type(mol)
-
-    if mytype == str:
-        # deal with strings as input
-        import pybel as pb
-        if len(mol) > 40:  # assume it's the content of a file
-            if format is None: format = 'pdb'
-            mol = pb.readstring(format, mol).next()
-        else:
-            if format is None: format = mol.split('.')[-1]
-            mol = pb.readfile(format, mol).next()
-        mytype = type(mol)
-
-    # Create an appropriate class
-    class BespokeVisualizer(_BACKENDS[backend], _INTERFACES[mytype]):
-        pass
-
-    return BespokeVisualizer(mol, **kwargs)
 
 
 def _enable_nbextension():

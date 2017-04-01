@@ -13,12 +13,10 @@
 # limitations under the License.
 import uuid
 
-from ipywidgets import Layout
-
 import traitlets
 from traitlets import Unicode
 from .base_widget import MessageWidget
-from .utils import translate_color
+from ..utils import translate_color
 
 
 class MolViz2DBaseWidget(MessageWidget):

@@ -15,7 +15,7 @@
 from itertools import product
 from IPython import display as dsp
 
-from nbmolviz.widget2d import MolViz2DBaseWidget
+from nbmolviz.base import MolViz2DBaseWidget
 
 import moldesign as mdt
 from moldesign import utils
@@ -111,7 +111,7 @@ class ChemicalGraphViewer(MolViz2DBaseWidget, ColorMixin):
         """ Highlight atoms in response to a selection event
 
         Args:
-            selection (dict): Selection event from :mod:`moldesign.uibase.selectors`
+            selection (dict): Selection event from :mod:`..uibase.selectors`
         """
         if 'atoms' in selection:
             self.highlight_atoms(

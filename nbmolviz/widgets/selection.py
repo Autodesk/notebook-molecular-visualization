@@ -17,7 +17,7 @@ import ipywidgets as ipy
 import traitlets
 
 from moldesign import utils
-from moldesign.uibase.components import SelBase
+from ..uibase.components import SelBase
 
 
 @utils.exports
