@@ -115,7 +115,8 @@ def _enable_nbextension():
         import notebook
         if not notebook.nbextensions.check_nbextension('nbmolviz-js'):
             print 'Installing Jupyter nbmolviz-js extension...',
-            notebook.nbextensions.install_nbextension_python('nbmolviz')
+            notebook.nbextensions.install_nbextension_python('nbmolviz',
+                    user=True)
             print 'done'
         notebook.nbextensions.enable_nbextension_python('widgetsnbextension')
         notebook.nbextensions.enable_nbextension_python('nbmolviz')
