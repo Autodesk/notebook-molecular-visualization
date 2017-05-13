@@ -16,10 +16,9 @@ import collections
 
 import ipywidgets as ipy
 
-from ..uibase.selector import SelectionGroup, Selector, create_value_selector
-from ..viewer import GeometryViewer
-from .. import utils
+from ..viewers import GeometryViewer
 from ..widget_utils import process_widget_kwargs
+from .selector import SelectionGroup, Selector, create_value_selector
 
 
 class OrbitalViewer(SelectionGroup):

@@ -38,7 +38,6 @@ atomic_numbers = {'Ac': 89, 'Ag': 47, 'Al': 13, 'Am': 95, 'Ar': 18, 'As': 33, 'A
 elements = {atnum:el for el,atnum in atomic_numbers.iteritems()}
 
 
-
 def make_layout(layout=None, **kwargs):
     from ipywidgets import Layout
     import traitlets

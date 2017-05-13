@@ -13,12 +13,12 @@
 # limitations under the License.
 import os as _os
 
-from . import base, uibase, viewer, widgets
+MDTVERSION = '0.8.0'
 
 # package metadata
 from nbmolviz import _version
 __version__ = _version.get_versions()['version']
-__copyright__ = "Copyright 2016 Autodesk Inc."
+__copyright__ = "Copyright 2017 Autodesk Inc."
 __license__ = "Apache 2.0"
 
 PACKAGE_PATH = _os.path.dirname(_os.path.abspath(__file__))

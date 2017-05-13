@@ -3,9 +3,8 @@ def toplevel(o):
     return o
 __all__ = []
 
-from .selector import *
-from .components import *
-from .plotting import *
 from .logwidget import *
+from .plotting import *
+
 
 

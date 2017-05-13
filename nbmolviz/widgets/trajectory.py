@@ -14,14 +14,11 @@
 import time
 
 import ipywidgets as ipy
-
 import moldesign as mdt
-from moldesign import utils
-
-from ..uibase.components import AtomInspector
-from ..uibase import selector
 
 from ..widget_utils import process_widget_kwargs
+from . import selector
+from .components import AtomInspector
 
 
 class TrajectoryViewer(selector.SelectionGroup):

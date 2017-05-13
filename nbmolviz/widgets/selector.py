@@ -16,7 +16,7 @@ import ipywidgets as ipy
 
 from moldesign import utils
 
-from .. import viewer
+from nbmolviz import viewers
 
 
 class Selector(object):
@@ -70,9 +70,9 @@ class SelectionGroup(ipy.Box):
             listeners = [element]
             element.selection_group = self
             element.selection_id = self.num_listeners
-            if issubclass(element.__class__, viewer.GeometryViewer):
+            if issubclass(element.__class__, viewers.GeometryViewer):
                 self.viewer = element
-            if issubclass(element.__class__, viewer.ChemicalGraphViewer):
+            if issubclass(element.__class__, viewers.ChemicalGraphViewer):
                 self.graphviewer = element
         else:
             listeners = []
@@ -82,22 +82,22 @@ class SelectionGroup(ipy.Box):
                 listeners.extend(self.get_child_listeners(child))
         return listeners
 
-    @utils.args_from(viewer.GeometryViewer.set_color)
+    @utils.args_from(viewers.GeometryViewer.set_color)
     def set_color(self, *args, **kwargs):
         if self.graphviewer: self.graphviewer.set_color(*args, **kwargs)
         if self.viewer: self.viewer.set_color(*args, **kwargs)
 
-    @utils.args_from(viewer.GeometryViewer.set_color)
+    @utils.args_from(viewers.GeometryViewer.set_color)
     def color_by(self, *args, **kwargs):
         if self.graphviewer: self.graphviewer.color_by(*args, **kwargs)
         if self.viewer: self.viewer.color_by(*args, **kwargs)
 
-    @utils.args_from(viewer.GeometryViewer.set_color)
+    @utils.args_from(viewers.GeometryViewer.set_color)
     def set_colors(self, *args, **kwargs):
         if self.graphviewer: self.graphviewer.set_colors(*args, **kwargs)
         if self.viewer: self.viewer.set_colors(*args, **kwargs)
 
-    @utils.args_from(viewer.GeometryViewer.unset_color)
+    @utils.args_from(viewers.GeometryViewer.unset_color)
     def unset_color(self, *args, **kwargs):
         if self.graphviewer: self.graphviewer.unset_color(*args, **kwargs)
         if self.viewer: self.viewer.unset_color(*args, **kwargs)

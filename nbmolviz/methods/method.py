@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ..widgets.configurator import Configurator
+from ..uielements.configurator import Configurator
 
 
-class MethodConfigurationMixin(object):
-    def configure(self):
-        return Configurator(self.params, self.PARAMETERS,
-                            title='Configuration for %s' % self.__class__.__name__)
+def configure(method):
+    return Configurator(method.params, method.PARAMETERS,
+                        title='Configuration for %s'%method.__class__.__name__)

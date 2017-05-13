@@ -15,16 +15,15 @@
 from itertools import product
 from IPython import display as dsp
 
-from nbmolviz.base import MolViz2DBaseWidget
+from ..base import MolViz2DBaseWidget
 
 import moldesign as mdt
 from moldesign import utils
 import moldesign.units as u
 
-from . import toplevel, ColorMixin
+from . import ColorMixin
 
 
-@toplevel
 class ChemicalGraphViewer(MolViz2DBaseWidget, ColorMixin):
     """ Create a JSON-format graph representing the chemical structure and draw it using the
     NBMolViz 2D widget.
@@ -132,7 +131,6 @@ def _charge_str(q):
         return str(q)
 
 
-@toplevel
 class DistanceGraphViewer(ChemicalGraphViewer):
     """ Create a 2D graph that includes edges with 3D information. This gives a 2D chemical that
     shows contacts from 3D space.

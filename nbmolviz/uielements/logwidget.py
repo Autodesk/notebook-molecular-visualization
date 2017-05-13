@@ -12,17 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-
 from collections import OrderedDict
 
 import IPython.display
 import ipywidgets as ipy
-
 import moldesign as mdt
-from moldesign import utils
 
-from .. import widget_utils as wu
 from .components import StyledTab
+from .. import widget_utils as wu
 
 STANDARD = 25  # logging level between INFO and WARN
 

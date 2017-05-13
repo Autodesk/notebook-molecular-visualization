@@ -17,7 +17,7 @@ import collections
 import ipywidgets as ipy
 import yaml
 
-from ..uibase import UnitText, ReadOnlyRepr
+from .components import UnitText, ReadOnlyRepr
 from moldesign import utils
 from moldesign.utils import exports
 
