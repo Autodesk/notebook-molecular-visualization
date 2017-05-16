@@ -15,12 +15,18 @@ import numpy as np
 from StringIO import StringIO
 from traitlets import Bool, Dict, Float, List, Set, Unicode
 
-from ..utils import JSObject, translate_color
-from .widget3d import MolViz3DBaseWidget
+from ..utils import JSObject, translate_color, in_pixels
 from .mdt2json import convert as convert_to_json
+from .base_widget import MessageWidget
 
 
-class MolViz_3DMol(MolViz3DBaseWidget):
+class MolViz3D(MessageWidget):
+    """
+    Draws molecules in 3D with 3DMol.js
+    """
+    height = Unicode(sync=True)
+    width = Unicode(sync=True)
+
     _view_name = Unicode('MolWidget3DView').tag(sync=True)
     _model_name = Unicode('MolWidget3DModel').tag(sync=True)
     _view_module = Unicode('nbmolviz-js').tag(sync=True)
@@ -47,8 +53,26 @@ class MolViz_3DMol(MolViz3DBaseWidget):
                    'ribbon': 'cartoon',
                    None: None}
 
-    def __init__(self, *args, **kwargs):
-        super(MolViz_3DMol, self).__init__(*args, **kwargs)
+    STYLE_SYNONYMS = {'vdw': 'vdw', 'sphere': 'vdw', 'cpk': 'vdw',
+                      'licorice': 'licorice', 'stick': 'licorice', 'tube':'licorice',
+                      'ball_and_stick': 'ball_and_stick',
+                      'line': 'line',
+                      'cartoon': 'ribbon', 'ribbon': 'ribbon',
+                      None: None, 'hide': None, 'invisible': None, 'remove': None}
+
+    def __init__(self, mol=None, width=500, height=350, **kwargs):
+        kwargs.update(width=width, height=height)
+        super(MolViz3D, self).__init__(**kwargs)
+        self.height = in_pixels(height)
+        self.width = in_pixels(width)
+
+        # current state
+        self.num_frames = 1
+        self.current_frame = 0
+        self.current_orbital = None
+
+        # add the new molecule if necessary
+        if mol is not None: self.add_molecule(mol)
         self.current_orbital = None
         self.orbital_spec = {}
         self._cached_cubefiles= {}
@@ -76,9 +100,32 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         self.viewer('setSlab', [float(near), float(far)])
 
     def set_color(self, color, atoms):
-        self.styles = MolViz_3DMol.get_styles_for_color(
-                color, atoms, self.styles
-        )
+        self.styles = MolViz3D.get_styles_for_color(
+                color, atoms, self.styles)
+
+    #some convenience synonyms
+    def sphere(self, **kwargs):
+        return self.add_style('vdw', **kwargs)
+    vdw = cpk = sphere
+
+    def ball_and_stick(self, **kwargs):
+        return self.add_style('ball_and_stick', **kwargs)
+
+    def licorice(self, **kwargs):
+        return self.add_style('licorice', **kwargs)
+    stick = tube = licorice
+
+    def line(self, **kwargs):
+        return self.add_style('line', **kwargs)
+
+    def ribbon(self, **kwargs):
+        return self.add_style('cartoon', **kwargs)
+    cartoon = ribbon
+
+    def hide(self, atoms=None):
+        return self.add_style(None,atoms=atoms)
+    invisible = hide
+
 
     # Returns new styles after updating the given atoms with the given color
     @staticmethod
@@ -104,7 +151,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
         """
         styles = dict(self.styles)
         for color, atoms in colormap.iteritems():
-            styles = MolViz_3DMol.get_styles_for_color(color, atoms, styles)
+            styles = MolViz3D.get_styles_for_color(color, atoms, styles)
 
         self.styles = styles
 
@@ -113,7 +160,7 @@ class MolViz_3DMol(MolViz3DBaseWidget):
             atom_json = {}
         else:
             atom_json = self._atoms_to_json(atoms)
-        self.viewer('unsetAtomColor', [atom_json])
+        self.viewer('unsetAtomColor', [atom_json])  # TODO: remove calls to self.viewer
 
     def set_style(self, style, atoms=None, **options):
         self._change_style(style, atoms, True, options)

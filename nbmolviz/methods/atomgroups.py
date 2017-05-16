@@ -35,6 +35,7 @@ def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
         moldesign.ui.SelectionGroup
     """
     from ..widgets.components import AtomInspector
+    from ..widgets.selector import SelectionGroup
 
     viz2d = None
     if group.num_atoms < 40:
@@ -56,7 +57,7 @@ def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
             lambda selected_atom_indices: atom_inspector.indices_to_value(selected_atom_indices,
                                                                           group.atoms))
 
-    displayobj = uielements.SelectionGroup([views, atom_inspector])
+    displayobj = SelectionGroup([views, atom_inspector])
 
     if display:
         IPython.display.display(displayobj)

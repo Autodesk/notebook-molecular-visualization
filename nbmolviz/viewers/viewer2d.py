@@ -15,7 +15,7 @@
 from itertools import product
 from IPython import display as dsp
 
-from ..base import MolViz2DBaseWidget
+from ..base import MolViz2D
 
 import moldesign as mdt
 from moldesign import utils
@@ -24,7 +24,7 @@ import moldesign.units as u
 from . import ColorMixin
 
 
-class ChemicalGraphViewer(MolViz2DBaseWidget, ColorMixin):
+class ChemicalGraphViewer(MolViz2D, ColorMixin):
     """ Create a JSON-format graph representing the chemical structure and draw it using the
     NBMolViz 2D widget.
 

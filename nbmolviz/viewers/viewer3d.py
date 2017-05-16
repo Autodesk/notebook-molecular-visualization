@@ -21,13 +21,13 @@ from moldesign import units as u
 from moldesign import utils
 from moldesign.helpers import VolumetricGrid, colormap
 
-from ..base.drivers3d import MolViz_3DMol
+from ..base import MolViz3D
 from . import ColorMixin
 
 
 # Right now hard-coded to use 3DMol driver - will need to be configurable when there's more than one
 # In theory, the only tie to the specific driver should be the class that we inherit from
-class GeometryViewer(MolViz_3DMol, ColorMixin):
+class GeometryViewer(MolViz3D, ColorMixin):
     """
     Viewer for static and multiple-frame geometries
 
