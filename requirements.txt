@@ -1,10 +1,10 @@
+future
 ipywidgets >= 6.0
-ipython >= 4.2
-IPython >= 4.2
-moldesign >= 0.8
+ipython >= 5.0
+#moldesign >= 0.8b1
 notebook >= 4.2
+matplotlib >= 2.0
 numpy
 requests
-traitlets
 uuid
 webcolors

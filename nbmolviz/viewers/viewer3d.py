@@ -1,4 +1,4 @@
-# Copyright 2016 Autodesk Inc.
+# Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ import numpy as np
 import moldesign as mdt
 from moldesign import units as u
 from moldesign import utils
-from moldesign.helpers import VolumetricGrid, colormap
+from moldesign.helpers import VolumetricGrid
 
 from ..base import MolViz3D
 from . import ColorMixin
+from ..colormaps import colormap
 
 
 # Right now hard-coded to use 3DMol driver - will need to be configurable when there's more than one
