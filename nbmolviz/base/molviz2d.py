@@ -1,4 +1,4 @@
-# Copyright 2016 Autodesk Inc.
+# Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@ import uuid
 
 import traitlets
 from traitlets import Unicode
-from nbmolviz.base_widget import MessageWidget
-from nbmolviz.utils import translate_color
+from .base_widget import MessageWidget
+from ..utils import translate_color
 
 
-class MolViz2DBaseWidget(MessageWidget):
+class MolViz2D(MessageWidget):
     """
-    This is actually the D3.js graphics driver for the 2D base widget.
-    It should be refactored with an abstract base class if
-    there's a chance of adding another graphics driver.
+    Draws 2D molecular representations with D3.js
     """
     _view_name = Unicode('MolWidget2DView').tag(sync=True)
     _model_name = Unicode('MolWidget2DModel').tag(sync=True)
@@ -43,9 +41,10 @@ class MolViz2DBaseWidget(MessageWidget):
                  charge=-150,
                  width=400, height=350,
                  **kwargs):
-        super(MolViz2DBaseWidget, self).__init__(width=width,
-                                                 height=height,
-                                                 **kwargs)
+
+        kwargs.update(width=width, height=height)
+        super(MolViz2D, self).__init__(**kwargs)
+
         try:
             self.atoms = atoms.atoms
         except AttributeError:
@@ -58,6 +57,7 @@ class MolViz2DBaseWidget(MessageWidget):
         self.charge = charge
         self._clicks_enabled = False
         self.graph = self.to_graph(self.atoms)
+
 
     def to_graph(self, atoms):
         """Turn a set of atoms into a graph
@@ -150,21 +150,3 @@ class MolViz2DBaseWidget(MessageWidget):
         """
         for color, atoms in colormap.iteritems():
             self.set_color(atoms=atoms, color=color)
-
-
-class AlwaysBenzene(MolViz2DBaseWidget):
-    def to_graph(self, atoms):
-        self.atoms = range(12)
-        nodes = [{'atom': 'C', 'category': i, 'index': i}
-                 for i in xrange(6)]+ \
-                [{'atom': 'H', 'color': 'green', 'index': i+6}
-                 for i in xrange(6)]
-        links = [{'source': i, 'target': (i+1)%6,
-                  'bond': (i%2+1), 'category': i}
-                 for i in xrange(6)]+ \
-                [{'source': i, 'target': i+6,
-                  'bond': 1, 'color': 'blue'}
-                 for i in xrange(6)]
-        return dict(nodes=nodes, links=links)
-
-    def get_atom_index(self, atom): return atom

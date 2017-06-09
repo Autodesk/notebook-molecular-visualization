@@ -26,15 +26,16 @@ Intended Audience :: Developers
 Intended Audience :: Education
 License :: OSI Approved :: Apache Software License
 Programming Language :: Python :: 2.7
-Programming Language :: Python :: 2 :: Only
+Programming Language :: Python :: 2
+Programming Language :: Python :: 3.5
+Programming Language :: Python :: 3.6
+Programming Language :: Python :: 3
 Topic :: Scientific/Engineering :: Chemistry
 Topic :: Scientific/Engineering :: Visualization
 Operating System :: POSIX
 Operating System :: Unix
 Operating System :: MacOS
 """.splitlines()
-
-assert sys.version_info[:2] == (2, 7), "Sorry, this package requires Python 2.7."
 
 with open('requirements.txt', 'r') as reqfile:
     requirements = [x.strip() for x in reqfile if x.strip()]
@@ -59,6 +60,7 @@ npm_path = os.pathsep.join([
     os.path.join(node_root, 'node_modules', '.bin'),
     os.environ.get('PATH', os.defpath),
 ])
+
 
 def update_package_data(distribution):
     """update package_data to catch changes during setup"""

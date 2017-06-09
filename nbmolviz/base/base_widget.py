@@ -1,4 +1,4 @@
-# Copyright 2016 Autodesk Inc.
+# Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,29 +16,39 @@ from uuid import uuid4
 
 import ipywidgets as widgets
 import traitlets
-from nbmolviz.utils import Measure
+from ..utils import Measure, make_layout
 
 
 def _identity(x): return x
+
 
 class MessageWidget(widgets.DOMWidget):
     """A widget to send messages back and forth between the
     javascript and python interpreters"""
     viewerId = traitlets.Unicode(sync=True)
-    _width = traitlets.Unicode(sync=True)
-    _height = traitlets.Unicode(sync=True)
+    #_width = traitlets.Unicode(sync=True)
+    #_height = traitlets.Unicode(sync=True)
     _convert_units = _identity
 
-    def __init__(self, width=500, height=350, **kwargs):
-        super(MessageWidget, self).__init__(width=width, height=height, **kwargs)
+    def __init__(self, **kwargs):
+        layoutargs = {}
+        for kw in ('width', 'height'):
+            val = kwargs.pop(kw, None)
+            if val is not None:
+                layoutargs[kw] = val
+
+        layout = make_layout(layout=kwargs.get('layout', None), **layoutargs)
+        kwargs['layout'] = layout
+
+        super(MessageWidget, self).__init__(**kwargs)
         self.viewer_ready = False
         self.js_events = {}
         self.message_queue = []
         self.js_event_handlers = {'ready':self._handle_viewer_ready,
                                   'function_done':self._handle_function_done}
         self.messages_received = []
-        self._width = str(Measure(width))
-        self._height = str(Measure(height))
+        #self._width = str(Measure(kwargs.get('width', 'null')))
+        #self._height = str(Measure(kwargs.get('height', 'null')))
         self.sent_messages = []
         self.num_calls = 0
         self.viewerId = 'molviz'+str(uuid4())
