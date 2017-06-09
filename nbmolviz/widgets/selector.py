@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # TODO: catch and log event exceptions
+from __future__ import print_function
 import ipywidgets as ipy
 
 from moldesign import utils
@@ -126,7 +127,7 @@ class ValueSelector(Selector):
             if self.value_selects in selection:
                 self.value = selection[self.value_selects]
         except Exception as exc:
-            print 'ERROR: (ignored) %s' % exc
+            print('ERROR: (ignored) %s' % exc)
         self.__hold_fire = False
 
 

@@ -25,7 +25,7 @@ nbmolviz.visualize(benzene)
 
 
 ## Dev install
-Requires npm.
+Requires npm. (Can get through `conda install -c conda-forge nodejs`)
 
     $ git clone https://github.com/autodesk/notebook-molecular-visualization.git
     $ cd notebook-molecular-visualization

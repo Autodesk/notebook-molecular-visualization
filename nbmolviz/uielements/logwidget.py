@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import print_function
 import logging
 from collections import OrderedDict
 
@@ -47,7 +48,7 @@ def display_log(obj, title=None, show=False):
     """
 
     if not widgets_enabled:
-        print obj
+        print(obj)
         return
 
     if _current_tabs is None:  # just display the damn thing
@@ -178,7 +179,7 @@ class Logger(ipy.Textarea if widgets_enabled else object):
                 self.active = True
             self.value += string.strip() + '\n'
         else:
-            print string.strip()
+            print(string.strip())
 
     # temporary so that we can use this like a logging module later
     error = warning = info = handled = debug = status = _write
@@ -193,7 +194,7 @@ def _capture_logging_displays(display=False, **kwargs):
     else:
         _current_tabs = None
         enable_logging_widgets(False)
-        print 'Failed to create UI logging system. Logging widgets disabled'
+        print('Failed to create UI logging system. Logging widgets disabled')
 
 
 def _finalize_logging_displays(display=True, **kwargs):

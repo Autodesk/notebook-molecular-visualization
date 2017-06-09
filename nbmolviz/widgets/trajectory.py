@@ -76,7 +76,7 @@ class TrajectoryViewer(selector.SelectionGroup):
         fps = mdt.utils.if_not_none(fps, self.default_fps)
         self.slider.value = 0
         spf = 1.0 / fps
-        for i in xrange(self.viewer.num_frames):
+        for i in range(self.viewer.num_frames):
             t0 = time.time()
             self.slider.value = i
             dt = time.time() - t0

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import print_function
 import sys
 
 import IPython.display as dsp
@@ -142,7 +143,7 @@ class GeometryViewer(MolViz3D, ColorMixin):
     @utils.doc_inherit
     def set_colors(self, colormap, _store=True):
         if _store:
-            for color, atoms in colormap.iteritems():
+            for color, atoms in colormap.items():
                 for atom in atoms:
                     self._colored_as[atom] = color
         return super(GeometryViewer, self).set_colors(colormap)
@@ -247,8 +248,8 @@ class GeometryViewer(MolViz3D, ColorMixin):
             scale = (lengths.max() / rescale_to)  # units of [vec units] / angstrom
             if hasattr(scale,'defunits'): scale = scale.defunits()
             arrowvecs = vecarray / scale
-            print 'Arrow scale: {q:.3f} {unit} per {native}'.format(q=scale, unit=unit,
-                                                                    native=self.DISTANCE_UNITS)
+            print('Arrow scale: {q:.3f} {unit} per {native}'.format(q=scale, unit=unit,
+                                                                    native=self.DISTANCE_UNITS))
         shapes = []
         for atom, vecarray in zip(self.mol.atoms, arrowvecs):
             if vecarray.norm() < 0.2: continue

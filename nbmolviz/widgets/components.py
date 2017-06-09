@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import print_function
 import collections
 
 import ipywidgets as ipy
@@ -35,9 +36,10 @@ class AtomInspector(ipy.HTML, Selector):
     Turn atom objects into a value to display
     """
     def atoms_to_value(self, atoms):
-        if len(atoms) == 0:
+        natom = len(list(atoms))
+        if natom == 0:
             return 'No selection'
-        elif len(atoms) == 1:
+        elif natom == 1:
             atom = atoms[0]
             res = atom.residue
             chain = res.chain
@@ -49,7 +51,7 @@ class AtomInspector(ipy.HTML, Selector):
             lines.append("<b>Atom</b> %s (%s), index %d<br>" % (atom.name, atom.symbol, atom.index))
             return '\n'.join(lines)
 
-        elif len(atoms) > 1:
+        elif natom > 1:
             atstrings = ['<b>%s</b>, index %s / res <b>%s</b>, index %s / chain <b>%s</b>' %
                          (a.name, a.index, a.residue.resname, a.residue.index, a.chain.name)
                          for a in atoms]
@@ -170,7 +172,7 @@ class ReadoutFloatSlider(ipy.Box):
             match = utils.GETFLOAT.search(s)
             if match is None:
                 self.readout.value = self.formatstring.format(self.slider.value)
-                print "Couldn't parse string %s" % s
+                print("Couldn't parse string %s" % s)
                 return
             else:
                 f = float(s[match.start():match.end()])

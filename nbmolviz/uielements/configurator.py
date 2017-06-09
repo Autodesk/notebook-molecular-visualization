@@ -71,7 +71,7 @@ class Configurator(ipy.Box):
 
     def reset_values(self, *args):
         reset_params = set()
-        for name, value in self.paramlist.iteritems():
+        for name, value in self.paramlist.items():
             if value is not None:
                 self.selectors[name].selector.value = value
             reset_params.add(name)
@@ -82,7 +82,7 @@ class Configurator(ipy.Box):
         self.show_relevant_fields()
 
     def apply_values(self, *args):
-        for paramname, selector in self.selectors.iteritems():
+        for paramname, selector in self.selectors.items():
             self.paramlist[paramname] = selector.selector.value
         self.currentconfig.value = self._pretty_print_config()
         self.show_relevant_fields()
@@ -91,7 +91,7 @@ class Configurator(ipy.Box):
         def cleanse(v):
             if isinstance(v, (float,int)): return v
             else: return str(v)
-        return yaml.dump({k: cleanse(v) for k, v in self.paramlist.iteritems()},
+        return yaml.dump({k: cleanse(v) for k, v in self.paramlist.items()},
                          default_flow_style=False)
 
     def show_relevant_fields(self):

@@ -35,8 +35,12 @@ atomic_numbers = {'Ac': 89, 'Ag': 47, 'Al': 13, 'Am': 95, 'Ar': 18, 'As': 33, 'A
                   'Uuh': 116, 'Uuo': 118, 'Uup': 115, 'Uuq': 114, 'Uus': 117, 'Uut': 113, 'V': 23,
                   'W': 74, 'Xe': 54, 'Y': 39, 'Yb': 70, 'Zn': 30, 'Zr': 40}
 
-elements = {atnum:el for el,atnum in atomic_numbers.iteritems()}
+elements = {atnum:el for el,atnum in atomic_numbers.items()}
 
+try:
+    basestring
+except NameError:
+    basestring = str
 
 def make_layout(layout=None, **kwargs):
     from ipywidgets import Layout
@@ -44,7 +48,7 @@ def make_layout(layout=None, **kwargs):
 
     if layout is None:
         layout = Layout()
-    for key, val in kwargs.iteritems():
+    for key, val in kwargs.items():
         # note that this is the type of the class descriptor, not the instance attribute
         if isinstance(getattr(Layout, key), traitlets.Unicode):
             val = in_pixels(val)

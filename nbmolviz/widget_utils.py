@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 
 def can_use_widgets():
@@ -19,7 +20,7 @@ def can_use_widgets():
         return False
 
     if int(ipy.__version__.split('.')[0]) < 6:
-        print 'WARNING: widgets require ipywidgets 6.0 or later'
+        print('WARNING: widgets require ipywidgets 6.0 or later')
         return False
 
     return True

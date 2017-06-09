@@ -148,5 +148,5 @@ class MolViz2D(MessageWidget):
         Args:
          colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
-        for color, atoms in colormap.iteritems():
+        for color, atoms in colormap.items():
             self.set_color(atoms=atoms, color=color)
