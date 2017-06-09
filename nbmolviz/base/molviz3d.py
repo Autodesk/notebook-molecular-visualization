@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 from traitlets import Bool, Dict, Float, List, Set, Unicode
 
 from ..utils import JSObject, translate_color, in_pixels
@@ -150,7 +153,7 @@ class MolViz3D(MessageWidget):
          colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
         styles = dict(self.styles)
-        for color, atoms in colormap.iteritems():
+        for color, atoms in colormap.items():
             styles = MolViz3D.get_styles_for_color(color, atoms, styles)
 
         self.styles = styles
@@ -490,9 +493,9 @@ class MolViz3D(MessageWidget):
         print >> fobj, 1, 1
         # finally, write out all the grid values
         # ival = 0
-        for ix in xrange(grid.npoints):
-            for iy in xrange(grid.npoints):
-                for iz in xrange(grid.npoints):
+        for ix in range(grid.npoints):
+            for iy in range(grid.npoints):
+                for iz in range(grid.npoints):
                     print >> fobj, grid.fxyz[ix, iy, iz],
                     # ival += 1
                     # if ival%6 == 0: print >> fobj #newline

@@ -88,7 +88,7 @@ class ChemicalGraphViewer(MolViz2D, ColorMixin):
                 nodes[-1].update({'atom': '',
                                   'size': 0.5,
                                   'color': 'darkgray'})
-            for neighbor, order in atom1.bond_graph.iteritems():
+            for neighbor, order in atom1.bond_graph.items():
                 if neighbor not in self.atom_indices: continue
                 nbr_idx = self.atom_indices[neighbor]
                 if nbr_idx < i1:
@@ -178,7 +178,7 @@ class DistanceGraphViewer(ChemicalGraphViewer):
 
         # Add distance restraints for non-bonded atoms
         for i1, atom1 in enumerate(atoms):
-            for i2 in xrange(i1 + 1, len(atoms)):
+            for i2 in range(i1 + 1, len(atoms)):
                 atom2 = atoms[i2]
                 if atom1 in atom2.bond_graph: continue
 

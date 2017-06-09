@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import print_function
 import os as _os
 
 MDTVERSION = '0.8.0'
@@ -49,9 +50,9 @@ def _enable_nbextension():
     try:
         import notebook
         if not notebook.nbextensions.check_nbextension('nbmolviz-js'):
-            print 'Installing Jupyter nbmolviz-js extension...',
+            print('Installing Jupyter nbmolviz-js extension...', end='')
             notebook.nbextensions.install_nbextension_python('nbmolviz')
-            print 'done'
+            print('done')
         notebook.nbextensions.enable_nbextension_python('widgetsnbextension')
         notebook.nbextensions.enable_nbextension_python('nbmolviz')
     except Exception as e:
