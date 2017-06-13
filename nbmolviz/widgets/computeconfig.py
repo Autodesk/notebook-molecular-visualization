@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import, division
 from future.builtins import *
 from future import standard_library
-
 standard_library.install_aliases()
 
 # Copyright 2017 Autodesk Inc.
@@ -27,29 +26,27 @@ import ipywidgets as ipy
 from pip._vendor.packaging import version
 
 import moldesign as mdt
-from moldesign import compute, uibase
+from moldesign import compute
 
-from . import toplevel
-from . import __all__ as __packageall
+from ..uielements import StyledTab
+from ..widget_utils import process_widget_kwargs
 
-
-@toplevel
 def configure():
     from IPython.display import display
     display(MDTConfig())
 
 # Some synonyms
 about = configure
-__packageall.append('about')
 
 
 class MDTConfig(ipy.Box):
     def __init__(self):
-        super(MDTConfig, self).__init__(display='flex', flex_flow='column')
+        super(MDTConfig, self).__init__(
+                **process_widget_kwargs({'display':'flex', 'flex_flow':'column'}))
 
         self.compute_config = ComputeConfig()
         self.changelog = ChangeLog()
-        self.tab_list = uibase.StyledTab([ipy.Box(), self.compute_config, self.changelog])
+        self.tab_list = StyledTab([ipy.Box(), self.compute_config, self.changelog])
         self.tab_list.set_title(0, '^')
         self.tab_list.set_title(1, 'Compute configuration')
         self.tab_list.set_title(2, "What's new")
@@ -58,7 +55,7 @@ class MDTConfig(ipy.Box):
 
     def make_header(self):
         img = io.open(os.path.join(mdt.PACKAGEPATH, '_static_data/img/banner.png'), 'r+b').read()
-        encoded = base64.b64encode(img)
+        encoded = base64.b64encode(img).decode('ascii')
         img = '<img style="max-width:100%" src=data:image/png;base64,'+('%s>'%encoded)
         links = [self._makelink(*args) for args in
                    (("http://moldesign.bionano.autodesk.com/", 'About'),
@@ -82,7 +79,8 @@ class MDTConfig(ipy.Box):
 
 class ChangeLog(ipy.Box):
     def __init__(self):
-        super(ChangeLog, self).__init__(orientation='vertical')
+        super(ChangeLog, self).__init__(**process_widget_kwargs(
+                dict(display='flex', flex_flow='column')))
         try:
             current = version.parse(mdt.__version__)
             latest = self.version_check()
@@ -124,18 +122,19 @@ class ChangeLog(ipy.Box):
         References:
             http://code.activestate.com/recipes/577708-check-for-package-updates-on-pypi-works-best-in-pi/
         """
-        import xmlrpclib
-        pypi = xmlrpclib.ServerProxy('https://pypi.python.org/pypi')
-        return pypi.package_releases('moldesign')
+        import xmlrpc.client
+        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+        return version.parse(pypi.package_releases('moldesign')[0])
 
 
 class ComputeConfig(ipy.Box):
     def __init__(self):
-        super(ComputeConfig, self).__init__(display='flex', flex_flow='column')
+        super(ComputeConfig, self).__init__(**process_widget_kwargs(
+                dict(display='flex', flex_flow='column')))
 
         self.engine_dropdown = ipy.Dropdown(description='Compute engine',
                                             options=ENGINE_DISPLAY,
-                                            value=ENGINES.keys()[0],
+                                            value=next(iter(ENGINES)),
                                             height='30px')
         self.engine_dropdown.observe(self.update_engine_display)
 
@@ -201,7 +200,7 @@ class ComputeConfig(ipy.Box):
         if engine is None:
             raise ValueError('Failed to create compute engine with current configuration')
         engine.test_connection()
-        print "SUCCESS: %s is accepting jobs" % engine
+        print("SUCCESS: %s is accepting jobs" % engine)
 
     def save_config(self, *args):
         compute.write_config()
@@ -209,7 +208,8 @@ class ComputeConfig(ipy.Box):
 
 class RegistryConfig(ipy.Box):
     def __init__(self):
-        super(RegistryConfig, self).__init__(display='flex', flex_flow='column')
+        super(RegistryConfig, self).__init__(**process_widget_kwargs(dict(
+                display='flex', flex_flow='column')))
         self.repo_field = ipy.Text(description='Image repository')
         self.version_field = ipy.Text(description='Image version')
 
@@ -270,4 +270,4 @@ _enginedefs = (
 )
 
 ENGINES = collections.OrderedDict(_enginedefs)
-ENGINE_DISPLAY = collections.OrderedDict((v['displayname'],k) for k,v in ENGINES.iteritems())
+ENGINE_DISPLAY = collections.OrderedDict((v['displayname'],k) for k,v in ENGINES.items())
