@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,9 +50,9 @@ def _enable_nbextension():
     try:
         import notebook
         if not notebook.nbextensions.check_nbextension('nbmolviz-js'):
-            print 'Installing Jupyter nbmolviz-js extension...',
+            print('Installing Jupyter nbmolviz-js extension...', end=' ')
             notebook.nbextensions.install_nbextension_python('nbmolviz')
-            print 'done'
+            print('done')
         notebook.nbextensions.enable_nbextension_python('widgetsnbextension')
         notebook.nbextensions.enable_nbextension_python('nbmolviz')
     except Exception as e:

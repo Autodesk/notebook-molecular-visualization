@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from builtins import str
 import collections
 
 import ipywidgets as ipy
@@ -66,12 +67,12 @@ class Configurator(ipy.Box):
                                           layout=ipy.Layout(width='350px', min_height='300px',
                                                             max_height='500px',
                                                             display='flex', flex_flow='column'))
-        self.middle = ipy.HBox([ipy.VBox(self.selectors.values()), self.currentconfig])
+        self.middle = ipy.HBox([ipy.VBox(list(self.selectors.values())), self.currentconfig])
         self.children = [self.title, self.middle, self.buttons]
 
     def reset_values(self, *args):
         reset_params = set()
-        for name, value in self.paramlist.iteritems():
+        for name, value in self.paramlist.items():
             if value is not None:
                 self.selectors[name].selector.value = value
             reset_params.add(name)
@@ -82,7 +83,7 @@ class Configurator(ipy.Box):
         self.show_relevant_fields()
 
     def apply_values(self, *args):
-        for paramname, selector in self.selectors.iteritems():
+        for paramname, selector in self.selectors.items():
             self.paramlist[paramname] = selector.selector.value
         self.currentconfig.value = self._pretty_print_config()
         self.show_relevant_fields()
@@ -91,11 +92,11 @@ class Configurator(ipy.Box):
         def cleanse(v):
             if isinstance(v, (float,int)): return v
             else: return str(v)
-        return yaml.dump({k: cleanse(v) for k, v in self.paramlist.iteritems()},
+        return yaml.dump({k: cleanse(v) for k, v in self.paramlist.items()},
                          default_flow_style=False)
 
     def show_relevant_fields(self):
-        for s in self.selectors.itervalues():
+        for s in self.selectors.values():
             if s.paramdef.relevance is not None:
                 if s.paramdef.relevance(self.paramlist):
                     s.layout.visibility = 'visible'

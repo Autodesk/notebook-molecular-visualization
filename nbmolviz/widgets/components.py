@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +29,7 @@ class AtomInspector(ipy.HTML, Selector):
     Turn atom indices into a value to display
     """
     def indices_to_value(self, atom_indices, atoms):
-        indicated_atoms = map(lambda index: atoms[index], atom_indices)
+        indicated_atoms = [atoms[index] for index in atom_indices]
         return self.atoms_to_value(indicated_atoms)
 
     """
@@ -170,7 +171,7 @@ class ReadoutFloatSlider(ipy.Box):
             match = utils.GETFLOAT.search(s)
             if match is None:
                 self.readout.value = self.formatstring.format(self.slider.value)
-                print "Couldn't parse string %s" % s
+                print("Couldn't parse string %s" % s)
                 return
             else:
                 f = float(s[match.start():match.end()])

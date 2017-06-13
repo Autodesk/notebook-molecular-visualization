@@ -1,7 +1,7 @@
 future
 ipywidgets >= 6.0
 ipython >= 5.0
-#moldesign >= 0.8b1
+moldesign >= 0.8a2
 notebook >= 4.2
 matplotlib >= 2.0
 numpy

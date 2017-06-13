@@ -1,3 +1,4 @@
+from __future__ import division
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,6 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from builtins import zip
+from builtins import str
+from past.builtins import basestring
+from past.utils import old_div
+from builtins import object
 import uuid
 import numpy as np
 
@@ -35,7 +41,7 @@ atomic_numbers = {'Ac': 89, 'Ag': 47, 'Al': 13, 'Am': 95, 'Ar': 18, 'As': 33, 'A
                   'Uuh': 116, 'Uuo': 118, 'Uup': 115, 'Uuq': 114, 'Uus': 117, 'Uut': 113, 'V': 23,
                   'W': 74, 'Xe': 54, 'Y': 39, 'Yb': 70, 'Zn': 30, 'Zr': 40}
 
-elements = {atnum:el for el,atnum in atomic_numbers.iteritems()}
+elements = {atnum:el for el,atnum in atomic_numbers.items()}
 
 
 def make_layout(layout=None, **kwargs):
@@ -44,7 +50,7 @@ def make_layout(layout=None, **kwargs):
 
     if layout is None:
         layout = Layout()
-    for key, val in kwargs.iteritems():
+    for key, val in kwargs.items():
         # note that this is the type of the class descriptor, not the instance attribute
         if isinstance(getattr(Layout, key), traitlets.Unicode):
             val = in_pixels(val)
@@ -65,7 +71,7 @@ def translate_color(color, prefix='0x'):
     """
     formatter = prefix + '{:06x}'
 
-    if issubclass(type(color), basestring):
+    if isinstance(color, basestring):
         if color.lower() in webcolors.css3_names_to_hex:
             color = webcolors.css3_names_to_hex[color.lower()]
 
@@ -151,9 +157,9 @@ class VolumetricGrid(object):
     def make_grid(self,npoints):
         self.npoints = npoints
         self.fxyz = np.zeros((npoints,npoints,npoints))
-        self.dx = (self.xr[1]-self.xr[0]) / (float(npoints)-1)
-        self.dy = (self.yr[1]-self.yr[0]) / (float(npoints)-1)
-        self.dz = (self.zr[1]-self.zr[0]) / (float(npoints)-1)
+        self.dx = old_div((self.xr[1]-self.xr[0]), (float(npoints)-1))
+        self.dy = old_div((self.yr[1]-self.yr[0]), (float(npoints)-1))
+        self.dz = old_div((self.zr[1]-self.zr[0]), (float(npoints)-1))
 
 try:
     import pyquante2
@@ -222,7 +228,7 @@ class Measure(object):
     __rmul__ = __mul__
 
     def __div__(self,other):
-        newnumber = int( float(self.number) / other)
+        newnumber = int( old_div(float(self.number), other))
         return Measure( '%d%s'%(newnumber,self.unit))
 
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from builtins import str
 import collections
 
 import ipywidgets as ipy
@@ -45,10 +46,10 @@ class OrbitalUIPane(Selector, ipy.Box):
         self.viz = viz
         kwargs.setdefault('width', '325px')
 
-        self.type_dropdown = ipy.Dropdown(options=self.viz.viewer.wfn.orbitals.keys())
+        self.type_dropdown = ipy.Dropdown(options=list(self.viz.viewer.wfn.orbitals.keys()))
         initial_orb = 'canonical'
         if initial_orb not in self.type_dropdown.options:
-            initial_orb = self.type_dropdown.options.iterkeys().next()
+            initial_orb = next(iter(self.type_dropdown.options.keys()))
         self.type_dropdown.value = initial_orb
         self.type_dropdown.observe(self.new_orb_type, 'value')
 

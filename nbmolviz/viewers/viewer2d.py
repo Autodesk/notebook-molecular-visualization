@@ -1,3 +1,4 @@
+from __future__ import division
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 from itertools import product
 from IPython import display as dsp
 
@@ -88,7 +92,7 @@ class ChemicalGraphViewer(MolViz2D, ColorMixin):
                 nodes[-1].update({'atom': '',
                                   'size': 0.5,
                                   'color': 'darkgray'})
-            for neighbor, order in atom1.bond_graph.iteritems():
+            for neighbor, order in atom1.bond_graph.items():
                 if neighbor not in self.atom_indices: continue
                 nbr_idx = self.atom_indices[neighbor]
                 if nbr_idx < i1:
@@ -178,7 +182,7 @@ class DistanceGraphViewer(ChemicalGraphViewer):
 
         # Add distance restraints for non-bonded atoms
         for i1, atom1 in enumerate(atoms):
-            for i2 in xrange(i1 + 1, len(atoms)):
+            for i2 in range(i1 + 1, len(atoms)):
                 atom2 = atoms[i2]
                 if atom1 in atom2.bond_graph: continue
 
@@ -186,7 +190,7 @@ class DistanceGraphViewer(ChemicalGraphViewer):
                 if distance > self.dmax: continue
 
                 strength = self.nonbond_strength * min(
-                    float((1.0 - (distance - self.dmin) / self.drange) ** 2),
+                    float((1.0 - old_div((distance - self.dmin), self.drange)) ** 2),
                     1.0)
 
                 if strength < self.minimum_bond_strength: continue

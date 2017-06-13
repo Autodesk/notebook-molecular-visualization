@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from builtins import str
 import threading
 from uuid import uuid4
 
@@ -108,7 +109,7 @@ class MessageWidget(widgets.DOMWidget):
             handler = self.js_event_handlers[event]
         except KeyError:
             errmsg = ("No handler found for JS event %s\n"%event +
-                      "Handlers: %s\n"%str(self.js_event_handlers.keys()) +
+                      "Handlers: %s\n"%str(list(self.js_event_handlers.keys())) +
                       "Message: %s\n"%content)
             raise KeyError(errmsg)
         else:

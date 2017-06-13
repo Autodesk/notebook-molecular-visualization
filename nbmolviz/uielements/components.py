@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from builtins import str
 import ipywidgets as ipy
 from ..widget_utils import process_widget_kwargs
 

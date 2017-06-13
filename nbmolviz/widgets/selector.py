@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # TODO: catch and log event exceptions
+from builtins import object
 import ipywidgets as ipy
 
 from moldesign import utils
@@ -70,9 +72,9 @@ class SelectionGroup(ipy.Box):
             listeners = [element]
             element.selection_group = self
             element.selection_id = self.num_listeners
-            if issubclass(element.__class__, viewers.GeometryViewer):
+            if isinstance(element, viewers.GeometryViewer):
                 self.viewer = element
-            if issubclass(element.__class__, viewers.ChemicalGraphViewer):
+            if isinstance(element, viewers.ChemicalGraphViewer):
                 self.graphviewer = element
         else:
             listeners = []
@@ -103,8 +105,10 @@ class SelectionGroup(ipy.Box):
         if self.viewer: self.viewer.unset_color(*args, **kwargs)
 
     def __getattr__(self, item):
-        if self.viewer is not None: return getattr(self.viewer, item)
-        else: raise AttributeError(item)
+        if item != 'viewer' and self.viewer is not None:
+            return getattr(self.viewer, item)
+        else:
+            raise AttributeError(item)
 
 
 class ValueSelector(Selector):
@@ -126,7 +130,7 @@ class ValueSelector(Selector):
             if self.value_selects in selection:
                 self.value = selection[self.value_selects]
         except Exception as exc:
-            print 'ERROR: (ignored) %s' % exc
+            print('ERROR: (ignored) %s' % exc)
         self.__hold_fire = False
 
 
