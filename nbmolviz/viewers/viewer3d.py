@@ -14,8 +14,6 @@ from __future__ import print_function
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from builtins import zip
-from past.utils import old_div
-import sys
 
 import IPython.display as dsp
 import numpy as np
@@ -23,7 +21,7 @@ import numpy as np
 import moldesign as mdt
 from moldesign import units as u
 from moldesign import utils
-from moldesign.helpers import padded_grid
+from moldesign.mathutils import padded_grid
 
 from ..base import MolViz3D
 from . import ColorMixin
@@ -233,12 +231,13 @@ class GeometryViewer(MolViz3D, ColorMixin):
 
         # strip units and scale the vectors appropriately
         if scale_factor is not None:  # scale all arrows by this quantity
-            if (old_div(u.get_units(vecs),scale_factor)).dimensionless:  # allow implicit scale factor
-                scale_factor = old_div(scale_factor, self.DISTANCE_UNITS)
+            if (u.get_units(vecs)/scale_factor).dimensionless:  # allow implicit scale factor
+                scale_factor = scale_factor / self.DISTANCE_UNITS
 
-            vecarray = old_div(vecs, scale_factor)
+            vecarray = vecs / scale_factor
             try: arrowvecs = vecarray.value_in(self.DISTANCE_UNITS)
-            except AttributeError: arrowvecs = vecarray
+            except AttributeError:
+                arrowvecs = vecarray
 
         else:  # rescale the maximum length arrow length to rescale_to
             try:
@@ -248,9 +247,10 @@ class GeometryViewer(MolViz3D, ColorMixin):
                 vecarray = vecs
                 unit = ''
             lengths = np.sqrt((vecarray * vecarray).sum(axis=1))
-            scale = (old_div(lengths.max(), rescale_to))  # units of [vec units] / angstrom
-            if hasattr(scale,'defunits'): scale = scale.defunits()
-            arrowvecs = old_div(vecarray, scale)
+            scale = (lengths.max() / rescale_to)  # units of [vec units] / angstrom
+            if hasattr(scale,'defunits'):
+                scale = scale.defunits()
+            arrowvecs = vecarray / scale
             print('Arrow scale: {q:.3f} {unit} per {native}'.format(q=scale, unit=unit,
                                                                     native=self.DISTANCE_UNITS))
         shapes = []

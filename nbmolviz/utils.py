@@ -18,7 +18,6 @@ from past.builtins import basestring
 from past.utils import old_div
 from builtins import object
 import uuid
-import numpy as np
 
 import webcolors
 

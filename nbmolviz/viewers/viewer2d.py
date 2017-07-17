@@ -150,7 +150,7 @@ class DistanceGraphViewer(ChemicalGraphViewer):
         charge (int): the force-directed layout repulsive "charge"
     """
     def __init__(self, atoms,
-                 distance_sensitivity=(3.0 * u.ang, 7.0 * u.ang),
+                 distance_sensitivity=(3.0 * u.angstrom, 7.0 * u.angstrom),
                  bond_edge_weight=1.0,
                  minimum_edge_weight=0.2,
                  nonbond_weight_factor=0.66,
@@ -221,8 +221,8 @@ class DistanceGraphViewer(ChemicalGraphViewer):
                                         text='%.1f ang'%dst.value_in('angstrom'),size=8)
 
 
-def make_contact_view(entity, view_radius=5.0*u.ang,
-                      contact_radius=2.25*u.ang,
+def make_contact_view(entity, view_radius=5.0*u.angstrom,
+                      contact_radius=2.25*u.angstrom,
                       angstrom_to_px=44.0,
                       **kwargs):
     """
