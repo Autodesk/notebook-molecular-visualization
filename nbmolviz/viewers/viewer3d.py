@@ -23,7 +23,7 @@ import numpy as np
 import moldesign as mdt
 from moldesign import units as u
 from moldesign import utils
-from moldesign.helpers import VolumetricGrid
+from moldesign.helpers import padded_grid
 
 from ..base import MolViz3D
 from . import ColorMixin
@@ -136,14 +136,14 @@ class GeometryViewer(MolViz3D, ColorMixin):
         atomsel = {'index': idxes}
         return atomsel
 
-    @utils.doc_inherit
+    #@utils.doc_inherit
     def set_color(self, color, atoms=None, _store=True):
         if _store:
             for atom in utils.if_not_none(atoms, self.mol.atoms):
                 self._colored_as[atom] = color
         return super(GeometryViewer, self).set_color(color, atoms=atoms)
 
-    @utils.doc_inherit
+    #@utils.doc_inherit
     def set_colors(self, colormap, _store=True):
         if _store:
             for color, atoms in colormap.items():
@@ -151,7 +151,7 @@ class GeometryViewer(MolViz3D, ColorMixin):
                     self._colored_as[atom] = color
         return super(GeometryViewer, self).set_colors(colormap)
 
-    @utils.doc_inherit
+    #@utils.doc_inherit
     def unset_color(self, atoms=None, _store=True):
         if _store:
             for atom in utils.if_not_none(atoms, self.mol.atoms):
@@ -202,9 +202,9 @@ class GeometryViewer(MolViz3D, ColorMixin):
         # self.wfn should already be set to the wfn for the current frame
         orbital = self.wfns[framenum].orbitals[orbtype][orbidx]
         positions = self._frame_positions[framenum]*u.angstrom
-        grid = VolumetricGrid(positions,
-                              padding=self.DEF_PADDING,
-                              npoints=npts)
+        grid = padded_grid(positions,
+                           padding=self.DEF_PADDING,
+                           npoints=npts)
         coords = grid.xyzlist().reshape(3, grid.npoints ** 3).T
         values = orbital(coords)
         grid.fxyz = values.reshape(npts, npts, npts)
@@ -326,7 +326,7 @@ class GeometryViewer(MolViz3D, ColorMixin):
         self.wfns.append(wfn)
         self.show_frame(self.num_frames - 1)
 
-    @utils.doc_inherit
+    #@utils.doc_inherit
     def show_frame(self, framenum, _fire_event=True, update_orbitals=True):
         # override base method - we'll handle frames using self.set_positions
         # instead of any built-in handlers

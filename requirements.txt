@@ -6,5 +6,4 @@ notebook >= 4.2
 matplotlib >= 2.0
 numpy
 requests
-uuid
 webcolors

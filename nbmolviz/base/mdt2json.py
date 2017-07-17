@@ -21,7 +21,7 @@ def convert(mol):
     js['atoms'] = [{'serial': i,
                     'name': atom.name,
                     'elem': atom.elem,
-                    'mass_magnitude': atom.mass.value_in(u.amu),
+                    'mass_magnitude': float(atom.mass.value_in(u.amu)),
                     'residue_index': atom.residue.index,
                     'residue_name': atom.residue.name,
                     'chain': atom.chain.name,
