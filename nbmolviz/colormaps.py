@@ -1,4 +1,5 @@
 from __future__ import print_function, absolute_import, division
+from builtins import map
 from future.builtins import *
 from future import standard_library
 standard_library.install_aliases()
@@ -71,7 +72,7 @@ def colormap(cats, mplmap='auto', categorical=None):
         if mplmap == 'auto':
             mplmap = DEF_CATEGORICAL
     else:
-        values = np.array(map(float, cats))
+        values = np.array(list(map(float, cats)))
         if mplmap == 'auto':
             mplmap = DEF_SEQUENTIAL
 
@@ -100,7 +101,7 @@ def _cmap_to_rgb(mplmap, values):
     rgba = cmap(cat_values)  # array of RGBA values in range [0.0, 1.0]
 
     # strip alpha field and rescale to [0,255] RGB integers
-    rgb = [map(int, c[:3]*256.0) for c in rgba]
+    rgb = [list(map(int, c[:3]*256.0)) for c in rgba]
     return rgb
 
 

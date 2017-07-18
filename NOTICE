@@ -20,8 +20,7 @@ License file: js/node_modules/nbmolviz2d/node_modules/d3/LICENSE
 ---------------------
 PyQuante2 is copyright (c) 2013 PyQuante Development Team
 Source file: nbmolviz/utils.py
-Description: The bbox function and CCLibBasis class contain modified code
-    from PyQuante2
+Description: The CCLibBasis class contains modified code from PyQuante2
 License:
 
 Copyright (c) 2013 PyQuante Development Team

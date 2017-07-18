@@ -1,3 +1,5 @@
+from __future__ import division
+from __future__ import print_function
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from builtins import zip
 
 import IPython.display as dsp
 import numpy as np
@@ -19,7 +21,6 @@ import numpy as np
 import moldesign as mdt
 from moldesign import units as u
 from moldesign import utils
-from moldesign.helpers import VolumetricGrid
 
 from ..base import MolViz3D
 from . import ColorMixin
@@ -132,22 +133,22 @@ class GeometryViewer(MolViz3D, ColorMixin):
         atomsel = {'index': idxes}
         return atomsel
 
-    @utils.doc_inherit
+    #@utils.doc_inherit
     def set_color(self, color, atoms=None, _store=True):
         if _store:
             for atom in utils.if_not_none(atoms, self.mol.atoms):
                 self._colored_as[atom] = color
         return super(GeometryViewer, self).set_color(color, atoms=atoms)
 
-    @utils.doc_inherit
+    #@utils.doc_inherit
     def set_colors(self, colormap, _store=True):
         if _store:
-            for color, atoms in colormap.iteritems():
+            for color, atoms in colormap.items():
                 for atom in atoms:
                     self._colored_as[atom] = color
         return super(GeometryViewer, self).set_colors(colormap)
 
-    @utils.doc_inherit
+    #@utils.doc_inherit
     def unset_color(self, atoms=None, _store=True):
         if _store:
             for atom in utils.if_not_none(atoms, self.mol.atoms):
@@ -174,38 +175,6 @@ class GeometryViewer(MolViz3D, ColorMixin):
                      for atom in self.mol.atoms]
         return positions
 
-    def calc_orb_grid(self, orbname, npts, framenum):
-        """ Calculate orbitals on a grid
-
-        Args:
-            orbname: Either orbital index (for canonical orbitals) or a tuple ( [orbital type],
-               [orbital index] ) where [orbital type] is a keyword (e.g., canonical, natural, nbo,
-               ao, etc)
-            npts (int): resolution in each dimension of the grid
-            framenum (int): wavefunction for which frame number?
-
-        Returns:
-            moldesign.viewer.VolumetricGrid: orbital values on a grid
-        """
-        # NEWFEATURE: limit grid size based on the non-zero atomic centers. Useful for localized
-        #    orbitals, which otherwise require high resolution
-        try:
-            orbtype, orbidx = orbname
-        except TypeError:
-            orbtype = 'canonical'
-            orbidx = orbname
-
-        # self.wfn should already be set to the wfn for the current frame
-        orbital = self.wfns[framenum].orbitals[orbtype][orbidx]
-        positions = self._frame_positions[framenum]*u.angstrom
-        grid = VolumetricGrid(positions,
-                              padding=self.DEF_PADDING,
-                              npoints=npts)
-        coords = grid.xyzlist().reshape(3, grid.npoints ** 3).T
-        values = orbital(coords)
-        grid.fxyz = values.reshape(npts, npts, npts)
-
-        return grid
 
     def get_orbnames(self):
         raise NotImplementedError()
@@ -234,7 +203,8 @@ class GeometryViewer(MolViz3D, ColorMixin):
 
             vecarray = vecs / scale_factor
             try: arrowvecs = vecarray.value_in(self.DISTANCE_UNITS)
-            except AttributeError: arrowvecs = vecarray
+            except AttributeError:
+                arrowvecs = vecarray
 
         else:  # rescale the maximum length arrow length to rescale_to
             try:
@@ -245,10 +215,11 @@ class GeometryViewer(MolViz3D, ColorMixin):
                 unit = ''
             lengths = np.sqrt((vecarray * vecarray).sum(axis=1))
             scale = (lengths.max() / rescale_to)  # units of [vec units] / angstrom
-            if hasattr(scale,'defunits'): scale = scale.defunits()
+            if hasattr(scale,'defunits'):
+                scale = scale.defunits()
             arrowvecs = vecarray / scale
-            print 'Arrow scale: {q:.3f} {unit} per {native}'.format(q=scale, unit=unit,
-                                                                    native=self.DISTANCE_UNITS)
+            print('Arrow scale: {q:.3f} {unit} per {native}'.format(q=scale, unit=unit,
+                                                                    native=self.DISTANCE_UNITS))
         shapes = []
         for atom, vecarray in zip(self.mol.atoms, arrowvecs):
             if vecarray.norm() < 0.2: continue
@@ -279,7 +250,7 @@ class GeometryViewer(MolViz3D, ColorMixin):
         return self.draw_atom_vectors(self.mol.momenta, **kwargs)
 
     def highlight_atoms(self, atoms=None):
-        """
+        """ Highlight a subset of atoms in the system
 
         Args:
             atoms (list[Atoms]): list of atoms to highlight. If None, remove all highlights
@@ -322,7 +293,7 @@ class GeometryViewer(MolViz3D, ColorMixin):
         self.wfns.append(wfn)
         self.show_frame(self.num_frames - 1)
 
-    @utils.doc_inherit
+    #@utils.doc_inherit
     def show_frame(self, framenum, _fire_event=True, update_orbitals=True):
         # override base method - we'll handle frames using self.set_positions
         # instead of any built-in handlers

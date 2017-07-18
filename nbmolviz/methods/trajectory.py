@@ -63,11 +63,11 @@ def plot(traj, x, y, **kwargs):
     if type(x) is str:
         strx = x
         x = getattr(traj, x)
-        xl = '%s / %s' % (strx, x.units)
+        xl = '%s / %s' % (strx, getattr(x, 'units', 'dimensionless'))
     if type(y) is str:
         stry = y
         y = getattr(traj, y)
-        yl = '%s / %s' % (stry, y.units)
+        yl = '%s / %s' % (stry, getattr(y, 'units', 'dimensionless'))
     plt = pylab.plot(x, y, **kwargs)
     pylab.xlabel(xl); pylab.ylabel(yl); pylab.grid()
     return plt

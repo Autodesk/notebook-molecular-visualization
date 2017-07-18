@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from builtins import map
+from builtins import str
+from builtins import range
 import uuid
 
 import traitlets
@@ -74,9 +77,9 @@ class MolViz2D(MessageWidget):
 
     def set_atom_style(self, atoms=None, fill_color=None, outline_color=None):
         if atoms is None:
-            indices = range(len(self.atoms))
+            indices = list(range(len(self.atoms)))
         else:
-            indices = map(self.get_atom_index, atoms)
+            indices = list(map(self.get_atom_index, atoms))
         spec = {}
         if fill_color is not None: spec['fill'] = translate_color(fill_color, prefix='#')
         if outline_color is not None: spec['stroke'] = translate_color(outline_color, prefix='#')
@@ -90,7 +93,7 @@ class MolViz2D(MessageWidget):
         :param dash_length:
         :return:
         """
-        atom_pairs = [map(self.get_atom_index, pair) for pair in bonds]
+        atom_pairs = [list(map(self.get_atom_index, pair)) for pair in bonds]
         spec = {}
         if width is not None: spec['stroke-width'] = str(width)+'px'
         if color is not None: spec['stroke'] = color
@@ -104,7 +107,7 @@ class MolViz2D(MessageWidget):
         self._change_label('setAtomLabel', atomidx, text, text_color, size, font)
 
     def set_bond_label(self, bond, text=None, text_color=None, size=None, font=None):
-        bondids = map(self.get_atom_index, bond)
+        bondids = list(map(self.get_atom_index, bond))
         self._change_label('setBondLabel', bondids, text, text_color, size, font)
 
     def _change_label(self, driver_function, obj_index, text,
@@ -121,7 +124,7 @@ class MolViz2D(MessageWidget):
         self.viewer(driver_function, [obj_index, text, spec])
 
     def highlight_atoms(self, atoms):
-        indices = map(self.get_atom_index, atoms)
+        indices = list(map(self.get_atom_index, atoms))
         self.viewer('updateHighlightAtoms', [indices])
 
     def get_atom_index(self, atom):
@@ -148,5 +151,5 @@ class MolViz2D(MessageWidget):
         Args:
          colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
         """
-        for color, atoms in colormap.iteritems():
+        for color, atoms in colormap.items():
             self.set_color(atoms=atoms, color=color)

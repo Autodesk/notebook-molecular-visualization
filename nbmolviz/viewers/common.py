@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from builtins import zip
+from builtins import map
+from past.builtins import basestring
+from builtins import object
 from moldesign import utils
 from ..colormaps import colormap
 
@@ -64,7 +68,7 @@ class ColorMixin(object):
         if force_cmap:
             name_is_color = [False]
         else:
-            name_is_color = map(utils.is_color, colors.keys())
+            name_is_color = list(map(utils.is_color, list(colors.keys())))
 
         if len(colors) <= 1:
             colors = {'gray': atoms}
@@ -73,7 +77,7 @@ class ColorMixin(object):
             assert not any(name_is_color), \
                 "callback function returned a mix of colors and categories"
             categories = colors
-            cats = categories.keys()
+            cats = list(categories.keys())
             # If there are >256 categories, this is a many-to-one mapping
             colornames = colormap(cats, mplmap=mplmap)
             colors = {c: [] for c in colornames}

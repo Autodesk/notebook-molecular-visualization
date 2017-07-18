@@ -21,6 +21,7 @@ NOTE:
     This is currently tied to ambertools and tleap! It will need to be made generic if/when
     another method for assigning forcefields is added.
 """
+from __future__ import print_function
 import collections
 
 import ipywidgets as ipy
@@ -35,9 +36,9 @@ def show_parameterization_results(errormessages, molin, molout=None):
         uibase.display_log(report, title='ERRORS/WARNINGS', show=True)
 
     else:
-        print 'Forcefield assignment: %s' % ('Success' if molout is not None else 'Failure')
+        print('Forcefield assignment: %s' % ('Success' if molout is not None else 'Failure'))
         for err in errormessages:
-            print utils.html_to_text(err.desc)
+            print(utils.html_to_text(err.desc))
 
 
 
