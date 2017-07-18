@@ -21,7 +21,6 @@ import numpy as np
 import moldesign as mdt
 from moldesign import units as u
 from moldesign import utils
-from moldesign.mathutils import padded_grid
 
 from ..base import MolViz3D
 from . import ColorMixin
@@ -176,38 +175,6 @@ class GeometryViewer(MolViz3D, ColorMixin):
                      for atom in self.mol.atoms]
         return positions
 
-    def calc_orb_grid(self, orbname, npts, framenum):
-        """ Calculate orbitals on a grid
-
-        Args:
-            orbname: Either orbital index (for canonical orbitals) or a tuple ( [orbital type],
-               [orbital index] ) where [orbital type] is a keyword (e.g., canonical, natural, nbo,
-               ao, etc)
-            npts (int): resolution in each dimension of the grid
-            framenum (int): wavefunction for which frame number?
-
-        Returns:
-            moldesign.viewer.VolumetricGrid: orbital values on a grid
-        """
-        # NEWFEATURE: limit grid size based on the non-zero atomic centers. Useful for localized
-        #    orbitals, which otherwise require high resolution
-        try:
-            orbtype, orbidx = orbname
-        except TypeError:
-            orbtype = 'canonical'
-            orbidx = orbname
-
-        # self.wfn should already be set to the wfn for the current frame
-        orbital = self.wfns[framenum].orbitals[orbtype][orbidx]
-        positions = self._frame_positions[framenum]*u.angstrom
-        grid = padded_grid(positions,
-                           padding=self.DEF_PADDING,
-                           npoints=npts)
-        coords = grid.xyzlist().reshape(3, grid.npoints ** 3).T
-        values = orbital(coords)
-        grid.fxyz = values.reshape(npts, npts, npts)
-
-        return grid
 
     def get_orbnames(self):
         raise NotImplementedError()
@@ -283,7 +250,7 @@ class GeometryViewer(MolViz3D, ColorMixin):
         return self.draw_atom_vectors(self.mol.momenta, **kwargs)
 
     def highlight_atoms(self, atoms=None):
-        """
+        """ Highlight a subset of atoms in the system
 
         Args:
             atoms (list[Atoms]): list of atoms to highlight. If None, remove all highlights
