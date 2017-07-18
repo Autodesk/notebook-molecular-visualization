@@ -3,12 +3,19 @@ python:
   - "2.7"
   - "3.5"
   - "3.6"
+
 before_install:
  - pip install future
+
+env:
+ - TRAVIS_NODE_VERSION="7"
+
 install:
  - python setup.py sdist
  - pip install dist/nbmolviz-*.tar.gz
+
 script: py.test
+
 deploy:
   provider: pypi
   user: justinmc
