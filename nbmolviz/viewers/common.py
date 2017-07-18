@@ -16,9 +16,9 @@ from builtins import zip
 from builtins import map
 from past.builtins import basestring
 from builtins import object
-from moldesign import utils
-from ..colormaps import colormap
 
+from moldesign import utils
+from .. import colormaps
 
 
 class ColorMixin(object):
@@ -68,7 +68,7 @@ class ColorMixin(object):
         if force_cmap:
             name_is_color = [False]
         else:
-            name_is_color = list(map(utils.is_color, list(colors.keys())))
+            name_is_color = list(map(colormaps.is_color, list(colors.keys())))
 
         if len(colors) <= 1:
             colors = {'gray': atoms}
@@ -79,7 +79,7 @@ class ColorMixin(object):
             categories = colors
             cats = list(categories.keys())
             # If there are >256 categories, this is a many-to-one mapping
-            colornames = colormap(cats, mplmap=mplmap)
+            colornames = colormaps.colormap(cats, mplmap=mplmap)
             colors = {c: [] for c in colornames}
             for cat, color in zip(cats, colornames):
                 colors[color].extend(categories[cat])

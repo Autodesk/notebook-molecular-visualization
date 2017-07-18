@@ -105,12 +105,14 @@ def _cmap_to_rgb(mplmap, values):
     return rgb
 
 
-
-
 def is_color(s):
     """ Do our best to determine if "s" is a color spec that can be converted to hex
-    :param s:
-    :return:
+
+    Args:
+        s (str or int): string or integer describing a color
+
+    Returns:
+        bool: True if this can be converted to a hex-compatible color
     """
     def in_range(i): return 0 <= i <= int('0xFFFFFF', 0)
 

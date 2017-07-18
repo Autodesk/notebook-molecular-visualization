@@ -54,6 +54,7 @@ class MolViz3D(MessageWidget):
         'SPHERE': 'Sphere',
         'ARROW': 'Arrow',
         'CYLINDER': 'Cylinder',
+        'LABEL': 'Label'
     }
 
     STYLE_NAMES = {'vdw': 'sphere',
@@ -184,25 +185,17 @@ class MolViz3D(MessageWidget):
         # No atoms passed means all atoms
         if atoms is None:
             atoms = self.mol.atoms
-        atoms = list(atoms)
 
-        if replace:
-            styles = dict()
-        else:
-            styles = dict(self.styles)
+        newstyles = self.styles.copy()
+        for atom in atoms:
+            new_style = {'visualization_type': style}
+            for key in ('color', 'radius'):
+                if key in options:
+                    new_style[key] = options[key]
 
-        for i, atom in enumerate(self.mol.atoms):
-            for j in range(0, len(atoms)):
-                if (atoms[j] is atom):
-                    newStyle = styles[str(atom.index)].copy() if i in styles else {}
-                    newStyle['visualization_type'] = style
-                    if 'color' in options:
-                        newStyle['color'] = options['color']
-                    styles[str(atom.index)] = newStyle
-                    atoms.remove(atoms[j])
-                    break
+            newstyles[str(atom.index)] = new_style
 
-        self.styles = styles
+        self.styles = newstyles
 
     def append_frame(self, positions=None):
         if positions is None:
@@ -380,9 +373,13 @@ class MolViz3D(MessageWidget):
                     backgroundColor=background,
                     borderColor=border,
                     fontSize=fontsize,
-                    backgroundOpacity=opacity)
-        self.viewer('renderPyLabel', [text, spec, js_label.id])
-        return js_label
+                    backgroundOpacity=opacity,
+                    type=self.SHAPE_NAMES['LABEL'])
+
+        shapes = list(self.shapes)
+        shapes.append(spec)
+        self.shapes = shapes
+        return spec
 
     def remove_all_labels(self):
         self.viewer('removeAllLabels', [])
