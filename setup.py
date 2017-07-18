@@ -49,6 +49,7 @@ PYEXT = set('.py .pyc .pyo'.split())
 versioncmds = versioneer.get_cmdclass()
 build_py = versioncmds['build_py']
 sdist = versioncmds['sdist']
+VERSION = versioneer.get_version()
 
 
 ###################################################################
@@ -136,6 +137,11 @@ class NPM(Command):
         env = os.environ.copy()
         env['PATH'] = npm_path
 
+        verfile_path = os.path.join(node_root, '.VERSION.json')
+        with open(verfile_path, 'w') as verfile:
+            verfile.write('{"version":"%s"}\n' % VERSION)
+        print('Wrote version "%s" to "%s"' % (VERSION, verfile_path))
+
         if self.should_run_npm_install():
             log.info("Installing build dependencies with npm.  This may take a while...")
             check_call(['npm', 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
@@ -158,7 +164,7 @@ class NPM(Command):
 
 args = dict(
         name=PACKAGE_NAME,
-        version=versioneer.get_version(),
+        version=VERSION,
         packages=find_packages(),
         classifiers=CLASSIFIERS,
         url='http://moldesign.bionano.autodesk.com/',

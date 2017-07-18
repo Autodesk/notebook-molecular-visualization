@@ -1,6 +1,5 @@
 {
   "name": "nbmolviz-js",
-  "version": "0.0.1",
   "description": "Molecular visualization in Jupyter notebooks",
   "author": "Autodesk, Inc.",
   "main": "src/index.js",
@@ -11,7 +10,8 @@
   },
   "scripts": {
     "prepublish": "webpack",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "version": "cd .. && python -c 'import versioneer; print(versioneer.get_version())'"
   },
   "devDependencies": {
     "babel-core": "^6.11.4",
