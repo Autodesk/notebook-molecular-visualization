@@ -1,0 +1,20 @@
+{
+  "name": "nbmolviz-jupyter-tests",
+  "version": "0.0.0",
+  "description": "",
+  "main": "nightwatch.js",
+  "scripts": {
+    "selenium": "node ./node_modules/selenium-standalone/bin/selenium-standalone install --version=2.53.1 --drivers.chrome.version=2.30"
+  },
+  "keywords": [],
+  "author": "",
+  "engines": {
+    "node": "6.9.2",
+    "npm": "3.10.8"
+  },
+  "dependencies": {
+    "chromedriver": "^2.30.0",
+    "nightwatch": "https://github.com/duncanmeech/nightwatch/tarball/master",
+    "selenium-standalone": "5.7.2"
+  }
+}
