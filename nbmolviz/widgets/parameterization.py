@@ -29,6 +29,9 @@ import ipywidgets as ipy
 from moldesign import uibase
 from moldesign import utils
 
+from ..uielements.components import HBox, VBox
+
+
 
 def show_parameterization_results(errormessages, molin, molout=None):
     if uibase.widgets_enabled:
@@ -65,7 +68,7 @@ class ParameterizationDisplay(ipy.Box):
             self.switch_display({'old': self.errorlist.value, 'new': self.errorlist.value})
         self.errorlist.observe(self.switch_display, 'value')
         children = (self.status,
-                    ipy.HBox([self.viewer, ipy.VBox([self.listdesc, self.errorlist])]),
+                    HBox([self.viewer, VBox([self.listdesc, self.errorlist])]),
                     self.errmsg)
 
         super(ParameterizationDisplay, self).__init__(children=children,

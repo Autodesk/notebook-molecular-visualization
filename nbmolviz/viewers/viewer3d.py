@@ -175,18 +175,20 @@ class GeometryViewer(MolViz3D, ColorMixin):
                      for atom in self.mol.atoms]
         return positions
 
-
     def get_orbnames(self):
         raise NotImplementedError()
 
     def draw_atom_vectors(self, vecs, rescale_to=1.75,
                           scale_factor=None, opacity=0.85,
                           radius=0.11, **kwargs):
-        """
-        For displaying atom-centered vector data (e.g., momenta, forces)
-        :param rescale_to: rescale to this length (in angstroms) (not used if scale_factor is passed)
-        :param scale_factor: Scaling factor for arrows: dimensions of [vecs dimensions] / [length]
-        :param kwargs: keyword arguments for self.draw_arrow
+        """ Draw a 3D vector on each atom
+
+        Args:
+            vecs (Matrix[shape=(*,3)]): list of vectors for each atom
+            rescale_to (Scalar[length]): vectors so the largest is this long
+            scale_factor (Scalar[length/units]): factor for conversion between input units and
+               length
+            kwargs (dict): keyword arguments for self.draw_arrow
         """
         kwargs['radius'] = radius
         kwargs['opacity'] = opacity

@@ -18,6 +18,7 @@ import traitlets
 from moldesign import utils
 
 from .components import SelBase
+from ..uielements.components import HBox
 
 
 @utils.exports
@@ -40,8 +41,8 @@ class BondSelector(SelBase):
 
         self.atom_list.observe(self.remove_bondlist_highlight, 'value')
 
-        self.subtools.children = [ipy.HBox([self.select_all_atoms_button,
-                                            self.select_none])]
+        self.subtools.children = [HBox([self.select_all_atoms_button,
+                                        self.select_none])]
         self.toolpane.children = (self.atom_listname,
                                   self.atom_list,
                                   self.bond_listname,
@@ -96,7 +97,7 @@ class ResidueSelector(SelBase):
         self.residue_list.observe(self.remove_atomlist_highlight, 'value')
         self.atom_list.observe(self.remove_reslist_highlight, 'value')
 
-        self.subtools.children = [ipy.HBox([self.select_all_atoms_button, self.select_none])]
+        self.subtools.children = [HBox([self.select_all_atoms_button, self.select_none])]
         self.toolpane.children = [self.selection_type,
                                   self.atom_listname,
                                   self.atom_list,

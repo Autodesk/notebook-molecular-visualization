@@ -20,6 +20,7 @@ import ipywidgets as ipy
 from ..viewers import GeometryViewer
 from ..widget_utils import process_widget_kwargs
 from .selector import SelectionGroup, Selector, create_value_selector
+from ..uielements.components import HBox
 
 
 class OrbitalViewer(SelectionGroup):
@@ -35,7 +36,7 @@ class OrbitalViewer(SelectionGroup):
         self.viewer = GeometryViewer(mol=mol, **process_widget_kwargs(kwargs))
         self.viewer.wfns = [mol.wfn]
         self.uipane = OrbitalUIPane(self, hostheight=self.viewer.layout.height)
-        hb = ipy.HBox([self.viewer, self.uipane])
+        hb = HBox([self.viewer, self.uipane])
         super(OrbitalViewer, self).__init__([hb])
 
 

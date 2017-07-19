@@ -18,7 +18,7 @@ import ipywidgets as ipy
 
 from moldesign import utils
 
-from nbmolviz import viewers
+from .. import viewers
 
 
 class Selector(object):
@@ -49,6 +49,8 @@ class SelectionGroup(ipy.Box):
         return utils.make_none, tuple()
 
     def __init__(self, *args, **kwargs):
+        if 'layout' not in kwargs:
+            kwargs['layout'] = ipy.Layout(flex_flow='column', width='100%')
         super(SelectionGroup, self).__init__(*args, **kwargs)
         self.selection_listeners = []
         self.num_listeners = 0

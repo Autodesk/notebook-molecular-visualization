@@ -22,6 +22,8 @@ import moldesign as mdt
 from ..widget_utils import process_widget_kwargs
 from . import selector
 from .components import AtomInspector
+from ..uielements.components import HBox, VBox
+
 
 
 class TrajectoryViewer(selector.SelectionGroup):
@@ -39,7 +41,7 @@ class TrajectoryViewer(selector.SelectionGroup):
 
         self.default_fps = 10
         self.traj = trajectory
-        self.pane = ipy.VBox()
+        self.pane = VBox()
         trajectory._apply_frame(trajectory.frames[0])
         self.viewer, self.view_container = self.make_viewer()
         for frame in self.traj.frames[1:]:
@@ -68,9 +70,9 @@ class TrajectoryViewer(selector.SelectionGroup):
                                                      value_selects='framenum',
                                                      value=0, description='Frame:',
                                                      min=0, max=len(self.traj)-1)
-        self.playbox = ipy.HBox([self.play_button, self.slider])
+        self.playbox = HBox([self.play_button, self.slider])
         controls.append(self.playbox)
-        self.controls = ipy.VBox(controls)
+        self.controls = VBox(controls)
 
     def _play(self, *args, **kwargs):
         self.animate()

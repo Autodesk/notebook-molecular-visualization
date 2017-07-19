@@ -56,9 +56,9 @@ def draw(atom, width=300, height=300):
         height (int): height of viewer in pixels
 
     Returns:
-        ipy.HBox: viewer object
+        HBox: viewer object
     """
     viz2d = atom.draw2d(width=width, height=height, display=False)
     viz3d = atom.draw3d(width=width, height=height, display=False)
-    return ipy.HBox([viz2d, viz3d])
+    return HBox([viz2d, viz3d])
 

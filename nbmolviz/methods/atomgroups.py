@@ -1,5 +1,3 @@
-
-
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +16,8 @@ import IPython
 import ipywidgets as ipy
 import traitlets
 
-from .. import uielements, viewers
+from .. import viewers
+from ..uielements.components import HBox
 
 
 def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
@@ -48,7 +47,7 @@ def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
         viz3d = draw3d(group, width=width, height=height,
                        display=False)
         traitlets.link((viz3d, 'selected_atom_indices'), (viz2d, 'selected_atom_indices'))
-        views = ipy.HBox([viz2d, viz3d])
+        views = HBox([viz2d, viz3d])
     else:
         views = draw3d(group, display=False)
 

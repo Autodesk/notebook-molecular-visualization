@@ -17,6 +17,23 @@ import ipywidgets as ipy
 from ..widget_utils import process_widget_kwargs
 
 
+class _CustomBox(ipy.Box):
+    def __init__(self, *args, **kwargs):
+        if 'layout' not in kwargs:
+            kwargs['layout'] = ipy.Layout()
+        kwargs['layout'].flex_flow = self._fflow
+        super().__init__(*args, **kwargs)
+
+
+class VBox(_CustomBox):
+    _fflow = 'column'
+
+
+class HBox(_CustomBox):
+    _fflow = 'row'
+
+
+
 class StyledTab(ipy.Tab):
     """
     Objects can inherit from this to maintain consistent styling.
@@ -26,7 +43,6 @@ class StyledTab(ipy.Tab):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('font_size', 9)
         super(StyledTab, self).__init__(*args, **process_widget_kwargs(kwargs))
-
 
 
 class ReadOnlyRepr(ipy.Box):

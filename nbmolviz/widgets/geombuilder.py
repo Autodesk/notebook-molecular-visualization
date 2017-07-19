@@ -22,6 +22,7 @@ from moldesign import units as u
 from moldesign.utils import exports
 
 from .components import ViewerToolBase, ReadoutFloatSlider
+from ..uielements.components import VBox, HBox
 
 @exports
 class GeometryBuilder(ViewerToolBase):
@@ -49,7 +50,7 @@ class GeometryBuilder(ViewerToolBase):
 
         # Viewer
         self.selection_description = ipy.HTML()
-        self.subtools.children = (ipy.HBox([self.clear_button, self.label_box]),
+        self.subtools.children = (HBox([self.clear_button, self.label_box]),
                                   self.selection_description)
         traitlets.directional_link(
             (self.viewer, 'selected_atom_indices'),
@@ -70,29 +71,31 @@ class GeometryBuilder(ViewerToolBase):
         self.z_slider.observe(self.set_atom_z, 'value')
 
         # Bond manipulation tools
-        self.adjust_button = ipy.Checkbox(description='Adjust entire molecule', align='end', value=True)
+        self.adjust_button = ipy.Checkbox(description='Adjust entire molecule',
+                                          align='end', value=True)
 
         self.length_slider = ReadoutFloatSlider(min=0.1, max=self.MAXDIST, format=self.POSFMT)
         self.length_slider.observe(self.set_distance, 'value')
         self.angle_slider = ReadoutFloatSlider(min=1.0, max=179.0, step=2.0, format=self.DEGFMT)
         self.angle_slider.observe(self.set_angle, 'value')
-        self.dihedral_slider = ReadoutFloatSlider(min=-90.0, max=360.0, step=4.0, format=self.DEGFMT)
+        self.dihedral_slider = ReadoutFloatSlider(min=-90.0, max=360.0, step=4.0,
+                                                  format=self.DEGFMT)
         self.dihedral_slider.observe(self.set_dihedral, 'value')
 
-        self.bond_tools = ipy.VBox((self.adjust_button,
-                                    self.length_slider,
-                                    self.angle_slider,
-                                    self.dihedral_slider))
+        self.bond_tools = VBox((self.adjust_button,
+                                self.length_slider,
+                                self.angle_slider,
+                                self.dihedral_slider))
 
-        self.atom_tools = ipy.VBox((self.adjust_button,
-                                    self.x_slider,
-                                    self.y_slider,
-                                    self.z_slider))
+        self.atom_tools = VBox((self.adjust_button,
+                                self.x_slider,
+                                self.y_slider,
+                                self.z_slider))
 
         self.reset_button = ipy.Button(description='Reset geometry')
         self.reset_button.on_click(self.reset_geometry)
 
-        self.tool_holder = ipy.VBox()
+        self.tool_holder = VBox()
         self.toolpane.children = (self.tool_holder,
                                   self.reset_button)
 

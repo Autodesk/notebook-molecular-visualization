@@ -22,6 +22,7 @@ from moldesign import utils
 from .. import viewers
 from ..widget_utils import process_widget_kwargs
 from .selector import Selector
+from ..uielements.components import HBox, VBox
 
 
 class AtomInspector(ipy.HTML, Selector):
@@ -67,12 +68,12 @@ class ViewerToolBase(ipy.Box):
     def __init__(self, mol):
         self.mol = mol
 
-        self.toolpane = ipy.VBox()
+        self.toolpane = VBox()
         self.viewer = self.VIEWERTYPE(mol)
 
         self.subtools = ipy.Box()
-        self.viewer_pane = ipy.VBox([self.viewer, self.subtools])
-        self.main_pane = ipy.HBox([self.viewer_pane, self.toolpane])
+        self.viewer_pane = VBox([self.viewer, self.subtools])
+        self.main_pane = HBox([self.viewer_pane, self.toolpane])
 
         super(ViewerToolBase, self).__init__([self.main_pane])
 
@@ -125,7 +126,7 @@ class SelBase(ViewerToolBase):
         self.viewer.selected_atom_indices = set()
 
 
-class ReadoutFloatSlider(ipy.Box):
+class ReadoutFloatSlider(VBox):
     description = traitlets.Unicode()
     value = traitlets.Float()
 
@@ -135,14 +136,14 @@ class ReadoutFloatSlider(ipy.Box):
         max = kwargs.setdefault('max', 10.0)
         self.formatstring = format
         self.header = ipy.HTML()
-        self.readout = ipy.Text(width=100)
+        self.readout = ipy.Text(layout=ipy.Layout(width='100px'))
         self.readout.on_submit(self.parse_value)
 
         kwargs.setdefault('readout', False)
         self.slider = ipy.FloatSlider(*args, **process_widget_kwargs(kwargs))
         self.minlabel = ipy.HTML(u'<font size=1.5>{}</font>'.format(self.formatstring.format(min)))
         self.maxlabel = ipy.HTML(u'<font size=1.5>{}</font>'.format(self.formatstring.format(max)))
-        self.sliderbox = ipy.HBox([self.minlabel, self.slider, self.maxlabel])
+        self.sliderbox = HBox([self.minlabel, self.slider, self.maxlabel])
         traitlets.link((self, 'description'), (self.header, 'value'))
         traitlets.link((self, 'value'), (self.slider, 'value'))
         self.description = description

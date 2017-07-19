@@ -20,6 +20,9 @@ import moldesign as mdt
 from moldesign import units as u
 from moldesign.utils import exports
 
+from ..uielements.components import HBox, VBox
+
+
 @exports
 class Symmetrizer(ipy.Box):
     def __init__(self, mol):
@@ -53,18 +56,18 @@ class Symmetrizer(ipy.Box):
         self.recalculate_button = ipy.Button(description='Recalculate')
         self.recalculate_button.on_click(self.coords_changed)
 
-        self.symm_pane = ipy.VBox([self.description,
+        self.symm_pane = VBox([self.description,
                                    self.symm_selector,
-                                   ipy.HBox([self.apply_button, self.reset_button]),
+                                   HBox([self.apply_button, self.reset_button]),
                                    self.apply_all_button,
-                                   ipy.HBox([self.tolerance_chooser, self.recalculate_button]),
+                                   HBox([self.tolerance_chooser, self.recalculate_button]),
                                    self.tolerance_descrip],
                                   layout=ipy.Layout(width='325px'))
 
         self.symmetry = None
         self.coords_changed()
 
-        self.hbox = ipy.HBox([ipy.VBox([self.viewer, self.showing]), self.symm_pane])
+        self.hbox = HBox([VBox([self.viewer, self.showing]), self.symm_pane])
         super(Symmetrizer, self).__init__([self.hbox])
 
     def reset_coords(self, *args):

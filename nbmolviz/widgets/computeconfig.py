@@ -140,7 +140,7 @@ class ComputeConfig(ipy.Box):
 
         self.engine_config_description = ipy.HTML('description')
         self.engine_config_value = ipy.Text('blank', width='500px')
-        self.engine_config = ipy.HBox([self.engine_config_description,
+        self.engine_config = HBox([self.engine_config_description,
                                        self.engine_config_value])
 
         self._reset_config_button = ipy.Button(description='Reset',
@@ -159,9 +159,9 @@ class ComputeConfig(ipy.Box):
 
         self.children = [self.engine_dropdown,
                          ipy.HTML('<hr>'),
-                         ipy.HBox([self.engine_config_description,
+                         HBox([self.engine_config_description,
                                    self.engine_config_value]),
-                         ipy.HBox([self._reset_config_button,
+                         HBox([self._reset_config_button,
                                    self._apply_changes_button,
                                    self._test_button,
                                    self._save_changes_button])
@@ -224,8 +224,8 @@ class RegistryConfig(ipy.Box):
                                        tooltip=
                                        'Download all moldesign images to the compute engine')
 
-        self.children = (ipy.HBox([self.repo_field, self.version_field]),
-                         ipy.HBox([self._reset_config_button,
+        self.children = (HBox([self.repo_field, self.version_field]),
+                         HBox([self._reset_config_button,
                                                 self._apply_changes_button,
                                                 self._pull_button]))
 
