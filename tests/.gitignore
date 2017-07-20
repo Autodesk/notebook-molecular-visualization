@@ -2,3 +2,5 @@ reports
 nightwatch.json
 nbtests
 *.log
+*.png
+e2ereports
