@@ -17,6 +17,7 @@ function collectTestsFromNotebooks() {
   notebookPaths.forEach(function (path) {
     tests.push.apply(tests, makeTests(path));  // equivalent of list.extend in python
   });
+  return tests;
 }
 
 
@@ -51,16 +52,15 @@ function makeTests(path){
   }
 
   let tests = {};
-  for (let spec of testSpecs){
+  testSpecs.forEach(function(spec){
     // Actually create the test and add it to the list:
     let name = spec.isTest;
     assert(! (name in tests), "Test '" + name + "' defined twice");
     tests[name] = makeTest(spec, fixtureCellIds, fixtureDependency, setupCellId);
-  }
+  });
 
   testList = Object.values(tests);
   console.log('Found ' + testList.length + ' tests in ' + path + '.');
-  console.log(testList);
   return testList; // this won't work
 }
 
@@ -104,13 +104,13 @@ function parseCodeCell(path, cell, idx){
     isSetup: false,
     cellIdx: idx};
 
-  for (let l of cell.source) {
+  cell.source.forEach(function(l){
     if (l.substring(0, 2) != '#!') return spec;  // return on first non-shebang line
     let line = l.trim();
     fields = line.substring(2).match(/\S+/g);
 
     if (fields == null){
-      continue
+      return;
     }
     else if(fields.length == 1 && fields[0] == 'setup'){
       spec.isSetup = true;
@@ -130,27 +130,28 @@ function parseCodeCell(path, cell, idx){
     else{
       assert(false, "Unrecognized shebang line: '" + line + "' in cell " + idx);
     }
-  }
+  });
 
   return spec;
 }
 
-collectTestsFromNotebooks();
+let testDescriptions = collectTestsFromNotebooks();
 
-module.exports = {"default": function (client){client.end()}}
-/*
-  "testSmallMoleculeRender": function (client) {
-    client.openNotebook("notebooks/test_draw_small_molecule.ipynb")
-      .restartKernel(20000)
-      .executeCell(0);
+module.exports = {};
 
-    client.perform(function(){console.log("OK I think I'm done")})
-      .pause(10000);
-    //client.execute(Jupyter.notebook.
+testDescriptions.forEach(function(testDescription){
+  module.exports[testDescription.name] = function(client){
+    console.log('Starting test: ' + JSON.stringify(testDescription));
 
+    client.openNotebook(testDescription.path)
+    .restartKernel(20000);
+
+    testDescription.setupCells.forEach(function(cellNum){
+      client.executeCell(cellNum);
+    });
+
+    client.executeCell(testDescription.cellIdx);
+    // client.cellOutputSnapshot(testDescription.cellIdx, testDescription.name);
     client.end();
-  },
-}
-
-
-*/
+  }
+});
