@@ -7,6 +7,7 @@ This module:
 const glob = require('glob');
 const fs = require('fs');
 const assert = require('assert');
+const dayguard = require('dayguard');
 
 function collectTestsFromNotebooks() {
   /* Drives all test collection*/
@@ -61,7 +62,7 @@ function makeTests(path){
 
   testList = Object.values(tests);
   console.log('Found ' + testList.length + ' tests in ' + path + '.');
-  return testList; // this won't work
+  return testList;
 }
 
 
@@ -135,23 +136,41 @@ function parseCodeCell(path, cell, idx){
   return spec;
 }
 
-let testDescriptions = collectTestsFromNotebooks();
 
-module.exports = {};
+function makeTestFunctions() {
+  let testDescriptions = collectTestsFromNotebooks();
+  restarted = {};
+  testDescriptions.forEach(function(td){restarted[td.path] = false});
 
-testDescriptions.forEach(function(testDescription){
-  module.exports[testDescription.name] = function(client){
-    console.log('Starting test: ' + JSON.stringify(testDescription));
+  let testFunctions = {};
 
-    client.openNotebook(testDescription.path)
-    .restartKernel(20000);
+  testDescriptions.forEach(function (testDescription) {
+    testFunctions[testDescription.name] = function (client) {
+      console.log('Starting test: ' + JSON.stringify(testDescription));
 
-    testDescription.setupCells.forEach(function(cellNum){
-      client.executeCell(cellNum);
-    });
+      client.openNotebook(testDescription.path);
 
-    client.executeCell(testDescription.cellIdx);
-    // client.cellOutputSnapshot(testDescription.cellIdx, testDescription.name);
-    client.end();
-  }
-});
+      if (restarted[testDescription.path]) {
+        client.clearNbOutputs();
+      } else {
+        client.restartKernel(60000);  // currently we restart the kernel every time
+        restarted[testDescription.path] = true;
+      }
+
+      testDescription.setupCells.forEach(function (cellNum) { client.executeCell(cellNum) });
+
+      client.executeCell(testDescription.cellIdx)
+      .pause(500);
+
+      let widgetOutputSelector = '//*[@id="notebook-container"]/div[' + (testDescription.cellIdx + 1) + ']/div[2]';
+      client.takeScreenshotFromElement('#notebook', testDescription.name.substring(5));
+
+      client.end();
+    }
+  });
+
+  return testFunctions;
+}
+
+
+module.exports = makeTestFunctions();

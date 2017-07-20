@@ -1,5 +1,5 @@
 /* Custom nightwatch functions based on
-https://github.com/hainm/nbtests
+ https://github.com/hainm/nbtests
  */
 const checkError = require("./utils").checkError;
 
@@ -7,14 +7,11 @@ exports.command = function(timeout, callback) {
   const self = this;
 
   this.waitForIdleKernel();
+  this.perform(function(){console.log('Clearing output (kernel not restarted)')});
 
-  this.perform(function(){console.log('Restarting kernel')});
   this.execute(
-    function(){Jupyter.notebook.restart_clear_output({"confirm":false})}, [],
+    function(){Jupyter.notebook.clear_output()}, [],
     checkError.bind(self));
-
-  this.expect.element('#notification_kernel').to.be.visible.before(250);
-  this.expect.element('#notification_kernel').to.not.be.visible.before(timeout);
   this.waitForIdleKernel();
 
   if (typeof callback === "function") { callback.call(self) }

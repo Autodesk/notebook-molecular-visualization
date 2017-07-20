@@ -3,12 +3,13 @@ const testUrl = process.env.NIGHTWATCH_URL || 'http://127.0.0.1:3001';
 const detailedOutput = !!process.env.NIGHTWATCH_DETAIL ;
 const parallelTests = !!process.env.PARALLEL;
 const parallelWorkers = process.env.PARALLEL_WORKERS || 'auto'; // ignored if PARALLEL is false
+const dayguard = require("dayguard");
 
 module.exports = {
   src_folders: ['js'],
   output_folder: 'e2ereports',
-  custom_commands_path : "customCommands/",
-  custom_assertions_path: '',
+  custom_commands_path : ["customCommands/", dayguard.custom_commands_path],
+  custom_assertions_path: [dayguard.custom_commands_path],
   page_objects_path: '',
   globals_path: "./globals.js",
   detailed_output: detailedOutput,
@@ -27,7 +28,7 @@ module.exports = {
   test_settings: {
     
     "default_SETTINGS_TO_BE_TESTED" : {
-      "log_screenshot_data" : false,
+      "log_screenshot_data" : true,
       "screenshots" : {
         "enabled"    : true,
         "on_failure" : true,
@@ -86,7 +87,7 @@ module.exports = {
         end_session_on_fail : true
       },
       screenshots: {
-        enabled: false,
+        enabled: true,
         path: 'e2ereports/screenshots/',
       },
       test_workers: {
