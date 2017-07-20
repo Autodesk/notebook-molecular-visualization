@@ -15,6 +15,7 @@
   "dependencies": {
     "chromedriver": "^2.30.0",
     "nightwatch": "https://github.com/duncanmeech/nightwatch/tarball/master",
+    "node-glob": "^1.2.0",
     "selenium-standalone": "5.7.2"
   }
 }

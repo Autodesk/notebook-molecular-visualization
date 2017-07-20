@@ -1,3 +1,4 @@
 reports
 nightwatch.json
 nbtests
+*.log
