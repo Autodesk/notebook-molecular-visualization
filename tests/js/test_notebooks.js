@@ -147,6 +147,8 @@ function makeTestFunctions() {
   testDescriptions.forEach(function (testDescription) {
     testFunctions[testDescription.name] = function (client) {
       console.log('Starting test: ' + JSON.stringify(testDescription));
+      const targetIdName = testDescription.name+'_target';
+
 
       client.openNotebook(testDescription.path);
 
@@ -160,10 +162,11 @@ function makeTestFunctions() {
       testDescription.setupCells.forEach(function (cellNum) { client.executeCell(cellNum) });
 
       client.executeCell(testDescription.cellIdx)
-      .pause(500);
+        .pause(500)
+        .tagCellOutputsWithId(testDescription.cellIdx, targetIdName)
+        .takeScreenshotFromElement('#' + targetIdName + '_widgetarea', testDescription.name.substring(5));
 
-      let widgetOutputSelector = '//*[@id="notebook-container"]/div[' + (testDescription.cellIdx + 1) + ']/div[2]';
-      client.takeScreenshotFromElement('#notebook', testDescription.name.substring(5));
+      //client.pause(6000000);
 
       client.end();
     }

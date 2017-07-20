@@ -17,7 +17,6 @@
     "dayguard": "^0.2.0",
     "nightwatch": "https://github.com/duncanmeech/nightwatch/tarball/master",
     "node-glob": "^1.2.0",
-    "nwrun": "^0.4.0",
     "png-crop": "0.0.1",
     "selenium-standalone": "5.7.2"
   }
