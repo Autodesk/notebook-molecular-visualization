@@ -2,22 +2,26 @@
 https://github.com/hainm/nbtests
 */
 
-import kernelWait from './utils';
+const kernelWait = require("./utils").kernelWait;
+checkError = require("./utils").checkError;
 
 
-exports.command = function (cellNumber, callback) {
-    const self = this;
+exports.command = function (cellNumber, timeout, callback) {
+    /* Synchronously run cell `cellNumber` in the active notebook.  Default timeout 60 s*/
+
+    if (arguments.length == 1){ timeout = 60000 }
 
     function cellRunner(cellNumber){
-        let cell = Jupyter.notebook.get_cell(cellNumber);
+        /* Asynchronously run cell `cellNumber` in the active notebook. */
+        const cell = Jupyter.notebook.get_cell(cellNumber);
         if (cell) { cell.execute() }
-        kernelWait(self, 10000);
-    }
-    function finish(result){
-        this.verify.ok(!Jupyter.notebook.kernel_busy, 'Timed out waiting for Kernel to idle')
-        if (typeof callback === "function") { callback.call(self, result) };
     }
 
-    this.execute( cellRunner, [cellNumber], finish );
+    console.log('Executing cell ' + cellNumber);
+    this.execute(cellRunner, [cellNumber], checkError.bind(this))
+      .waitForIdleKernel(timeout);
+
+
+    if (typeof callback === "function") { callback.call(this) };
     return this; // allows the command to be chained.
 };

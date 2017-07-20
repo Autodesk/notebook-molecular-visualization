@@ -1,25 +1,19 @@
 /* Custom nightwatch functions based on
 https://github.com/hainm/nbtests
  */
-
-import kernelWait from './utils'
-
+const checkError = require("./utils").checkError;
 
 exports.command = function(timeout, callback) {
-    const self = this;
+  const self = this;
 
-    this.execute(
-        function() {
-            Jupyter.notebook.kernel.restart();
-        },
-        null, // arguments array to be passed
-        function(result) {
-            self.pause(timeout);
-            if (typeof callback === "function") {
-                callback.call(self, result);
-            }
-        }
-    );
+  this.execute(
+    function(){Jupyter.notebook.restart_clear_output({"confirm":false})}, [],
+    checkError.bind(self));
 
-    return this; // allows the command to be chained.
+  this.expect.element('#notification_kernel').to.be.visible.before(250);
+  this.expect.element('#notification_kernel').to.not.be.visible.before(timeout);
+
+  if (typeof callback === "function") { callback.call(self) }
+
+  return this; // allows the command to be chained.
 };

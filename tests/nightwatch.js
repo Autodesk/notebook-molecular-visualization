@@ -7,7 +7,7 @@ const parallelWorkers = process.env.PARALLEL_WORKERS || 'auto'; // ignored if PA
 module.exports = {
   src_folders: ['js'],
   output_folder: 'e2ereports',
-  custom_commands_path : "nbtests/jscommands/",
+  custom_commands_path : "customCommands/",
   custom_assertions_path: '',
   page_objects_path: '',
   globals_path: "./globals.js",
@@ -87,7 +87,7 @@ module.exports = {
       },
       screenshots: {
         enabled: false,
-        path: '',
+        path: 'e2ereports/screenshots/',
       },
       test_workers: {
         enabled: parallelTests,
