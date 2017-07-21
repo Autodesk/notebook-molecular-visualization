@@ -3,16 +3,12 @@ const pauseOnFail = process.env.NIGHTWATCH_PAUSE_ON_FAIL || 'false';
 var chromedriver  = require('chromedriver');
 var util = require ('util');
 
-
 module.exports = {
 
   // External before hook is ran at the beginning of the tests run, before creating the chromedriver session
   // This will be run after each test suite (e.g. a test file) is started
   before: function(done) {
-    console.log("before: 'this' = " + util.inspect(this));
-
     // set isLocal in a globals block in your test config or test default
-
     // run this only for the local-env
     if (this.isLocal) {
       chromedriver.start();

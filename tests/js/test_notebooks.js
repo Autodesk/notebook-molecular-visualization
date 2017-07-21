@@ -7,7 +7,7 @@ This module:
 const glob = require('glob');
 const fs = require('fs');
 const assert = require('assert');
-const dayguard = require('dayguard');
+const path = require('path');
 
 function collectTestsFromNotebooks() {
   /* Drives all test collection*/
@@ -146,16 +146,19 @@ function makeTestFunctions() {
 
   testDescriptions.forEach(function (testDescription) {
     testFunctions[testDescription.name] = function (client) {
+
       console.log('Starting test: ' + JSON.stringify(testDescription));
       const targetIdName = testDescription.name+'_target';
-
+      const screenshotPath = path.join(
+        path.basename(testDescription.path, '.ipynb'),
+        testDescription.name.substring(5) + '_widget');
 
       client.openNotebook(testDescription.path);
 
       if (restarted[testDescription.path]) {
         client.clearNbOutputs();
       } else {
-        client.restartKernel(60000);  // currently we restart the kernel every time
+        //client.restartKernel(60000);  // currently we restart the kernel every time
         restarted[testDescription.path] = true;
       }
 
@@ -163,8 +166,14 @@ function makeTestFunctions() {
 
       client.executeCell(testDescription.cellIdx)
         .pause(500)
-        .tagCellOutputsWithId(testDescription.cellIdx, targetIdName)
-        .takeScreenshotFromElement('#' + targetIdName + '_widgetarea', testDescription.name.substring(5));
+        .tagCellOutputsWithId(testDescription.cellIdx, targetIdName);
+
+
+      client.elementScreenshot('#' + targetIdName + '_widgetarea', screenshotPath);
+      // client.compareScreenshotFromElement('#' + targetIdName + '_widgetarea', testDescription.path,
+      // function(result){console.log(result)});
+
+      // console.log(client.visualChangesOf('#' + targetIdName + '_widgetarea'));
 
       //client.pause(6000000);
 

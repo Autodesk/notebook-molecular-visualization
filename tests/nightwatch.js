@@ -3,13 +3,12 @@ const testUrl = process.env.NIGHTWATCH_URL || 'http://127.0.0.1:3001';
 const detailedOutput = !!process.env.NIGHTWATCH_DETAIL ;
 const parallelTests = !!process.env.PARALLEL;
 const parallelWorkers = process.env.PARALLEL_WORKERS || 'auto'; // ignored if PARALLEL is false
-const dayguard = require("dayguard");
 
 module.exports = {
   src_folders: ['js'],
   output_folder: 'e2ereports',
-  custom_commands_path : ["customCommands/", dayguard.custom_commands_path],
-  custom_assertions_path: [dayguard.custom_commands_path],
+  custom_commands_path : ["customCommands/"],
+  custom_assertions_path: [],
   page_objects_path: '',
   globals_path: "./globals.js",
   detailed_output: detailedOutput,
@@ -26,26 +25,6 @@ module.exports = {
   },
 
   test_settings: {
-    
-    "default_SETTINGS_TO_BE_TESTED" : {
-      "log_screenshot_data" : true,
-      "screenshots" : {
-        "enabled"    : true,
-        "on_failure" : true,
-        "on_error"   : true,
-        "path"       : "e2ereports/screenshots/"
-      },
-      // https://github.com/SeleniumHQ/selenium/wiki/DesiredCapabilities
-      "desiredCapabilities": {
-        "chromeOptions" : {
-          "args" : ["--no-sandbox", "test-type=browser", "--auto-open-devtools-for-tabs", 
-                    "--safebrowsing-disable-auto-update", "--dom-automation", "disable-extensions",
-
-                    ],  // http://peter.sh/experiments/chromium-command-line-switches/
-          "detach" : true,
-        }
-       }
-    },
     // default environment. other environments inheret these defaults
     "default" : {
       "launch_url" : testUrl,
@@ -81,14 +60,14 @@ module.exports = {
         }
        },
       globals : {
-        screenshot_path : "e2ereports/screenshots/",
+        screenshot_path : "baseline_images",
         waitForConditionTimeout: 10000,
         isLocal : false,
-        end_session_on_fail : true
+        end_session_on_fail : true,
       },
       screenshots: {
         enabled: true,
-        path: 'e2ereports/screenshots/',
+        path: 'baseline_images',
       },
       test_workers: {
         enabled: parallelTests,

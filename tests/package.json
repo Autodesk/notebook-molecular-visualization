@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "chromedriver": "^2.30.0",
-    "dayguard": "^0.2.0",
+    "fs-extra": "^4.0.0",
+    "gm": "^1.23.0",
     "nightwatch": "https://github.com/duncanmeech/nightwatch/tarball/master",
     "node-glob": "^1.2.0",
     "png-crop": "0.0.1",
