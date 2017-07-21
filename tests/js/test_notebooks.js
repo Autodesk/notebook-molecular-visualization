@@ -146,8 +146,7 @@ function makeTestFunctions() {
 
   testDescriptions.forEach(function (testDescription) {
     testFunctions[testDescription.name] = function (client) {
-
-      console.log('Starting test: ' + JSON.stringify(testDescription));
+      console.log('Starting test "' + testDescription.name + '" from ' + path.basename(testDescription.path));
       const targetIdName = testDescription.name+'_target';
       const screenshotPath = path.join(
         path.basename(testDescription.path, '.ipynb'),
@@ -158,7 +157,7 @@ function makeTestFunctions() {
       if (restarted[testDescription.path]) {
         client.clearNbOutputs();
       } else {
-        //client.restartKernel(60000);  // currently we restart the kernel every time
+        client.restartKernel(60000);  // currently we restart the kernel every time
         restarted[testDescription.path] = true;
       }
 
@@ -170,13 +169,6 @@ function makeTestFunctions() {
 
 
       client.elementScreenshot('#' + targetIdName + '_widgetarea', screenshotPath);
-      // client.compareScreenshotFromElement('#' + targetIdName + '_widgetarea', testDescription.path,
-      // function(result){console.log(result)});
-
-      // console.log(client.visualChangesOf('#' + targetIdName + '_widgetarea'));
-
-      //client.pause(6000000);
-
       client.end();
     }
   });

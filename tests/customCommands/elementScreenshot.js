@@ -15,13 +15,15 @@ exports.command = function(selector, imagePath){
   let pixelRatio = null;
 
   function boundingBoxCallback(result) {
-    checkError.bind(self)(result);
-    bbox = result.value[0];
-    pixelRatio = result.value[1];
+    self.perform(function() {
+      checkError.bind(self)(result);
+      bbox = result.value[0];
+      pixelRatio = result.value[1];
+    });
   }
 
   function cropAndSaveScreenshot(result){
-    const latestPath = path.join(self.options.screenshotsPath, imagePath + '_latest.png');
+    const latestPath = path.join(self.options.screenshotsPath, imagePath + '.png');
     console.log('Saving screenshot to ' + latestPath);
 
     fs.outputFileSync(latestPath, new Buffer(result.value, 'base64'));

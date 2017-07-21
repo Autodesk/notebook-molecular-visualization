@@ -60,14 +60,14 @@ module.exports = {
         }
        },
       globals : {
-        screenshot_path : "baseline_images",
+        screenshot_path : "latest_images",
         waitForConditionTimeout: 10000,
         isLocal : false,
         end_session_on_fail : true,
       },
       screenshots: {
         enabled: true,
-        path: 'baseline_images',
+        path: 'latest_images',
       },
       test_workers: {
         enabled: parallelTests,
