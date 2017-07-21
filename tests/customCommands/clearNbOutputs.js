@@ -7,7 +7,7 @@ exports.command = function(timeout, callback) {
   const self = this;
 
   this.waitForIdleKernel();
-  this.perform(function(){console.log('Clearing output (kernel not restarted)')});
+  this.perform(function(){process.stdout.write('Clear old output... ')});
 
   this.execute(
     function(){Jupyter.notebook.clear_output()}, [],

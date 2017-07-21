@@ -3,6 +3,11 @@ https://github.com/hainm/nbtests
 */
 
 
+// in case of Python errors, output is in a div INSIDE of outputarea div, with classes:
+// "output_subarea output_text output_error"
+// Can also get from Jupyter API directly by checking for an output area s.t.
+// Jupyter.notebook.get_cell(cellNum).output_area.outputs[i].output_type == 'error'
+
 exports.command = function(cellNumber, callback) {
     const self = this;
 

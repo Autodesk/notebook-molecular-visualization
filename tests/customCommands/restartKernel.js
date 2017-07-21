@@ -8,7 +8,7 @@ exports.command = function(timeout, callback) {
 
   this.waitForIdleKernel();
 
-  this.perform(function(){console.log('Restarting kernel')});
+  this.perform(function(){process.stdout.write('Restart kernel... ')});
   this.execute(
     function(){Jupyter.notebook.restart_clear_output({"confirm":false})}, [],
     checkError.bind(self));

@@ -24,7 +24,7 @@ exports.command = function(selector, imagePath){
 
   function cropAndSaveScreenshot(result){
     const latestPath = path.join(self.options.screenshotsPath, imagePath + '.png');
-    console.log('Saving screenshot to ' + latestPath);
+    process.stdout.write('Screenshot saved: ' + latestPath + '\n');
 
     fs.outputFileSync(latestPath, new Buffer(result.value, 'base64'));
     const shot = loadImage(latestPath).quality(100);

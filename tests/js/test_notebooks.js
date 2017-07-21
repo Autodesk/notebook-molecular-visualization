@@ -146,8 +146,8 @@ function makeTestFunctions() {
 
   testDescriptions.forEach(function (testDescription) {
     testFunctions[testDescription.name] = function (client) {
-      console.log('Starting test "' + testDescription.name + '" from ' + path.basename(testDescription.path));
-      const targetIdName = testDescription.name+'_target';
+      process.stdout.write(`\n"${testDescription.name}" from ${path.basename(testDescription.path)}:\n`);
+      const targetIdName = testDescription.name + '_target';
       const screenshotPath = path.join(
         path.basename(testDescription.path, '.ipynb'),
         testDescription.name.substring(5) + '_widget');
@@ -165,8 +165,8 @@ function makeTestFunctions() {
 
       client.executeCell(testDescription.cellIdx)
         .pause(500)
+        .perform(function(){process.stdout.write('done\n')})
         .tagCellOutputsWithId(testDescription.cellIdx, targetIdName);
-
 
       client.elementScreenshot('#' + targetIdName + '_widgetarea', screenshotPath);
       client.end();
