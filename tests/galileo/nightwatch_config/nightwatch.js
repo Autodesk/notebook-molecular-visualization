@@ -4,23 +4,29 @@ const detailedOutput = !!process.env.NIGHTWATCH_DETAIL ;
 const parallelTests = !!process.env.PARALLEL;
 const parallelWorkers = process.env.PARALLEL_WORKERS || 'auto'; // ignored if PARALLEL is false
 
+import path from 'path';
+
+const glopath = path.join(__dirname,'..');
+
 module.exports = {
   src_folders: ['js'],
-  output_folder: 'e2ereports',
-  custom_commands_path : ["customCommands/"],
+  output_folder: 'reports',
+  custom_commands_path : [path.join(glopath, 'nightwatch_config', "customCommands")],
   custom_assertions_path: [],
   page_objects_path: '',
-  globals_path: "./globals.js",
+  globals_path: path.join(glopath, 'nightwatch_config', "globals.js"),
   detailed_output: detailedOutput,
 
   selenium: {
      start_process: false,
-     server_path: './node_modules/selenium-standalone/.selenium/selenium-server/2.53.1-server.jar',
+     server_path: path.join('..',
+         'node_modules','selenium-standalone','.selenium','selenium-server','2.53.1-server.jar'),
      log_path: '',
      host: '127.0.0.1',
      port: 4444,
      cli_args: {
-       'webdriver.chrome.driver': './node_modules/selenium-standalone/.selenium/chromedriver/2.30-x64-chromedriver',
+       'webdriver.chrome.driver': path.join('..',
+           'node_modules','selenium-standalone','.selenium','chromedriver','2.30-x64-chromedriver'),
      }
   },
 

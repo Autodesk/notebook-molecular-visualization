@@ -12,7 +12,7 @@ const path = require('path');
 function collectTestsFromNotebooks() {
   /* Drives all test collection*/
 
-  const notebookPaths = glob.sync('notebooks/*.ipynb');
+  const notebookPaths = glob.sync('*.ipynb');
 
   let tests = [];
   notebookPaths.forEach(function (path) {

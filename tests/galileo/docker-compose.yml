@@ -1,0 +1,5 @@
+nbserver:
+  build: ../
+
+testrunner:
+  build: ./

@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+
+const glopath = path.join(__dirname, '..');
+
+function runGalileo() {
+    // CLI driver
+
+    const argv = require('yargs')
+        .usage("Galileo observes Jupyter - visual regression test runner for notebooks")
+        .describe('nbport', 'Port to connect to jupyter on (default: random if ' +
+            'launching jupyter as a child process, 8888 otherwise)')
+        .boolean('launchnb')
+        .describe('launchnb', 'Launch a notebook server as a child process')
+        .describe('nbtoken', 'Optional token for connecting to Jupyter server ' +
+            '(ignored if --launchnb flag is passed)')
+        .argv;
+
+    if (argv.nbport) {
+        const nbport = argv.nbport
+    } else if (argv.launchnb) {
+        const nbport = (Math.random() * (65535 - 49152)) + 49152
+    } else {
+        const nbport = 8888
+    }
+
+    let jupyterConfigPath = '';
+
+    if(argv.nbtoken){
+        const nbtoken = argv.nbtoken;
+    } else if (argv.launchnb) {
+        // Create a random token then create a config file for it
+        const nbtoken = crypto.randomBytes(64).toString('hex');
+        configFile = JSON.stringify({"NotebookApp":{"token": nbtoken}});
+        const dirname = path.join(os.tmpdir(), nbtoken);
+        jupyterConfigPath = '-c ' + path.join(dirname, 'jupyter_config.json');
+        fs.mkdirSync(dirname);
+        fs.writeFileSync(configPath, configFile);
+    } else {
+        const nbtoken = null;
+    }
+
+
+    if (argv.launchnb) {
+        launchJupyter(nbport, jupyterConfigPath, runNightwatch) }
+    else {
+        runNightwatch() }
+}
+
+function launchJupyter(nbport, configPath, callbackWhenReady) {
+    const net = require('net');
+
+    const cmd = 'jupyter notebook ' +
+        '--no-browser ' +
+        '--ip=127.0.0.1 ' +
+        `--port=${parseInt(nbport)} ` +
+        configPath;
+    process.stdout.write('Launching Jupyter ...\n$ ' + cmd + '\n');
+    child_process.exec(cmd, jupyterFinished);
+
+    let client = net.connect({port: 8124},
+        function () { //'connect' listener
+            console.log('Jupyter is ready');
+            client.end();
+            callbackWhenReady()
+        });
+}
+
+function jupyterFinished(error, stderr, stdout){
+    process.stdout.write("jupyter server exited");
+}
+
+
+function runNightwatch() {
+    // launches the nightwatch test runner, which will actually do the real testing
+    const nwexe = path.join(glopath, 'node_modules', 'nightwatch', 'bin', 'nightwatch');
+    const nwconfig = path.join(glopath, 'nightwatch_config', 'nightwatch.js');
+
+    process.env.GALILEO_NBPORT = nbport;
+    process.env.GALILEO_NBTOKEN = nbtoken;
+    child_process.execSync(`${nwexe} -c ${nwconfig}`, {stdio:[0,1,2]})
+}
+
+runGalileo();
