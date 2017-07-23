@@ -4,12 +4,12 @@ const detailedOutput = !!process.env.NIGHTWATCH_DETAIL ;
 const parallelTests = !!process.env.PARALLEL;
 const parallelWorkers = process.env.PARALLEL_WORKERS || 'auto'; // ignored if PARALLEL is false
 
-import path from 'path';
+const path = require('path');
 
 const glopath = path.join(__dirname,'..');
 
 module.exports = {
-  src_folders: ['js'],
+  src_folders: [path.join(glopath, 'collector')],
   output_folder: 'reports',
   custom_commands_path : [path.join(glopath, 'nightwatch_config', "customCommands")],
   custom_assertions_path: [],
@@ -19,13 +19,13 @@ module.exports = {
 
   selenium: {
      start_process: false,
-     server_path: path.join('..',
+     server_path: path.join(glopath,
          'node_modules','selenium-standalone','.selenium','selenium-server','2.53.1-server.jar'),
      log_path: '',
      host: '127.0.0.1',
      port: 4444,
      cli_args: {
-       'webdriver.chrome.driver': path.join('..',
+       'webdriver.chrome.driver': path.join(glopath,
            'node_modules','selenium-standalone','.selenium','chromedriver','2.30-x64-chromedriver'),
      }
   },

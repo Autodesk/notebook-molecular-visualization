@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 
+const path = require('path');
+const fs = require('fs');
+const child_process = require('child_process');
+const crypto = require('crypto');
+const os = require('os');
+
 const glopath = path.join(__dirname, '..');
 
 function runGalileo() {
     // CLI driver
+
+    let nbport = null;
+    let nbtoken = null;
 
     const argv = require('yargs')
         .usage("Galileo observes Jupyter - visual regression test runner for notebooks")
@@ -16,29 +25,33 @@ function runGalileo() {
         .argv;
 
     if (argv.nbport) {
-        const nbport = argv.nbport
+        nbport = argv.nbport
     } else if (argv.launchnb) {
-        const nbport = (Math.random() * (65535 - 49152)) + 49152
+        nbport = Math.floor((Math.random() * (65535 - 49152)) + 49152)
     } else {
-        const nbport = 8888
+        nbport = 8888
     }
 
     let jupyterConfigPath = '';
 
     if(argv.nbtoken){
-        const nbtoken = argv.nbtoken;
+        nbtoken = argv.nbtoken;
     } else if (argv.launchnb) {
         // Create a random token then create a config file for it
-        const nbtoken = crypto.randomBytes(64).toString('hex');
+        nbtoken = crypto.randomBytes(24).toString('hex');
         configFile = JSON.stringify({"NotebookApp":{"token": nbtoken}});
         const dirname = path.join(os.tmpdir(), nbtoken);
-        jupyterConfigPath = '-c ' + path.join(dirname, 'jupyter_config.json');
+        jupyterConfigPath = path.join(dirname, 'jupyter_config.json');
         fs.mkdirSync(dirname);
-        fs.writeFileSync(configPath, configFile);
+        fs.writeFileSync(jupyterConfigPath, configFile);
+
+        process.stdout.write(`Token for nb server 'http://localhost:${nbport}':\n${nbtoken}\n`)
     } else {
-        const nbtoken = null;
+        nbtoken = null;
     }
 
+    process.env.GALILEO_NBPORT = nbport;
+    process.env.GALILEO_NBTOKEN = nbtoken;
 
     if (argv.launchnb) {
         launchJupyter(nbport, jupyterConfigPath, runNightwatch) }
@@ -48,25 +61,46 @@ function runGalileo() {
 
 function launchJupyter(nbport, configPath, callbackWhenReady) {
     const net = require('net');
+    const port = parseInt(nbport);
+
+    let client = null;
+    let waitTime = 0;
 
     const cmd = 'jupyter notebook ' +
         '--no-browser ' +
         '--ip=127.0.0.1 ' +
-        `--port=${parseInt(nbport)} ` +
-        configPath;
-    process.stdout.write('Launching Jupyter ...\n$ ' + cmd + '\n');
+        `--port=${port} ` +
+        `--config=${configPath}`;
+    process.stdout.write('Launching Jupyter:\n$ ' + cmd + '\n');
     child_process.exec(cmd, jupyterFinished);
+    process.stdout.write('Waiting for Jupyter ..');
 
-    let client = net.connect({port: 8124},
-        function () { //'connect' listener
-            console.log('Jupyter is ready');
+    function attemptConnection(){
+        // Polls Jupyter server @ localhost:[nbport] until it comes online
+        if(waitTime >= 60000) throw "Timed out waiting to connect to Jupyter server";
+
+        process.stdout.write('.');
+        client = net.connect({"port": port}, connectionSuccess)
+        client.on('error', function(err){ // should really test the errors here
             client.end();
-            callbackWhenReady()
-        });
+            setTimeout(attemptConnection, 1000)});  // poll every 1000 ms
+        waitTime += 1000;
+    }
+
+    function connectionSuccess(){
+        process.stdout.write(' connection successful');
+        client.end();
+        callbackWhenReady()
+    }
+
+    attemptConnection();
 }
 
 function jupyterFinished(error, stderr, stdout){
     process.stdout.write("jupyter server exited");
+    console.log(stderr);
+    console.log(stdout);
+    if(error) throw error;
 }
 
 
@@ -74,10 +108,7 @@ function runNightwatch() {
     // launches the nightwatch test runner, which will actually do the real testing
     const nwexe = path.join(glopath, 'node_modules', 'nightwatch', 'bin', 'nightwatch');
     const nwconfig = path.join(glopath, 'nightwatch_config', 'nightwatch.js');
-
-    process.env.GALILEO_NBPORT = nbport;
-    process.env.GALILEO_NBTOKEN = nbtoken;
-    child_process.execSync(`${nwexe} -c ${nwconfig}`, {stdio:[0,1,2]})
+    child_process.execSync(`${nwexe} -c ${nwconfig} --env local_chrome`, {stdio:[0,1,2]})
 }
 
 runGalileo();
