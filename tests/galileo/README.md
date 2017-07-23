@@ -17,7 +17,7 @@ npm run selenium
 
 ### Get started
 
-Create a notebook and name it `test_widgets`. Add the following cells:
+Create a notebook and name it `test_widgets.ipynb`. Add the following cells:
 
 ```python
 #! setup
@@ -29,12 +29,9 @@ import ipywidgets
 ipywidgets.FloatWidget('float widget')
 ```
 
-Start a Jupyter server in the same directory as your new notebook:
+Run the tests from the same directory that you created this new notebook:
 
-`jupyter notebook --no-browser --port=88888`
-
-Now run the tests:
-`[PATH_TO_NB_WIDGET_TESTER]/test_nbwidgets --jupyterport 88888 --jupytertoken [jupyter token]`
+`[PATH_TO_GALILEO]/bin/galileo --launchnb`
 
 If you haven't set a static Jupyter token or password, the token will be printed to the terminal when you first launch Jupyter.
 

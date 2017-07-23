@@ -20,6 +20,7 @@
     "node-glob": "^1.2.0",
     "png-crop": "0.0.1",
     "selenium-standalone": "5.7.2",
+    "url-parse": "^1.1.9",
     "yargs": "^8.0.2"
   },
   "license": "Apache-2.0",

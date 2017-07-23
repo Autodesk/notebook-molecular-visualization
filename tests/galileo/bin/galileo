@@ -5,32 +5,43 @@ const fs = require('fs');
 const child_process = require('child_process');
 const crypto = require('crypto');
 const os = require('os');
+const assert = require('assert');
+const urlparse = require('url-parse');
 
 const glopath = path.join(__dirname, '..');
 
 function runGalileo() {
     // CLI driver
 
-    let nbport = null;
+    let nbserver = null;
     let nbtoken = null;
 
     const argv = require('yargs')
         .usage("Galileo observes Jupyter - visual regression test runner for notebooks")
-        .describe('nbport', 'Port to connect to jupyter on (default: random if ' +
-            'launching jupyter as a child process, 8888 otherwise)')
+        .describe('nbserver', 'Host and port for Jupyter server, e.g. "http://hostname:8888"\n' +
+        'DEFAULT:\n - "localhost:[random port] with --launchnb flag; \n' +
+        '         - "localhost:8888" otherwise)')
         .boolean('launchnb')
-        .describe('launchnb', 'Launch a notebook server as a child process')
-        .describe('nbtoken', 'Optional token for connecting to Jupyter server ' +
-            '(ignored if --launchnb flag is passed)')
+        .describe('launchnb', 'Launch a notebook server as a child process. If --nbserver is not ' +
+            'provided, the server will listen on a random high-numbered port' +
+            ' (the hostname for nbserver is ignored.). If --nbtoken is ' +
+            'not provided, a security token will be generated. Both the port and token ' +
+            'will be displayed in output.')
+        .describe('nbtoken', 'Optional security token for connecting to Jupyter server ')
+        .help()
         .argv;
 
-    if (argv.nbport) {
-        nbport = argv.nbport
+    if (argv.nbserver) {
+        nbserver = argv.nbserver;
+        assert(urlparse(nbserver).port, "Jupyter server must include a port number!");
     } else if (argv.launchnb) {
-        nbport = Math.floor((Math.random() * (65535 - 49152)) + 49152)
+        nbserver = 'http://localhost:' + Math.floor((Math.random() * (65535 - 49152)) + 49152)
     } else {
-        nbport = 8888
+        nbserver = "http://localhost:8888"
     }
+
+    let serverURI = urlparse(nbserver);
+    if(!serverURI.protocol) serverURI.protocol = 'http:';
 
     let jupyterConfigPath = '';
 
@@ -45,21 +56,21 @@ function runGalileo() {
         fs.mkdirSync(dirname);
         fs.writeFileSync(jupyterConfigPath, configFile);
 
-        process.stdout.write(`Token for nb server 'http://localhost:${nbport}':\n${nbtoken}\n`)
+        process.stdout.write(`Token for nb server '${nbserver}':\n${nbtoken}\n`)
     } else {
         nbtoken = null;
     }
 
-    process.env.GALILEO_NBPORT = nbport;
+    process.env.GALILEO_NBSERVER = serverURI.href;
     process.env.GALILEO_NBTOKEN = nbtoken;
 
     if (argv.launchnb) {
-        launchJupyter(nbport, jupyterConfigPath, runNightwatch) }
+        launchJupyter(serverURI, jupyterConfigPath, runNightwatch) }
     else {
         runNightwatch() }
 }
 
-function launchJupyter(nbport, configPath, callbackWhenReady) {
+function launchJupyter(serverURI, configPath, callbackWhenReady) {
     const net = require('net');
     const port = parseInt(nbport);
 
@@ -69,7 +80,7 @@ function launchJupyter(nbport, configPath, callbackWhenReady) {
     const cmd = 'jupyter notebook ' +
         '--no-browser ' +
         '--ip=127.0.0.1 ' +
-        `--port=${port} ` +
+        `--port=${serverURI.port} ` +
         `--config=${configPath}`;
     process.stdout.write('Launching Jupyter:\n$ ' + cmd + '\n');
     child_process.exec(cmd, jupyterFinished);

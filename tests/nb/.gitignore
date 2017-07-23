@@ -1,6 +1,4 @@
 reports
-nightwatch.json
 nbtests
 *.log
-e2ereports
 latest_images
