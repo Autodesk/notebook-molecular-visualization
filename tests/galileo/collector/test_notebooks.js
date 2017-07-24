@@ -1,6 +1,6 @@
 /*
 This module:
-1) Collects all notebooks that match notebooks/test_*.ipynb
+1) Collects all notebooks that match test_*.ipynb
 2) Examines their internal JSON to create tests
 3) Exports all tests given their internal names
  */
@@ -60,7 +60,10 @@ function makeTests(path){
     tests[name] = makeTest(spec, fixtureCellIds, fixtureDependency, setupCellId);
   });
 
-  testList = Object.values(tests);
+  //testList = Object.values(tests);
+  let testList = Object.keys(tests).map(function(key) {
+    return tests[key];
+  });
   console.log('Found ' + testList.length + ' tests in ' + path + '.');
   return testList;
 }
@@ -139,7 +142,7 @@ function parseCodeCell(path, cell, idx){
 
 function makeTestFunctions() {
   let testDescriptions = collectTestsFromNotebooks();
-  restarted = {};
+  let restarted = {};
   testDescriptions.forEach(function(td){restarted[td.path] = false});
 
   let testFunctions = {};

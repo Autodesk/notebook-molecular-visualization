@@ -1,0 +1,26 @@
+version: '2'
+
+services:
+  demoserver:
+    build: ./
+    working_dir: $HOME
+    command: /opt/launch-mdt-examples.sh
+    ports:
+    - 8888:8888
+
+
+  testrunner:
+    build: tests/
+    command: bash -c "sleep 2 && /opt/galileo/bin/galileo --nbserver=testserver:8888"
+    working_dir: /opt/test_notebooks
+    links:
+      - testserver
+
+
+  testserver:
+    build: ./
+    working_dir: /opt/notebook-molecular-visualization/tests/nb
+    command: /opt/run_notebook.sh
+    expose:
+     - 8885
+

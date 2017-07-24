@@ -14,10 +14,8 @@
 **/.cache/
 **/node_modules
 **/.coverage
-tests/latest_images
 **/*.log
 **/*.bak
-tests/nb/reports
-tests/nb/latest_images
-
-
+nb/reports
+**/latest_images
+galileo/node_modules

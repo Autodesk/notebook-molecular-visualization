@@ -2,7 +2,6 @@
 https://github.com/hainm/nbtests
 */
 
-const kernelWait = require("./utils").kernelWait;
 checkError = require("./utils").checkError;
 
 

@@ -33,7 +33,9 @@ function runGalileo() {
 
     if (argv.nbserver) {
         nbserver = argv.nbserver;
-        assert(urlparse(nbserver).port, "Jupyter server must include a port number!");
+        if(nbserver.substring(0,4) != 'http') nbserver = 'http://' + nbserver;
+        assert(urlparse(nbserver).port,
+            `Jupyter server ${nbserver} must include a port number!`);
     } else if (argv.launchnb) {
         nbserver = 'http://localhost:' + Math.floor((Math.random() * (65535 - 49152)) + 49152)
     } else {
@@ -41,7 +43,6 @@ function runGalileo() {
     }
 
     let serverURI = urlparse(nbserver);
-    if(!serverURI.protocol) serverURI.protocol = 'http:';
 
     let jupyterConfigPath = '';
 
@@ -58,11 +59,11 @@ function runGalileo() {
 
         process.stdout.write(`Token for nb server '${nbserver}':\n${nbtoken}\n`)
     } else {
-        nbtoken = null;
+        nbtoken = undefined;
     }
 
     process.env.GALILEO_NBSERVER = serverURI.href;
-    process.env.GALILEO_NBTOKEN = nbtoken;
+    if(nbtoken) process.env.GALILEO_NBTOKEN = nbtoken;
 
     if (argv.launchnb) {
         launchJupyter(serverURI, jupyterConfigPath, runNightwatch) }
@@ -72,7 +73,7 @@ function runGalileo() {
 
 function launchJupyter(serverURI, configPath, callbackWhenReady) {
     const net = require('net');
-    const port = parseInt(nbport);
+    const port = parseInt(serverURI.port);
 
     let client = null;
     let waitTime = 0;
@@ -87,11 +88,11 @@ function launchJupyter(serverURI, configPath, callbackWhenReady) {
     process.stdout.write('Waiting for Jupyter ..');
 
     function attemptConnection(){
-        // Polls Jupyter server @ localhost:[nbport] until it comes online
+        // Polls Jupyter server until it comes online
         if(waitTime >= 60000) throw "Timed out waiting to connect to Jupyter server";
 
         process.stdout.write('.');
-        client = net.connect({"port": port}, connectionSuccess)
+        client = net.connect({"port": port}, connectionSuccess);
         client.on('error', function(err){ // should really test the errors here
             client.end();
             setTimeout(attemptConnection, 1000)});  // poll every 1000 ms
@@ -99,7 +100,7 @@ function launchJupyter(serverURI, configPath, callbackWhenReady) {
     }
 
     function connectionSuccess(){
-        process.stdout.write(' connection successful');
+        process.stdout.write(' connection successful.\n');
         client.end();
         callbackWhenReady()
     }
