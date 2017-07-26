@@ -1,4 +1,8 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +16,7 @@ from __future__ import print_function
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
+from past.builtins import basestring
 import numpy as np
 from io import StringIO
 from traitlets import Bool, Dict, Float, List, Set, Unicode
@@ -23,8 +24,7 @@ from traitlets import Bool, Dict, Float, List, Set, Unicode
 from moldesign import units as u
 from moldesign.mathutils import padded_grid
 
-
-from ..utils import JSObject, translate_color, in_pixels
+from ..utils import translate_color, in_pixels
 from .mdt2json import convert as convert_to_json
 from .base_widget import MessageWidget
 
@@ -45,16 +45,16 @@ class MolViz3D(MessageWidget):
     background_opacity = Float(1.0).tag(sync=True)
     model_data = Dict({}).tag(sync=True)
     orbital = Dict({}).tag(sync=True)
-    selected_atom_indices = Set(set()).tag(sync=True)
+    selected_atom_indices = List().tag(sync=True)
     selection_type = Unicode('Atom').tag(sync=True)
     shapes = List([]).tag(sync=True)
     styles = Dict({}).tag(sync=True)
+    labels = List([]).tag(sync=True)
 
     SHAPE_NAMES = {
         'SPHERE': 'Sphere',
         'ARROW': 'Arrow',
         'CYLINDER': 'Cylinder',
-        'LABEL': 'Label'
     }
 
     STYLE_NAMES = {'vdw': 'sphere',
@@ -364,7 +364,6 @@ class MolViz3D(MessageWidget):
                    border='black',
                    color='white',
                    fontsize=14, opacity=1.0):
-        js_label = JSObject('label')
         position = self._convert_units(position)
         color = translate_color(color)
         background = translate_color(background)

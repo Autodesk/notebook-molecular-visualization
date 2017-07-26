@@ -24,10 +24,13 @@ exports.command = function(cellNumber, callback) {
     function verify(result){
         if (result.value != null) {
             if (result.value.output_type) {
+                let error = 'not found';
                 if (result.value.output_type == 'error') {
                     console.log('error code', result.value.code);
+                    error = result.value
                 }
-                self.verify.ok(result.value.output_type != 'error', "Check that python has no error");
+                self.verify.ok(result.value.output_type != 'error',
+                    "Error executing cell " + cellNumber + ': \n' + error);
             }   }
 
         if (typeof callback === "function") {

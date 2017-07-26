@@ -31,6 +31,7 @@ class Nbmolviz3dComponent extends React.Component {
       shapes: model.get('shapes'),
       styles: model.get('styles'),
       width: model.get('width'),
+      labels: model.get('labels'),
     };
   }
 

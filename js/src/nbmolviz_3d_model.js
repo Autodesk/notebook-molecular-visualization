@@ -32,6 +32,7 @@ const Nbmolviz3dModel = widgets.DOMWidgetModel.extend({
     selection_type: 'Atom',
     shapes: [],
     width: '500px',
+    labels: [],
   },
 });
 
