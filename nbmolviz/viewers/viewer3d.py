@@ -42,6 +42,7 @@ class GeometryViewer(MolViz3D, ColorMixin):
     DEFAULT_WIDTH = '100%'  # by default, expand to fill parent container horizontally
     DEFAULT_HEIGHT = "450px"
     DEF_PADDING = 2.25 * u.angstrom
+    AXISCOLORS = {'x':'red', 'y':'green', 'z':'blue'}
 
     def __reduce__(self):
         """prevent these from being pickled for now"""
@@ -80,6 +81,10 @@ class GeometryViewer(MolViz3D, ColorMixin):
     @property
     def wfn(self):
         return self.wfns[self.current_frame]
+
+    @property
+    def selected_atoms(self):
+        return [self.mol.atoms[i] for i in self.selected_atom_indices]
 
     def autostyle(self):
         if self.mol.mass <= 500.0 * u.dalton:
@@ -133,30 +138,6 @@ class GeometryViewer(MolViz3D, ColorMixin):
         atomsel = {'index': idxes}
         return atomsel
 
-    #@utils.doc_inherit
-    def set_color(self, color, atoms=None, _store=True):
-        if _store:
-            for atom in utils.if_not_none(atoms, self.mol.atoms):
-                self._colored_as[atom] = color
-        return super(GeometryViewer, self).set_color(color, atoms=atoms)
-
-    #@utils.doc_inherit
-    def set_colors(self, colormap, _store=True):
-        if _store:
-            for color, atoms in colormap.items():
-                for atom in atoms:
-                    self._colored_as[atom] = color
-        return super(GeometryViewer, self).set_colors(colormap)
-
-    #@utils.doc_inherit
-    def unset_color(self, atoms=None, _store=True):
-        if _store:
-            for atom in utils.if_not_none(atoms, self.mol.atoms):
-                self._colored_as.pop(atom, None)
-
-        result = super(GeometryViewer, self).unset_color(atoms=atoms)
-        if self.atom_highlights: self._redraw_highlights()
-        return result
 
     def get_input_file(self):
         if len(self.mol.atoms) <= 250:
@@ -204,7 +185,8 @@ class GeometryViewer(MolViz3D, ColorMixin):
                 scale_factor = scale_factor / self.DISTANCE_UNITS
 
             vecarray = vecs / scale_factor
-            try: arrowvecs = vecarray.value_in(self.DISTANCE_UNITS)
+            try:
+                arrowvecs = vecarray.value_in(self.DISTANCE_UNITS)
             except AttributeError:
                 arrowvecs = vecarray
 
@@ -224,18 +206,19 @@ class GeometryViewer(MolViz3D, ColorMixin):
                                                                     native=self.DISTANCE_UNITS))
         shapes = []
         for atom, vecarray in zip(self.mol.atoms, arrowvecs):
-            if vecarray.norm() < 0.2: continue
+            if vecarray.norm() < 0.2:
+                continue
             shapes.append(self.draw_arrow(atom.position, vector=vecarray, **kwargs))
         return shapes
 
     def draw_axis(self, on=True):
         label_kwargs = dict(color='white', opacity=0.4, fontsize=14)
         if on and self._axis_objects is None:
-            xarrow = self.draw_arrow([0, 0, 0], [1, 0, 0], color='red')
+            xarrow = self.draw_arrow([0, 0, 0], [1, 0, 0], color=self.AXISCOLORS['x'])
             xlabel = self.draw_label([1.0, 0.0, 0.0], text='x', **label_kwargs)
-            yarrow = self.draw_arrow([0, 0, 0], [0, 1, 0], color='green')
+            yarrow = self.draw_arrow([0, 0, 0], [0, 1, 0], color=self.AXISCOLORS['y'])
             ylabel = self.draw_label([-0.2, 1, -0.2], text='y', **label_kwargs)
-            zarrow = self.draw_arrow([0, 0, 0], [0, 0, 1], color='blue')
+            zarrow = self.draw_arrow([0, 0, 0], [0, 0, 1], color=self.AXISCOLORS['z'])
             zlabel = self.draw_label([0, 0, 1], text='z', **label_kwargs)
             self._axis_objects = [xarrow, yarrow, zarrow,
                                   xlabel, ylabel, zlabel]
@@ -244,6 +227,8 @@ class GeometryViewer(MolViz3D, ColorMixin):
             for arrow in self._axis_objects:
                 self.remove(arrow)
             self._axis_objects = None
+
+    draw_axes = draw_axis  # If I can never keep this straight, I doubt anyone else can either ...
 
     def draw_forces(self, **kwargs):
         return self.draw_atom_vectors(self.mol.forces, **kwargs)

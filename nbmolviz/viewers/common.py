@@ -11,78 +11,47 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from builtins import zip
-from builtins import map
 from past.builtins import basestring
-from builtins import object
 
+import collections
 from moldesign import utils
 from .. import colormaps
 
 
 class ColorMixin(object):
-    def color_by(self, atom_callback, atoms=None, mplmap='auto', force_cmap=False):
-        """
-        Color atoms according to either:
-          * an atomic attribute (e.g., 'chain', 'residue', 'mass')
-          * a callback function that accepts an atom and returns a color or a category
+    def colormap(self, atomvalues, atoms=None, mplmap='auto'):
+        """ Color atoms according to categorical or numeric data
 
         Args:
-            atom_callback (callable OR str): callable f(atom) returns color OR
-                category OR an atom attribute (e.g., ``atnum, mass, residue.type``)
-            atoms (moldesign.molecules.AtomContainer): atoms to color (default: self.atoms)
+            atomvalues (callable OR list or str): Either:
+              - a callable that takes an atom and the data,
+              - a list of values of each atom
+              - the name of an atomic property (e.g., 'residue' or 'mass')
+            atoms (moldesign.molecules.AtomContainer): atoms to color (default: self.mol.atoms)
             mplmap (str): name of the matplotlib colormap to use if colors aren't explicitly
                specified)
             force_cmap (bool): force the use of a colormap
-
-        Notes:
-            If you'd like to explicitly specify colors, the callback can return color
-            specifications as an HTML string (``'#1234AB'``), a hexadecimal integer (
-            ``0x12345AB``), or a CSS3 color keyword (``'green'``, ``'purple'``, etc., see
-            https://developer.mozilla.org/en-US/docs/Web/CSS/color_value)
-
-            If the callback returns an integer, it may be interpreted as a color spec (since RGB
-            colors are just hexadecimal integers). Use ``force_cmap=True`` to force the creation
-            of a colormap.
 
         Returns:
             dict: mapping of categories to colors
         """
         atoms = utils.if_not_none(atoms, self.mol.atoms)
-        if isinstance(atom_callback, basestring):
+        if isinstance(atomvalues, basestring):
             # shortcut to use strings to access atom attributes, i.e. "ff.partial_charge"
-            attrs = atom_callback.split('.')
-
-            # make sure that whatever value is returned doesn't get interpreted as a color
-            force_cmap = True
-
-            def atom_callback(atom):
+            attrs = atomvalues.split('.')
+            atomvalues = []
+            for atom in atoms:
                 obj = atom
                 for attr in attrs:
                     obj = getattr(obj, attr)
-                return obj
+                atomvalues.append(obj)
 
-        colors = utils.Categorizer(atom_callback, atoms)
+        elif callable(atomvalues):
+            atomvalues = list(map(atomvalues, atoms))
 
-        if force_cmap:
-            name_is_color = [False]
-        else:
-            name_is_color = list(map(colormaps.is_color, list(colors.keys())))
+        colors = colormaps.colormap(atomvalues, mplmap=mplmap)
+        self.set_colors(colors, atoms=atoms)
 
-        if len(colors) <= 1:
-            colors = {'gray': atoms}
+        return {v:c for v,c in zip(atomvalues, colors)}
 
-        elif not all(name_is_color):
-            assert not any(name_is_color), \
-                "callback function returned a mix of colors and categories"
-            categories = colors
-            cats = list(categories.keys())
-            # If there are >256 categories, this is a many-to-one mapping
-            colornames = colormaps.colormap(cats, mplmap=mplmap)
-            colors = {c: [] for c in colornames}
-            for cat, color in zip(cats, colornames):
-                colors[color].extend(categories[cat])
-
-        self.set_colors(colors)
-
+    color_by = colormap

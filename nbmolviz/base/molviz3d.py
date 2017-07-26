@@ -109,9 +109,38 @@ class MolViz3D(MessageWidget):
     def set_clipping(self, near, far):
         self.viewer('setSlab', [float(near), float(far)])
 
-    def set_color(self, color, atoms):
-        self.styles = MolViz3D.get_styles_for_color(
-                color, atoms, self.styles)
+    def set_color(self, colors, atoms=None):
+        """ Set atom colors
+
+        May be called in several different ways:
+          - ``set_color(color, atoms=list_of_atoms_or_None)``
+                  where all passed atoms are to be colored a single color
+          - ``set_color(list_of_colors, atoms=list_of_atoms_or_None)``
+                  with a list of colors for each atom
+          -  ``set_color(dict_from_atoms_to_colors)``
+                  a dictionary that maps atoms to colors
+          - ``set_color(f, atoms=list_of_atoms_or_None)``
+                 where f is a function that maps atoms to colors
+
+        Args:
+            colors (see note for allowable types): list of colors for each atom, or map
+               from atoms to colors, or a single color for all atoms
+            atoms (List[moldesign.Atom]): list of atoms (if None, assumed to be mol.atoms; ignored
+               if a dict is passed for "color")
+        """
+        if hasattr(colors, 'items'):
+            atoms, colors = zip(*colors.items())
+        elif atoms is None:
+            atoms = self.mol.atoms
+
+        if callable(colors):
+            colors = map(colors, atoms)
+        elif isinstance(colors, basestring) or not hasattr(colors, '__iter__'):
+            colors = [colors for atom in atoms]
+
+        self.styles = self._get_styles_for_color(colors, atoms, self.styles)
+
+    set_colors = set_color  # synonym
 
     #some convenience synonyms
     def sphere(self, **kwargs):
@@ -136,16 +165,24 @@ class MolViz3D(MessageWidget):
         return self.add_style(None,atoms=atoms)
     invisible = hide
 
-
-    # Returns new styles after updating the given atoms with the given color
     @staticmethod
-    def get_styles_for_color(color, atoms, styles):
+    def _get_styles_for_color(colors, atoms, styles):
+        """ Returns new styles after updating the given atoms with the given color
+
+        Args:
+            color (List[str]): list of colors for each atom
+            atoms (List[moldesign.Atom]): list of atoms to apply the colors to
+            styles (dict): old style dictionary
+
+        Returns:
+
+        """
         styles = dict(styles)
 
-        if not atoms:
-            return styles
+        if len(colors) != len(atoms):
+            raise ValueError("Number of colors provided does not match number of atoms provided")
 
-        for atom in atoms:
+        for atom, color in zip(atoms, colors):
             if str(atom.index) in styles:
                 styles[str(atom.index)] = dict(styles[str(atom.index)])
             else:
@@ -153,17 +190,6 @@ class MolViz3D(MessageWidget):
             styles[str(atom.index)]['color'] = color
 
         return styles
-
-    def set_colors(self, colormap):
-        """
-        Args:
-         colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
-        """
-        styles = dict(self.styles)
-        for color, atoms in colormap.items():
-            styles = MolViz3D.get_styles_for_color(color, atoms, styles)
-
-        self.styles = styles
 
     def unset_color(self, atoms=None):
         if atoms is None:
@@ -189,7 +215,7 @@ class MolViz3D(MessageWidget):
         newstyles = self.styles.copy()
         for atom in atoms:
             new_style = {'visualization_type': style}
-            for key in ('color', 'radius'):
+            for key in ('color', 'radius', 'opacity'):
                 if key in options:
                     new_style[key] = options[key]
 
@@ -373,11 +399,11 @@ class MolViz3D(MessageWidget):
                     borderColor=border,
                     fontSize=fontsize,
                     backgroundOpacity=opacity,
-                    type=self.SHAPE_NAMES['LABEL'])
+                    text=text)
 
-        shapes = list(self.shapes)
-        shapes.append(spec)
-        self.shapes = shapes
+        labels = list(self.labels)
+        labels.append(spec)
+        self.labels = labels
         return spec
 
     def remove_all_labels(self):
@@ -404,14 +430,12 @@ class MolViz3D(MessageWidget):
 
         self.selected_atom_indices = selected_atom_indices
 
-    def get_selected_bonds(self, *args, **kwargs):
-        atomIndices = kwargs.get('atomIndices', self.selected_atom_indices);
-        bonds = set()
-
+    def get_selected_bonds(self):
+        bonds = []
+        atom_indices = set(self.selected_atom_indices)
         for bond in self.mol.bonds:
-            if bond.a1.index in atomIndices and bond.a2.index in atomIndices:
-                bonds.add(bond)
-
+            if bond.a1.index in atom_indices and bond.a2.index in atom_indices:
+                bonds.append(bond)
         return bonds
 
     def get_cubefile(self, orbname, npts, framenum):
