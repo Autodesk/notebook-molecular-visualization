@@ -1,5 +1,10 @@
-exports.command = function(timeout, callback){
+exports.command = function(timeout, assertIdle, callback){
   /* Block until Jupyter kernel is idle. Default timeout is 30000 ms if not specified. */
+
+  if(arguments.length == 2 && typeof(assertIdle) == 'function'){
+    callback = assertIdle;
+    assertIdle = true;
+  }
 
   if(timeout == undefined){
     timeout = 30000;
@@ -14,7 +19,7 @@ exports.command = function(timeout, callback){
   // method 2: wait for Jupyter API
   this.waitForTrue(function(){return !Jupyter.notebook.kernel_busy}, timeout);
 
-  this.assertKernelIdle();
+  if(assertIdle) this.assertKernelIdle();
 
   if (typeof callback === "function") { callback.call(self) }
   return this;

@@ -10,7 +10,10 @@ checkError = require("./utils").checkError;
 '/div[@class="output"]' */
 
 exports.command = function (cellNumber, timeout, callback) {
-    /* Synchronously run cell `cellNumber` in the active notebook.  Default timeout is 60000 ms*/
+    /* Synchronously run cell `cellNumber` in the active notebook.
+     Will fail if the cell fails with an error.
+     Default timeout is 60000 ms
+     */
 
     if (arguments.length == 1){ timeout = 60000 }
 
@@ -34,6 +37,8 @@ exports.command = function (cellNumber, timeout, callback) {
     .waitForIdleKernel(timeout) //one more check to make ABSOLUTELY SURE it's done before moving on
     .execute(function(cellNumber){Jupyter.notebook.scroll_to_cell(cellNumber)},
       [cellNumber], checkError.bind(this));
+
+  this.checkCellExecutedWithoutErrors(cellNumber);
 
 
     if (typeof callback === "function") { callback.call(this) };

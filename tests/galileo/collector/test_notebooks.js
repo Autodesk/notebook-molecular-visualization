@@ -140,40 +140,57 @@ function parseCodeCell(path, cell, idx){
 }
 
 
+function runTestInOpenNotebook(testDescription){
+  const client = this;
+
+  process.stdout.write(`\n"${testDescription.name}" from ${path.basename(testDescription.path)}:\n`);
+  const targetIdName = testDescription.name + '_target';
+  const screenshotPath = path.join(
+    path.basename(testDescription.path, '.ipynb'),
+    testDescription.name.substring(5) + '_widget');
+
+    client.clearNbOutputs();
+
+    // run all setup cells
+    testDescription.setupCells.forEach(function (cellNum) {
+      client.executeCell(cellNum)
+    });
+
+    // run the actual tests
+    client.executeCell(testDescription.cellIdx)
+      .perform(() => { process.stdout.write('done\n') })
+      .tagCellOutputsWithId(testDescription.cellIdx, targetIdName);
+
+  client.elementScreenshot('#' + targetIdName + '_widgetarea', screenshotPath);
+}
+
+
 function makeTestFunctions() {
   let testDescriptions = collectTestsFromNotebooks();
   let restarted = {};
   testDescriptions.forEach(function(td){restarted[td.path] = false});
 
   let testFunctions = {};
+  let testCases = {};
 
   testDescriptions.forEach(function (testDescription) {
-    testFunctions[testDescription.name] = function (client) {
-      process.stdout.write(`\n"${testDescription.name}" from ${path.basename(testDescription.path)}:\n`);
-      const targetIdName = testDescription.name + '_target';
-      const screenshotPath = path.join(
-        path.basename(testDescription.path, '.ipynb'),
-        testDescription.name.substring(5) + '_widget');
+    const testNbName = path.basename(testDescription.path, '.ipynb');
+    const testPath = testDescription.path;
 
-      client.openNotebook(testDescription.path);
+    if (!(testNbName in testFunctions)) {
+      testCases[testNbName] = [];
 
-      if (restarted[testDescription.path]) {
-        client.clearNbOutputs();
-      } else {
-        client.restartKernel(60000);  // currently we restart the kernel every time
-        restarted[testDescription.path] = true;
+      // make only 1 test for each notebook - repeatedly closing and opening the window can lead to Jupyter trouble
+      testFunctions[testNbName] = function (client) {
+        client.openNotebook(testPath);
+        process.stdout.write(`Starting tests for notebook "${testNbName}"`);
+        client.restartKernel();
+        testCases[testNbName].forEach(runTestInOpenNotebook.bind(client));
+        client.end();
       }
-
-      testDescription.setupCells.forEach(function (cellNum) { client.executeCell(cellNum) });
-
-      client.executeCell(testDescription.cellIdx)
-        .pause(500)
-        .perform(function(){process.stdout.write('done\n')})
-        .tagCellOutputsWithId(testDescription.cellIdx, targetIdName);
-
-      client.elementScreenshot('#' + targetIdName + '_widgetarea', screenshotPath);
-      client.end();
     }
+
+    testCases[testNbName].push(testDescription);
   });
 
   return testFunctions;
