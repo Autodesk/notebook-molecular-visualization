@@ -13,6 +13,7 @@
 # limitations under the License.
 from builtins import next
 import ipywidgets as ipy
+import numpy as np
 
 import traitlets
 import moldesign as mdt
@@ -28,10 +29,10 @@ BONDDESCRIPTION = '<b>Bond distance</b> <span style="color:{c1}">{a1.name} - {a2
 ANGLEDESCRIPTION = ('<b>Bond angle</b>'
                     '<span style="color:{c1}">{a1.name} - {a2.name}</span> '
                     '- <span style="color:{c2}">{a3.name}</span>')
-DIHEDRALDESCRIPTION = ('<b>Dihedral angle</b> <span style="color:{c0}">{a4.name}</span>'
-                       ' - <span style="color:{c1}">{a1.name}'
-                       ' - {a2.name}</span> '
-                       '- <span style="color:{c2}">{a3.name}</span>')
+DIHEDRALDESCRIPTION = ('<b>Dihedral angle</b> <span style="color:{c0}">{a1.name}</span>'
+                       ' - <span style="color:{c1}">{a2.name}'
+                       ' - {a3.name}</span> '
+                       '- <span style="color:{c2}">{a4.name}</span>')
 
 @exports
 class GeometryBuilder(ViewerToolBase):
@@ -128,18 +129,6 @@ class GeometryBuilder(ViewerToolBase):
                    u"x:{p[0]:.3f}, y:{p[1]:.3f}, z:{p[2]:.3f} \u212B".format(
                        atom=atom, p=atom.position.value_in(u.angstrom))
 
-
-
-    def set_dihedral(self, *args):
-        bonds = self.viewer.get_selected_bonds()
-        bond = self.get_selected_bond(bonds)
-        bond_neighbors = self.get_bond_neighbors(bonds, bond)
-        angle = self.dihedral_slider.value
-
-        mdt.set_dihedral(bond_neighbors['a1'], bond.a1, bond.a2, bond_neighbors['a2'], angle*u.pi/180.0,
-                         adjustmol=self.rigid_mol_selector.value)
-        self.viewer.set_positions()
-
     def label_atoms(self, *args):
         self.viewer.atom_labels_shown = self.label_box.value
 
@@ -166,7 +155,7 @@ class GeometryBuilder(ViewerToolBase):
         elif len(atoms) == 3:
             self._setup_angle_tools(atoms)
         elif len(atoms) == 4:
-            self._setup_twist_tools(atoms)
+            self._setup_dihedral_tools(atoms)
 
     def _setup_atom_tools(self, atoms):
         atom = atoms[0]
@@ -208,7 +197,8 @@ class GeometryBuilder(ViewerToolBase):
     def set_distance(self, *args):
         a1, a2 = self.viewer.selected_atoms
         dist_in_angstrom = self.length_slider.value
-        mdt.set_distance(a1, a2, dist_in_angstrom*u.angstrom, adjustmol=self.rigid_mol_selector.value)
+        mdt.set_distance(a1, a2, dist_in_angstrom*u.angstrom,
+                         adjustmol=self.rigid_mol_selector.value)
         cstart = self._cylinder['start']
         cstart['x'], cstart['y'], cstart['z'] = a1.position.value_in(u.angstrom)
         cend = self._cylinder['end']
@@ -221,77 +211,57 @@ class GeometryBuilder(ViewerToolBase):
         self.viewer.shapes = []
 
         # creates a temp cylinder that will be overwritten in self.set_distance
-        self._circle = self.viewer.draw_circle(a2.position, radius=max(a1.distance(a2),
-                                                                       a3.distance(a2)),
-                                                   opacity=0.65, color='blue')
-        self.length_slider.value = a1.distance(a2).value_in(u.angstrom)
-        self.length_slider.description = ANGLEDESCRIPTION.format(
+        angle_normal = np.cross(a1.position-a2.position,
+                               a3.position-a2.position)
+        self._circle = self.viewer.draw_circle(a2.position,
+                                               normal=angle_normal,
+                                               radius=max(a1.distance(a2), a3.distance(a2)),
+                                               opacity=0.65, color='blue')
+        self.angle_slider.value = mdt.angle(a1, a2, a3).value_in(u.degrees)
+        self.angle_slider.description = ANGLEDESCRIPTION.format(
                     a1=a1, a2=a2, a3=a3,
                     c1=self.viewer.HIGHLIGHT_COLOR, c2=self.NBR2HIGHLIGHT)
 
-        bond = mdt.Bond(a1, a2)
-        if bond.exists and not bond.is_cyclic:
-            self.tool_holder.children = (self.rigid_mol_selector, self.length_slider,)
+        b1 = mdt.Bond(a1, a2)
+        b2 = mdt.Bond(a3, a2)
+        if b1.is_cyclic:
+            b1, b2 = b2, b1  # try to find a b1 that is not cyclic
+        if b1.exists and b2.exists and not b1.is_cyclic:
+            self.tool_holder.children = (self.rigid_mol_selector, self.angle_slider,)
         else:
-            self.tool_holder.children = (self.length_slider,)
+            self.tool_holder.children = (self.angle_slider,)
             self.rigid_mol_selector.value = False
 
     def set_angle(self, *args):
-        bonds = self.viewer.get_selected_bonds()
-        bond = self.get_selected_bond(bonds)
-        bond_neighbors = self.get_bond_neighbors(bonds, bond)
-        angle = self.angle_slider.value
-
-        mdt.set_angle(bond.a1, bond.a2, bond_neighbors['a2'], angle*u.pi/180.0, adjustmol=self.rigid_mol_selector.value)
+        a1, a2, a3 = self.viewer.selected_atoms
+        mdt.set_angle(a1, a2, a3,
+                      self.angle_slider.value*u.pi/180.0, adjustmol=self.rigid_mol_selector.value)
         self.viewer.set_positions()
 
-    def _setup_angle_tools(self, atoms):
-        # examine the selected bond
-        self.length_slider.value = bond.a1.distance(bond.a2).value_in(u.angstrom)
+    def _setup_dihedral_tools(self, atoms):
+        a1, a2, a3, a4 = atoms
+        self._cylinder = self.viewer.draw_cylinder(a2.position, a3.position, radius=0.3,
+                                                   opacity=0.65, color='red')
 
-        a1_neighbors = set([a for a in bond.a1.bond_graph if a is not bond.a2])
-        bond_neighbors = self.get_bond_neighbors(bonds, bond)
-
-        # Bond angle
-        if bond_neighbors['a2']:
-            self.dihedral_slider.enable()
-            self.angle_slider.enable()
-            self.angle_slider.value = mdt.angle(bond.a1, bond.a2,
-                                                bond_neighbors['a2']).value_in(u.degrees)
-            self.angle_slider.description = ANGLEDESCRIPTION.format(
-                    a1=bond.a1, a2=bond.a2, a3=bond_neighbors['a2'],
-                    c1=self.viewer.HIGHLIGHT_COLOR, c2=self.NBR2HIGHLIGHT)
+        bc = mdt.Bond(a2, a3)
+        b_0 = mdt.Bond(a1, a2)
+        b_f = mdt.Bond(a3, a4)
+        self.dihedral_slider.description = DIHEDRALDESCRIPTION.format(
+                a1=a1, a2=a2, a3=a3, a4=a4,
+                c0=self.NBR1HIGHLIGHT, c1=self.viewer.HIGHLIGHT_COLOR,
+                c2=self.NBR2HIGHLIGHT)
+        if bc.exists and b_0.exists and b_f.exists and not b_0.is_cyclic:
+            self.tool_holder.children = (self.rigid_mol_selector, self.dihedral_slider,)
         else:
-            self.dihedral_slider.disable()
-            self.angle_slider.disable()
-            self.angle_slider.description = 'no angle associated with this bond'
+            self.rigid_mol_selector = False
+            self.tool_holder.children = (self.dihedral_slider,)
 
-        # Dihedral twist
-        if bond_neighbors['a2'] and bond_neighbors['a1']:
-            self.dihedral_slider.value = mdt.dihedral(bond_neighbors['a1'], bond.a1, bond.a2,
-                                                      bond_neighbors['a2']).value_in(u.degrees)
-            self.dihedral_slider.description = DIHEDRALDESCRIPTION.format(
-                    a4=bond_neighbors['a1'], a1=bond.a1, a2=bond.a2, a3=bond_neighbors['a2'],
-                    c0=self.NBR1HIGHLIGHT, c1=self.viewer.HIGHLIGHT_COLOR,
-                    c2=self.NBR2HIGHLIGHT)
-        else:
-            self.dihedral_slider.description = 'not a torsion bond'
-            self.dihedral_slider.disabled = True
-        self.tool_holder.children = (self.bond_tools,)
-
-
-    @staticmethod
-    def get_bond_neighbors(bonds, bond):
-        neighbors = { 'a1': None, 'a2': None }
-        a1_neighbors = set([a for a in bond.a1.bond_graph if a is not bond.a2])
-        a2_neighbors = set([a for a in bond.a2.bond_graph if a is not bond.a1])
-
-        if a1_neighbors:
-            neighbors['a1'] = max(a1_neighbors, key=lambda x: x.mass)
-        if a2_neighbors:
-            neighbors['a2'] = max(a2_neighbors, key=lambda x: x.mass)
-
-        return neighbors
+    def set_dihedral(self, *args):
+        a1, a2, a3, a4 = self.viewer.selected_atoms
+        mdt.set_dihedral(a1, a2, a3, a4,
+                         self.dihedral_slider.value*u.pi/180.0,
+                         adjustmol=self.rigid_mol_selector.value)
+        self.viewer.set_positions()
 
     def _highlight_atoms(self, atoms, color=None):
         color = utils.if_not_none(color, self.viewer.HIGHLIGHT_COLOR)
