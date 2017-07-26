@@ -64,12 +64,13 @@ class ViewerToolBase(ipy.Box):
     UI controls on the right, and some additional widgets underneath the viewer
     """
     VIEWERTYPE = viewers.GeometryViewer
+    VIEWERWIDTH = '600px'
 
     def __init__(self, mol):
         self.mol = mol
 
         self.toolpane = VBox()
-        self.viewer = self.VIEWERTYPE(mol)
+        self.viewer = self.VIEWERTYPE(mol, width=self.VIEWERWIDTH)
 
         self.subtools = ipy.Box()
         self.viewer_pane = VBox([self.viewer, self.subtools])

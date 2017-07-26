@@ -41,7 +41,7 @@ class MolViz3D(MessageWidget):
     _view_module = Unicode('nbmolviz-js').tag(sync=True)
     _model_module = Unicode('nbmolviz-js').tag(sync=True)
     atom_labels_shown = Bool(False).tag(sync=True)
-    background_color = Unicode('#73757C').tag(sync=True)
+    background_color = Unicode('#545c85').tag(sync=True)
     background_opacity = Float(1.0).tag(sync=True)
     model_data = Dict({}).tag(sync=True)
     orbital = Dict({}).tag(sync=True)
@@ -70,7 +70,7 @@ class MolViz3D(MessageWidget):
                       'cartoon': 'ribbon', 'ribbon': 'ribbon',
                       None: None, 'hide': None, 'invisible': None, 'remove': None}
 
-    def __init__(self, mol=None, width=500, height=350, **kwargs):
+    def __init__(self, mol=None, width='100%', height=350, **kwargs):
         kwargs.update(width=width, height=height)
         super(MolViz3D, self).__init__(**kwargs)
         self.height = in_pixels(height)

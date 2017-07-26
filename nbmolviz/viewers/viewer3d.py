@@ -39,8 +39,8 @@ class GeometryViewer(MolViz3D, ColorMixin):
     DISTANCE_UNITS = u.angstrom
     HIGHLIGHT_COLOR = '#1FF3FE'
     DEFAULT_COLOR_MAP = colormap
-    DEFAULT_WIDTH = 625
-    DEFAULT_HEIGHT = 400
+    DEFAULT_WIDTH = '100%'  # by default, expand to fill parent container horizontally
+    DEFAULT_HEIGHT = "450px"
     DEF_PADDING = 2.25 * u.angstrom
 
     def __reduce__(self):

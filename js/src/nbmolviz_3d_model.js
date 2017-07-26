@@ -18,7 +18,7 @@ import widgets from 'jupyter-js-widgets';
 const Nbmolviz3dModel = widgets.DOMWidgetModel.extend({
   defaults: {
     atom_labels_shown: false,
-    background_color: '#73757C',
+    background_color: '#545c85',
     background_opacity: 1.0,
     height: '500px',
     model_data: { atoms: [], bonds: [] },
@@ -31,7 +31,7 @@ const Nbmolviz3dModel = widgets.DOMWidgetModel.extend({
     selected_atom_indices: [],
     selection_type: 'Atom',
     shapes: [],
-    width: '500px',
+    width: '100%',
     labels: [],
   },
 });
