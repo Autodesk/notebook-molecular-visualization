@@ -50,6 +50,7 @@ class MolViz3D(MessageWidget):
     shapes = List([]).tag(sync=True)
     styles = Dict({}).tag(sync=True)
     labels = List([]).tag(sync=True)
+    positions = List([]).tag(sync=True)
 
     SHAPE_NAMES = {
         'SPHERE': 'Sphere',
@@ -70,11 +71,12 @@ class MolViz3D(MessageWidget):
                       'cartoon': 'ribbon', 'ribbon': 'ribbon',
                       None: None, 'hide': None, 'invisible': None, 'remove': None}
 
-    def __init__(self, mol=None, width='100%', height=350, **kwargs):
+    def __init__(self, mol=None, width='100%', height=350, trajectory=None, **kwargs):
         kwargs.update(width=width, height=height)
         super(MolViz3D, self).__init__(**kwargs)
         self.height = in_pixels(height)
         self.width = in_pixels(width)
+        self.traj = trajectory
 
         # current state
         self.num_frames = 1
@@ -82,10 +84,11 @@ class MolViz3D(MessageWidget):
         self.current_orbital = None
 
         # add the new molecule if necessary
-        if mol is not None: self.add_molecule(mol)
+        if mol is not None:
+            self.add_molecule(mol)
         self.current_orbital = None
         self.orbital_spec = {}
-        self._cached_cubefiles= {}
+        self._cached_cubefiles = {}
         self._clicks_enabled = False
 
     # Utilities
@@ -100,6 +103,7 @@ class MolViz3D(MessageWidget):
     def add_molecule(self, mol):
         self.mol = mol
         self.model_data = convert_to_json(self.mol)
+        self.set_positions()
 
     def set_background_color(self, color, opacity=1.0):
         color = translate_color(color)
@@ -223,34 +227,23 @@ class MolViz3D(MessageWidget):
 
         self.styles = newstyles
 
-    def append_frame(self, positions=None):
-        if positions is None:
-            positions = self.get_positions()
-
-        positions = self._convert_units(positions)
-        try:
-            positions = positions.tolist()
-        except AttributeError:
-            pass
-
-        self.num_frames += 1
-        self.viewer('addFrameFromList', args=[positions])
-        self.show_frame(self.num_frames - 1)
+    def show_frame(self, framenum, _fire_event=True, update_orbitals=True):
+        # override base method - we'll handle frames using self.set_positions
+        # instead of any built-in handlers
+        if framenum != self.current_frame:
+            self.set_positions(self.traj.positions[framenum])
+            self.current_frame = framenum
+            if _fire_event and self.selection_group:
+                self.selection_group.update_selections(self, {'framenum': framenum})
+            if update_orbitals:
+                self.redraw_orbs()
 
     def set_positions(self, positions=None):
-        from moldesign import units as u
-        if positions is not None:
-            for i, atom in enumerate(self.mol.atoms):
-                atom.position[0] = positions[i][0] * u.angstrom
-                atom.position[1] = positions[i][1] * u.angstrom
-                atom.position[2] = positions[i][2] * u.angstrom
-        self.model_data = convert_to_json(self.mol)
+        if positions is None:
+            self.positions = self.mol.positions.value_in(u.angstrom).tolist()
+        else:
+            self.positions = positions.value_in(u.angstrom).tolist()
 
-    def show_frame(self, framenum):
-        self.viewer('setFrame', [framenum])
-        self.current_frame = framenum
-        if self.current_orbital is not None:
-            self.draw_orbital(self.current_orbital, **self.orbital_spec)
 
     #Shapes
     @staticmethod
@@ -498,12 +491,9 @@ class MolViz3D(MessageWidget):
         """
         self.orbital_spec = dict(npts=npts, isoval=isoval,
                                  opacity=opacity,
-                                 negative_color=negative_color,
-                                 positive_color=positive_color)
+                                 negative_color=translate_color(positive_color),
+                                 positive_color=translate_color(negative_color))
         self.current_orbital = orbname
-
-        positive_color = translate_color(positive_color)
-        negative_color = translate_color(negative_color)
 
         orbidx = self.get_orbidx(orbname)
         cubefile = self.get_cubefile(orbidx, npts, self.current_frame)

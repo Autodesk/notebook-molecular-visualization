@@ -33,6 +33,7 @@ const Nbmolviz3dModel = widgets.DOMWidgetModel.extend({
     shapes: [],
     width: '100%',
     labels: [],
+    positions: []
   },
 });
 

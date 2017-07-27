@@ -16,15 +16,28 @@
 import React from 'react';
 import Molecule3d from 'molecule-3d-for-react';
 import widgets from 'jupyter-js-widgets';
+import assert from 'assert';
+
 
 class Nbmolviz3dComponent extends React.Component {
   static getStateFromModel(model) {
+    const oldModelData = model.get('model_data');
+    const positions = model.get('positions');
+    const modelData = JSON.parse(JSON.stringify(oldModelData));
+
+    if (modelData.hasOwnProperty('atoms')) {
+        assert(modelData.atoms.length == positions.length);
+        for (let i = 0; i < modelData.atoms.length; i++) {
+            modelData.atoms[i].positions = positions[i];
+        }
+    }
+
     return {
       atomLabelsShown: model.get('atom_labels_shown'),
       backgroundColor: model.get('background_color'),
       backgroundOpacity: model.get('background_opacity'),
       height: model.get('height'),
-      modelData: model.get('model_data'),
+      modelData: modelData,
       orbital: model.get('orbital'),
       selectedAtomIds: model.get('selected_atom_indices'),
       selectionType: model.get('selection_type'),

@@ -263,34 +263,6 @@ class GeometryViewer(MolViz3D, ColorMixin):
         if self.atom_highlights:
             self.set_color(self.HIGHLIGHT_COLOR, self.atom_highlights, _store=False)
 
-    def append_frame(self, positions=None, wfn=None):
-        # override base method - we'll handle frames entirely in python
-        # this is copied verbatim from molviz, except for the line noted
-        if positions is None:
-            positions = self.get_positions()
-
-        positions = self._convert_units(positions)
-        try:
-            positions = positions.tolist()
-        except AttributeError:
-            pass
-
-        self.num_frames += 1
-        self._frame_positions.append(positions)  # only modification from molviz
-        self.wfns.append(wfn)
-        self.show_frame(self.num_frames - 1)
-
-    #@utils.doc_inherit
-    def show_frame(self, framenum, _fire_event=True, update_orbitals=True):
-        # override base method - we'll handle frames using self.set_positions
-        # instead of any built-in handlers
-        if framenum != self.current_frame:
-            self.set_positions(self._frame_positions[framenum])
-            self.current_frame = framenum
-            if _fire_event and self.selection_group:
-                self.selection_group.update_selections(self, {'framenum': framenum})
-            if update_orbitals:
-                self.redraw_orbs()
 
     def handle_selection_event(self, selection):
         """

@@ -17,13 +17,13 @@ from past.utils import old_div
 import time
 
 import ipywidgets as ipy
+import traitlets
 import moldesign as mdt
 
 from ..widget_utils import process_widget_kwargs
 from . import selector
 from .components import AtomInspector
 from ..uielements.components import HBox, VBox
-
 
 
 class TrajectoryViewer(selector.SelectionGroup):
@@ -35,7 +35,6 @@ class TrajectoryViewer(selector.SelectionGroup):
         display (bool): immediately display this to the notebook (default: False)
         **kwargs (dict): keyword arguments for :class:`ipywidgets.Box`
     """
-
     def __init__(self, trajectory, display=False, **kwargs):
         from IPython.display import display as displaynow
 
@@ -44,9 +43,6 @@ class TrajectoryViewer(selector.SelectionGroup):
         self.pane = VBox()
         trajectory._apply_frame(trajectory.frames[0])
         self.viewer, self.view_container = self.make_viewer()
-        for frame in self.traj.frames[1:]:
-            self.viewer.append_frame(positions=frame.positions,
-                                     wfn=frame.get('wfn', None))
         self.make_controls()
         self.pane.children = [self.view_container, self.controls]
         super(TrajectoryViewer, self).__init__([self.pane, AtomInspector()],
@@ -55,8 +51,10 @@ class TrajectoryViewer(selector.SelectionGroup):
         if display:
             displaynow(self)
 
+
     def make_viewer(self):
-        viewer = self.traj._tempmol.draw3d(style='licorice')
+        viewer = self.traj._tempmol.draw3d(style='licorice',
+                                           trajectory=self.traj)
         viewer.show_unbonded()
         return viewer, viewer
 
