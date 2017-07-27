@@ -16,27 +16,29 @@ import collections
 
 import ipywidgets as ipy
 import traitlets
-from moldesign import units as u
 from moldesign import utils
 
 from .. import viewers
 from ..widget_utils import process_widget_kwargs
-from .selector import Selector
 from ..uielements.components import HBox, VBox
 
 
-class AtomInspector(ipy.HTML, Selector):
-    """
-    Turn atom indices into a value to display
-    """
-    def indices_to_value(self, atom_indices, atoms):
-        indicated_atoms = [atoms[index] for index in atom_indices]
-        return self.atoms_to_value(indicated_atoms)
+class AtomInspector(ipy.HTML):
+    """ Turn atom indices into a value to display
 
+    To use this with a display widget, link its ``selected_atom_indices`` attribute to the
+    display widget's list of selected atom indices.
     """
-    Turn atom objects into a value to display
-    """
-    def atoms_to_value(self, atoms):
+    selected_atom_indices = traitlets.List([])
+
+    def __init__(self, atoms, **kwargs):
+        super().__init__(**kwargs)
+        self.atoms = atoms
+
+    @traitlets.observe('selected_atom_indices')
+    def atoms_to_value(self, change):
+        atoms = [self.atoms[idx] for idx in change['new']]
+
         if len(atoms) == 0:
             return 'No selection'
         elif len(atoms) == 1:
@@ -49,13 +51,13 @@ class AtomInspector(ipy.HTML, Selector):
             if atom.residue.type != 'placeholder':
                 lines.append("<b>Residue</b> %s, index %d<br>" % (res.name, res.index))
             lines.append("<b>Atom</b> %s (%s), index %d<br>" % (atom.name, atom.symbol, atom.index))
-            return '\n'.join(lines)
+            self.value = '\n'.join(lines)
 
         elif len(atoms) > 1:
             atstrings = ['<b>%s</b>, index %s / res <b>%s</b>, index %s / chain <b>%s</b>' %
                          (a.name, a.index, a.residue.resname, a.residue.index, a.chain.name)
                          for a in atoms]
-            return '<br>'.join(atstrings)
+            self.value = '<br>'.join(atstrings)
 
 
 class ViewerToolBase(ipy.Box):

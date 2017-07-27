@@ -13,12 +13,12 @@
 # limitations under the License.
 from past.builtins import basestring
 
-import collections
+from ..base.base_widget import MessageWidget
 from moldesign import utils
 from .. import colormaps
 
 
-class ColorMixin(object):
+class BaseViewer(MessageWidget):
     def colormap(self, atomvalues, atoms=None, mplmap='auto'):
         """ Color atoms according to categorical or numeric data
 

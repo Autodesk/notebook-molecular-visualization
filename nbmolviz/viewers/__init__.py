@@ -1,3 +1,3 @@
 from .common import *
 from .viewer2d import *
-from .viewer3d import *
+from .geometry_viewer import *

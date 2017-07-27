@@ -17,7 +17,8 @@ import ipywidgets as ipy
 import traitlets
 
 from .. import viewers
-from ..uielements.components import HBox
+from ..uielements.components import HBox, VBox
+from ..widgets.components import AtomInspector
 
 
 def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
@@ -35,8 +36,6 @@ def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
     Returns:
         moldesign.ui.SelectionGroup
     """
-    from ..widgets.components import AtomInspector
-    from ..widgets.selector import SelectionGroup
 
     viz2d = None
     if group.num_atoms < 40:
@@ -49,16 +48,18 @@ def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
         traitlets.link((viz3d, 'selected_atom_indices'), (viz2d, 'selected_atom_indices'))
         views = HBox([viz2d, viz3d])
     else:
-        views = draw3d(group, display=False)
+        viz3d = draw3d(group, display=False)
+        views = viz3d
 
-    atom_inspector = AtomInspector()
-    traitlets.directional_link(
-            (viz2d or views, 'selected_atom_indices'),
-            (atom_inspector, 'value'),
-            lambda selected_atom_indices: atom_inspector.indices_to_value(selected_atom_indices,
-                                                                          group.atoms))
+    atom_inspector = AtomInspector(group.atoms)
+    traitlets.link((viz3d, 'selected_atom_indices'),
+                   (atom_inspector, 'selected_atom_indices'))
 
-    displayobj = SelectionGroup([views, atom_inspector])
+    if viz2d:
+        traitlets.link((viz2d, 'selected_atom_indices'),
+                       (atom_inspector, 'selected_atom_indices'))
+
+    displayobj = VBox([views, atom_inspector])
 
     if display:
         IPython.display.display(displayobj)
