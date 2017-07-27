@@ -282,6 +282,10 @@ class GeometryViewer(MolViz3D, ColorMixin):
     def draw_momenta(self, **kwargs):
         return self.draw_atom_vectors(self.mol.momenta, **kwargs)
 
+    def draw_normalmodes(self, normode_num, **kwargs):
+        normodes = self.mol.properties['normalmodes_displacements'][normode_num]
+        return self.draw_atom_vectors(normodes , **kwargs)
+
     def highlight_atoms(self, atoms=None):
         """
 
