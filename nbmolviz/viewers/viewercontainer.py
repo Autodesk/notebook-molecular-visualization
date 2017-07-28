@@ -32,17 +32,12 @@ class ViewerContainer(VBox):
         so it reduces to NOTHING"""
         return utils.make_none, tuple()
 
-    def __init__(self, children, **kwargs):
+    def __init__(self, children, viewer=None, graphviewer=None, **kwargs):
         if 'layout' not in kwargs:
             kwargs['layout'] = ipy.Layout(flex_flow='column', width='100%')
         super(ViewerContainer, self).__init__(children, **kwargs)
-        self.viewer = None
-        self.graphviewer = None
-        for child in children:
-            if isinstance(child, viewers.GeometryViewer):
-                self.viewer = child
-            if isinstance(child, viewers.ChemicalGraphViewer):
-                self.graphviewer = child
+        self.viewer = viewer
+        self.graphviewer = graphviewer
 
 
     @utils.args_from(viewers.GeometryViewer.set_color)

@@ -33,6 +33,7 @@ class Nbmolviz2dComponent extends React.Component {
         nodes,
         links,
       },
+      charge: model.get('graph_layout_charge'),
       selectedAtomIds: model.get('selected_atom_indices'),
     };
   }

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import IPython
-import ipywidgets as ipy
+from IPython.display import display as dsp
 import traitlets
 
 from .. import viewers
@@ -39,7 +38,8 @@ def draw(group, width=None, height=None, show_2dhydrogens=None, display=False,
         moldesign.ui.SelectionGroup
     """
 
-    viz2d = None
+    atom_inspector = AtomInspector(group.atoms)
+
     if group.num_atoms < 40:
         width = width if width is not None else 500
         height = height if height is not None else 500
@@ -51,10 +51,10 @@ def draw(group, width=None, height=None, show_2dhydrogens=None, display=False,
         traitlets.link((viz3d, 'selected_atom_indices'), (viz2d, 'selected_atom_indices'))
         views = HBox([viz2d, viz3d])
     else:
+        viz2d = None
         viz3d = draw3d(group, **kwargs, display=False)
         views = viz3d
 
-    atom_inspector = AtomInspector(group.atoms)
     traitlets.link((viz3d, 'selected_atom_indices'),
                    (atom_inspector, 'selected_atom_indices'))
 
@@ -62,10 +62,12 @@ def draw(group, width=None, height=None, show_2dhydrogens=None, display=False,
         traitlets.link((viz2d, 'selected_atom_indices'),
                        (atom_inspector, 'selected_atom_indices'))
 
-    displayobj = viewers.ViewerContainer([views, atom_inspector])
+    displayobj = viewers.ViewerContainer([views, atom_inspector],
+                                         viewer=viz3d,
+                                         graphviewer=viz2d)
 
     if display:
-        IPython.display.display(displayobj)
+        dsp(displayobj)
     return displayobj
 
 
