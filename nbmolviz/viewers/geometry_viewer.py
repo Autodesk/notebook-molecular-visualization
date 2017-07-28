@@ -53,6 +53,7 @@ class GeometryViewer(BaseViewer):
     DEFAULT_COLOR_MAP = colormap
     DEF_PADDING = 2.25 * u.angstrom
     AXISCOLORS = {'x':'red', 'y':'green', 'z':'blue'}
+    DISTANCE_UNITS = u.angstrom
 
     _view_name = traitlets.Unicode('MolWidget3DView').tag(sync=True)
     _model_name = traitlets.Unicode('MolWidget3DModel').tag(sync=True)
@@ -72,6 +73,10 @@ class GeometryViewer(BaseViewer):
     styles = traitlets.Dict({}).tag(sync=True)
     labels = traitlets.List([]).tag(sync=True)
     positions = traitlets.List([]).tag(sync=True)
+    near_clip = traitlets.Float().tag(sync=True)
+    far_clip = traitlets.Float().tag(sync=True)
+    outline_width = traitlets.Float(0.0).tag(sync=True)
+    outline_color = traitlets.Unicode('#000000').tag(sync=True)
 
     SHAPE_NAMES = {
         'SPHERE': 'Sphere',
@@ -122,6 +127,14 @@ class GeometryViewer(BaseViewer):
         """ List[moldesign.Atom]: list of selected atoms
         """
         return [self.mol.atoms[i] for i in self.selected_atom_indices]
+
+    def set_outline(self, width=None, color=None):
+        if width is None and not self.outline_width:  # set a default
+            width = 0.1
+        if width is not None:
+            self.outline_width = width
+        if color is not None:
+            self.outline_color = translate_color(color)
 
     def autostyle(self):
         """ Attempts to create a reasonably informative default rendering style
@@ -196,8 +209,6 @@ class GeometryViewer(BaseViewer):
         instring = writemol.write(format=fmt)
         return instring, fmt
 
-        return positions
-
 
     def convert_style_name(self, name):
         canonical_name = self.STYLE_SYNONYMS[name]
@@ -250,7 +261,7 @@ class GeometryViewer(BaseViewer):
 
     set_colors = set_color  # synonym
 
-    #some convenience synonyms
+    # some convenience synonyms
     def sphere(self, **kwargs):
         return self.add_style('vdw', **kwargs)
     vdw = cpk = sphere
@@ -332,10 +343,22 @@ class GeometryViewer(BaseViewer):
         self.styles = newstyles
 
     def set_positions(self, positions=None):
+        """ Set positions of atoms in the 3D display
+
+        Args:
+            positions (Matrix[length, shape=(*,3)]): positions to set atoms to - optional.
+               If not provided, positions are taken from current positions of the molecule.
+
+        Returns:
+
+        """
         if positions is None:
-            self.positions = self.mol.positions.value_in(u.angstrom).tolist()
+            pos = self.mol.positions
         else:
-            self.positions = positions.value_in(u.angstrom).tolist()
+            pos = positions
+
+        self.positions = pos.value_in(u.angstrom).tolist()
+        self._update_clipping(np.abs(pos.value_in(self.DISTANCE_UNITS)).max())
 
     def draw_atom_vectors(self, vecs, rescale_to=1.75,
                           scale_factor=None, opacity=0.85,
@@ -454,7 +477,10 @@ class GeometryViewer(BaseViewer):
         try:
             return obj.value_in(self.DISTANCE_UNITS)
         except AttributeError:
-            return obj
+            if isinstance(obj, (list, tuple)):
+                return np.array(obj)
+            else:
+                return obj
 
     @staticmethod
     def _list_to_jsvec(vec):
@@ -479,12 +505,11 @@ class GeometryViewer(BaseViewer):
         """
         center = self._convert_units(center)
         radius = self._convert_units(radius)
-        center = dict(x=center[0], y=center[1], z=center[2])
         color = translate_color(color)
 
         shape = {
             'type': self.SHAPE_NAMES['SPHERE'],
-            'center': center,
+            'center': self._list_to_jsvec(center),
             'radius': radius,
             'color': color,
             'opacity': opacity,
@@ -492,7 +517,12 @@ class GeometryViewer(BaseViewer):
         shapes = list(self.shapes)
         shapes.append(shape)
         self.shapes = shapes
+        self._update_clipping(center.max() + radius)
         return shape
+
+    def _update_clipping(self, maxextent):
+        self.near_clip = min(self.near_clip, -np.sqrt(3) * maxextent)
+        self.far_clip = max(self.far_clip, np.sqrt(3) * maxextent)
 
     def draw_circle(self, center, normal, radius,
                     color='red', opacity=0.8):
@@ -555,18 +585,11 @@ class GeometryViewer(BaseViewer):
 
     def _draw3dmol_cylinder(self, color, start, end,
                             draw_start_face, draw_end_face,
-                            opacity, radius, clickable, batch):
+                            opacity, radius):
         color = translate_color(color)
         facestart = self._convert_units(start)
         faceend = self._convert_units(end)
         radius = self._convert_units(radius)
-        spec = dict(
-                start=self._list_to_jsvec(facestart),
-                end=self._list_to_jsvec(faceend),
-                radius=radius,
-                color=color,
-                alpha=opacity,
-                fromCap=draw_start_face, toCap=draw_end_face)
 
         shape = {
             'type': self.SHAPE_NAMES['CYLINDER'],
@@ -575,10 +598,13 @@ class GeometryViewer(BaseViewer):
             'radius': radius,
             'color': color,
             'opacity': opacity,
+            'fromCap': 1 if draw_start_face else 0,
+            'toCap': 1 if draw_end_face else 0
         }
         shapes = list(self.shapes)
         shapes.append(shape)
         self.shapes = shapes
+        self._update_clipping(max(facestart.max() + radius, faceend.max()+radius))
         return shape
 
     def draw_arrow(self, start, end=None, vector=None, radius=0.15, color='red', opacity=1.0):
@@ -596,9 +622,14 @@ class GeometryViewer(BaseViewer):
         Returns:
             dict: Shape specification
         """
+        start = self._convert_units(start)
+
         if (end is None) == (vector is None):
             raise ValueError("Either 'end' or 'vector' should be passed, but not both.")
-        if end is None: end = np.array(start) + np.array(vector)
+        if end is None:
+            end = start + self._convert_units(vector)
+        else:
+            end = self._convert_units(end)
         facestart = self._convert_units(start)
         faceend = self._convert_units(end)
         color = translate_color(color)
@@ -614,6 +645,7 @@ class GeometryViewer(BaseViewer):
         shapes = list(self.shapes)
         shapes.append(shape)
         self.shapes = shapes
+        self._update_clipping(max(start.max() + radius, end.max()+radius))
         return shape
 
     def remove_all_shapes(self):
@@ -668,6 +700,7 @@ class GeometryViewer(BaseViewer):
 
         self.labels.append(spec)
         self.send_state('labels')
+        self._update_clipping(position.max() + len(text)/5.0)  # assuming 5 chars per angstrom?
         return spec
 
     def select_residues(self, residues):

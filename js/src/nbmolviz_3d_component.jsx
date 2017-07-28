@@ -45,6 +45,10 @@ class Nbmolviz3dComponent extends React.Component {
       styles: model.get('styles'),
       width: model.get('width'),
       labels: model.get('labels'),
+      nearClip: model.get('near_clip'),
+      farClip: model.get('far_clip'),
+      outlineWidth: model.get('outline_width'),
+      outlineColor: model.get('outline_color')
     };
   }
 
