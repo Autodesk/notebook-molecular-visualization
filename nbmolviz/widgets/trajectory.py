@@ -18,15 +18,14 @@ import time
 
 import ipywidgets as ipy
 import traitlets
-import moldesign as mdt
 
+from ..viewers import ViewerContainer
 from ..widget_utils import process_widget_kwargs
-from . import selector
 from .components import AtomInspector
 from ..uielements.components import HBox, VBox
 
 
-class TrajectoryViewer(selector.SelectionGroup):
+class TrajectoryViewer(ViewerContainer):
     """ 3D representation, with animation controls, for a trajectory.
 
     Users will typically instantiate this using ``trajectory.draw()``
@@ -35,56 +34,54 @@ class TrajectoryViewer(selector.SelectionGroup):
         display (bool): immediately display this to the notebook (default: False)
         **kwargs (dict): keyword arguments for :class:`ipywidgets.Box`
     """
+
+    current_frame = traitlets.Integer(0).tag(sync=True)
+
     def __init__(self, trajectory, display=False, **kwargs):
         from IPython.display import display as displaynow
 
+        self.playbutton = None
+        self.slider = None
+
         self.default_fps = 10
         self.traj = trajectory
-        self.pane = VBox()
         trajectory._apply_frame(trajectory.frames[0])
-        self.viewer, self.view_container = self.make_viewer()
-        self.make_controls()
-        self.pane.children = [self.view_container, self.controls]
-        super(TrajectoryViewer, self).__init__([self.pane, AtomInspector()],
-                                               **process_widget_kwargs(kwargs))
-        self.update_selections('initialization', {'framenum': 0})
+        self.viewer = self.traj._tempmol.draw3d(style='licorice')
+        self.viewer.show_unbonded()
+        self.controls = self.make_controls()
+        self.pane = VBox(children=(self.viewer, self.controls))
+
+        super().__init__(children=(self.pane, AtomInspector(self.traj.mol)),
+                         viewer=self.viewer, **process_widget_kwargs(kwargs))
+
         if display:
             displaynow(self)
 
+    @property
+    def wfn(self):
+        return self.trajectory.wfn[self.current_frame]
 
-    def make_viewer(self):
-        viewer = self.traj._tempmol.draw3d(style='licorice',
-                                           trajectory=self.traj)
-        viewer.show_unbonded()
-        return viewer, viewer
+    def show_frame(self, framenum, update_orbitals=True):
+        self.viewer.set_positions(self.traj.positions[framenum])
+        self.current_frame = framenum
+        if update_orbitals:
+            self.redraw_orbs()
 
     def make_controls(self):
-        controls = []
-        self.play_button = ipy.Button(description=u"\u25B6")
-        self.text_view = FrameInspector(self.traj)
-        controls.append(self.text_view)
-        self.play_button.on_click(self._play)
-        self.slider = selector.create_value_selector(ipy.IntSlider,
-                                                     value_selects='framenum',
-                                                     value=0, description='Frame:',
-                                                     min=0, max=len(self.traj)-1)
-        self.playbox = HBox([self.play_button, self.slider])
-        controls.append(self.playbox)
-        self.controls = VBox(controls)
+        self.playbutton = ipy.Play(value=0,
+                                   min=0,
+                                   max=self.traj.num_frames-1)
 
-    def _play(self, *args, **kwargs):
-        self.animate()
+        self.slider = ipy.IntSlider(value_selects='framenum', value=0,
+                                    description='Frame:', min=0, max=len(self.traj)-1)
 
-    def animate(self, fps=None):
-        fps = mdt.utils.if_not_none(fps, self.default_fps)
-        self.slider.value = 0
-        spf = old_div(1.0, fps)
-        for i in range(self.viewer.num_frames):
-            t0 = time.time()
-            self.slider.value = i
-            dt = time.time() - t0
-            if dt < spf:
-                time.sleep(spf-dt)
+        traitlets.link((self.playbutton, 'value'), (self.slider, 'value'))
+        traitlets.link((self.slider, 'value'), (self, 'current_frame'))
+        return HBox((self.playbutton, self.slider))
+
+    @traitlets.observe('current_frame')
+    def _change_frame(self, change):
+        self.show_frame(change['new'])
 
     def __getattr__(self, item):
         """Users can run viz commands directly on the trajectory,
@@ -99,16 +96,16 @@ class TrajectoryOrbViewer(TrajectoryViewer):
         return viewframe.viewer, viewframe
 
 
-class FrameInspector(ipy.HTML, selector.Selector):
+class FrameInspector(ipy.HTML):
+    framenum = traitlets.Integer(0)
+
     def __init__(self, traj, **kwargs):
         self.traj = traj
         super(FrameInspector, self).__init__(**process_widget_kwargs(kwargs))
 
-    def handle_selection_event(self, selection):
-        if 'framenum' not in selection:
-            return
-        else:
-            framenum = selection['framenum']
+    @traitlets.observe('framenum')
+    def update_frame_data(self, change):
+        framenum = change['new']
 
         if hasattr(self.traj.frames[framenum], 'time') and self.traj.frames[framenum].time is not None:
             result = 'Time: %s; ' % self.traj.frames[framenum].time.defunits()
