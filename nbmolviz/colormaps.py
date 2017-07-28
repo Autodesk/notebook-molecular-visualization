@@ -36,8 +36,9 @@ def colormap(cats, mplmap='auto', categorical=None):
     Args:
         cats (Iterable): list of categories or numerical values
         mplmap (str): name of matplotlib colormap object
-        categorical (bool): if True, interpret this data as categorical. If False, interpret
-            the data as numerical values (data must be convertible to float)
+        categorical (bool): If None
+            (the default) interpret data as numerical only if it can be cast to float.
+            If True, interpret this data as categorical. If False, cast the data to float.
 
     Returns:
         List[str]: List of hexadecimal RGB color values in the in the form ``'#000102'``
@@ -62,7 +63,7 @@ def colormap(cats, mplmap='auto', categorical=None):
         cats = arr.magnitude
         is_categorical = False
     else:
-        is_categorical = not isinstance(cats[0], float)
+        is_categorical = not isinstance(cats[0], (float, int))
 
     if categorical is not None:
         is_categorical = categorical

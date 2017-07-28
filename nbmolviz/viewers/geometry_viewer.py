@@ -104,19 +104,14 @@ class GeometryViewer(BaseViewer):
         self._axis_objects = None
         self._colored_as = {}
 
-        if mol:
-            self.add_molecule(mol)
-            if style is None:
-                self.autostyle()
-            else:
-                self.set_style(style)
+        self.add_molecule(mol)
+        if style is None:
+            self.autostyle()
+        else:
+            self.set_style(style)
+
         if display:
             dsp.display(self)
-
-        # add the new molecule if necessary
-        if mol is not None:
-            self.add_molecule(mol)
-        self._clicks_enabled = False
 
     def __reduce__(self):
         """prevent these from being pickled"""
@@ -461,11 +456,14 @@ class GeometryViewer(BaseViewer):
         except AttributeError:
             return obj
 
-    #Shapes
     @staticmethod
     def _list_to_jsvec(vec):
         assert len(vec) == 3
-        return dict(x=vec[0], y=vec[1], z=vec[2])
+        try:
+            v = vec.value_in(u.angstrom)
+        except AttributeError:
+            v = vec
+        return dict(x=v[0], y=v[1], z=v[2])
 
     def draw_sphere(self, center, radius=2.0, color='red', opacity=1.0):
         """ Draw a 3D sphere into the scene
@@ -668,9 +666,8 @@ class GeometryViewer(BaseViewer):
                     backgroundOpacity=opacity,
                     text=text)
 
-        labels = list(self.labels)
-        labels.append(spec)
-        self.labels = labels
+        self.labels.append(spec)
+        self.send_state('labels')
         return spec
 
     def select_residues(self, residues):

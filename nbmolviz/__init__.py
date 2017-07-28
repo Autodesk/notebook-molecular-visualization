@@ -25,6 +25,12 @@ __license__ = "Apache 2.0"
 
 PACKAGE_PATH = _os.path.dirname(_os.path.abspath(__file__))
 
+from . import base
+from . import uielements
+from . import viewers
+from . import methods
+
+
 
 def _jupyter_nbextension_paths():
     return [{

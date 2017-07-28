@@ -19,7 +19,7 @@ from .. import colormaps
 
 
 class BaseViewer(MessageWidget):
-    def colormap(self, atomvalues, atoms=None, mplmap='auto'):
+    def colormap(self, atomvalues, atoms=None, mplmap='auto', categorical=None):
         """ Color atoms according to categorical or numeric data
 
         Args:
@@ -30,7 +30,10 @@ class BaseViewer(MessageWidget):
             atoms (moldesign.molecules.AtomContainer): atoms to color (default: self.mol.atoms)
             mplmap (str): name of the matplotlib colormap to use if colors aren't explicitly
                specified)
-            force_cmap (bool): force the use of a colormap
+            categorical (bool): If None (the default), automatically detect whether the
+               data is categorical or numerical. Otherwise, use this flag to force
+               interpretation of the data as categorical (True) or numerical (False)
+
 
         Returns:
             dict: mapping of categories to colors
@@ -49,7 +52,7 @@ class BaseViewer(MessageWidget):
         elif callable(atomvalues):
             atomvalues = list(map(atomvalues, atoms))
 
-        colors = colormaps.colormap(atomvalues, mplmap=mplmap)
+        colors = colormaps.colormap(atomvalues, mplmap=mplmap, categorical=categorical)
         self.set_colors(colors, atoms=atoms)
 
         return {v:c for v,c in zip(atomvalues, colors)}

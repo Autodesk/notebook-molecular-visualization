@@ -17,21 +17,23 @@ import ipywidgets as ipy
 import traitlets
 
 from .. import viewers
-from ..uielements.components import HBox, VBox
+from ..uielements.components import HBox
 from ..widgets.components import AtomInspector
 
 
-def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
+def draw(group, width=None, height=None, show_2dhydrogens=None, display=False,
+         **kwargs):
     """ Visualize this molecule (Jupyter only).
 
     Creates a 3D viewer, and, for small molecules, a 2D viewer).
 
     Args:
-        width (int): width of the viewer in pixels
-        height (int): height of the viewer in pixels
+        width (str or int): css width spec (if str) or width in pixels (if int)
+        height (str or int): css height spec (if str) or height in pixels (if int)
         show_2dhydrogens (bool): whether to show the hydrogens in 2d (default: True if there
                are 10 or less heavy atoms, false otherwise)
         display (bool): immediately display this viewer
+        **kwargs (dict): keyword arguments for GeometryViewer only
 
     Returns:
         moldesign.ui.SelectionGroup
@@ -39,16 +41,17 @@ def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
 
     viz2d = None
     if group.num_atoms < 40:
-
+        width = width if width is not None else 500
+        height = height if height is not None else 500
         viz2d = draw2d(group, width=width, height=height,
                        display=False,
                        show_hydrogens=show_2dhydrogens)
         viz3d = draw3d(group, width=width, height=height,
-                       display=False)
+                       display=False, **kwargs)
         traitlets.link((viz3d, 'selected_atom_indices'), (viz2d, 'selected_atom_indices'))
         views = HBox([viz2d, viz3d])
     else:
-        viz3d = draw3d(group, display=False)
+        viz3d = draw3d(group, **kwargs, display=False)
         views = viz3d
 
     atom_inspector = AtomInspector(group.atoms)
@@ -59,7 +62,7 @@ def draw(group, width=500, height=500, show_2dhydrogens=None, display=False):
         traitlets.link((viz2d, 'selected_atom_indices'),
                        (atom_inspector, 'selected_atom_indices'))
 
-    displayobj = VBox([views, atom_inspector])
+    displayobj = viewers.ViewerContainer([views, atom_inspector])
 
     if display:
         IPython.display.display(displayobj)
