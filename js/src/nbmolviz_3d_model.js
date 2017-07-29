@@ -20,12 +20,14 @@ const Nbmolviz3dModel = widgets.DOMWidgetModel.extend({
     atom_labels_shown: false,
     background_color: '#545c85',
     background_opacity: 1.0,
+    cubefile: '',
     height: '500px',
     model_data: { atoms: [], bonds: [] },
-    orbital: {
-      cube_file: '',
+    volumetric_style: {
       iso_val: null,
       opacity: null,
+      negativeVolumetricColor: null,
+      positiveVolumetricColor: null,
     },
     styles: {},
     selected_atom_indices: [],

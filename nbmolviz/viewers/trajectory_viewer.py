@@ -21,7 +21,7 @@ import traitlets
 
 from ..viewers import ViewerContainer
 from ..widget_utils import process_widget_kwargs
-from .components import AtomInspector
+from ..widgets.components import AtomInspector
 from ..uielements.components import HBox, VBox
 
 

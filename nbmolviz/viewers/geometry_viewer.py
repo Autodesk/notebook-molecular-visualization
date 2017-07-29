@@ -37,7 +37,7 @@ class GeometryViewer(BaseViewer):
     """
     An Jupyter notebook widget that draws molecules in 3D.
 
-    Note:
+    Notes:
         This class handles only the static atomic positions - trajectory and
         orbital visualizations use this class as a component
 
@@ -49,34 +49,35 @@ class GeometryViewer(BaseViewer):
         height (str or int): css height spec (if str) or height in pixels (if int)
         **kwargs (dict): ipywidgets keyword arguments
     """
-    HIGHLIGHT_COLOR = '#1FF3FE'
+    AXISCOLORS = {'x':'red', 'y':'green', 'z':'blue'}
     DEFAULT_COLOR_MAP = colormap
     DEF_PADDING = 2.25 * u.angstrom
-    AXISCOLORS = {'x':'red', 'y':'green', 'z':'blue'}
     DISTANCE_UNITS = u.angstrom
+    HIGHLIGHT_COLOR = '#1FF3FE'
 
     _view_name = traitlets.Unicode('MolWidget3DView').tag(sync=True)
     _model_name = traitlets.Unicode('MolWidget3DModel').tag(sync=True)
     _view_module = traitlets.Unicode('nbmolviz-js').tag(sync=True)
     _model_module = traitlets.Unicode('nbmolviz-js').tag(sync=True)
 
-    height = traitlets.Unicode(sync=True)
-    width = traitlets.Unicode(sync=True)
     atom_labels_shown = traitlets.Bool(False).tag(sync=True)
     background_color = traitlets.Unicode('#545c85').tag(sync=True)
     background_opacity = traitlets.Float(1.0).tag(sync=True)
+    cubefile = traitlets.Unicode().tag(sync=True)
+    far_clip = traitlets.Float().tag(sync=True)
+    height = traitlets.Unicode(sync=True)
+    labels = traitlets.List([]).tag(sync=True)
     model_data = traitlets.Dict({}).tag(sync=True)
-    orbital = traitlets.Dict({}).tag(sync=True)
+    near_clip = traitlets.Float().tag(sync=True)
+    outline_color = traitlets.Unicode('#000000').tag(sync=True)
+    outline_width = traitlets.Float(0.0).tag(sync=True)
+    positions = traitlets.List([]).tag(sync=True)
     selected_atom_indices = traitlets.List().tag(sync=True)
     selection_type = traitlets.Unicode('Atom').tag(sync=True)
     shapes = traitlets.List([]).tag(sync=True)
     styles = traitlets.Dict({}).tag(sync=True)
-    labels = traitlets.List([]).tag(sync=True)
-    positions = traitlets.List([]).tag(sync=True)
-    near_clip = traitlets.Float().tag(sync=True)
-    far_clip = traitlets.Float().tag(sync=True)
-    outline_width = traitlets.Float(0.0).tag(sync=True)
-    outline_color = traitlets.Unicode('#000000').tag(sync=True)
+    volumetric_style = traitlets.Dict({}).tag(sync=True)
+    width = traitlets.Unicode(sync=True)
 
     SHAPE_NAMES = {
         'SPHERE': 'Sphere',
@@ -262,27 +263,61 @@ class GeometryViewer(BaseViewer):
     set_colors = set_color  # synonym
 
     # some convenience synonyms
-    def sphere(self, **kwargs):
-        return self.add_style('vdw', **kwargs)
-    vdw = cpk = sphere
+    def sphere(self, atoms=None, color=None, opacity=None):
+        """ Draw as Van der Waals spheres
 
+        Args:
+            atoms (List[moldesign.Atom]): atoms to apply this style to
+               (if not passed, uses all atoms)
+            color (int or str): color as string or RGB hexadecimal
+            opacity (float): opacity of the representation (between 0 and 1.0)
+        """
+        return self.add_style('vdw', atoms=atoms, color=color, opacity=opacity)
+    vdw = cpk = spheres = sphere
+
+    @utils.kwargs_from(sphere)
     def ball_and_stick(self, **kwargs):
+        """Draw as balls and sticks
+
+        Args:
+            **kwargs (dict): style kwargs
+        """
         return self.add_style('ball_and_stick', **kwargs)
+    balls_and_sticks = ball_and_stick
 
+    @utils.kwargs_from(sphere)
     def licorice(self, **kwargs):
-        return self.add_style('licorice', **kwargs)
-    stick = tube = licorice
+        """Draw as 3D sticks
 
+        Args:
+            **kwargs (dict): style kwargs
+        """
+        return self.add_style('licorice', **kwargs)
+    stick = sticks = tube = tubes = licorice
+
+    @utils.kwargs_from(sphere)
     def line(self, **kwargs):
+        """Draw as 1-dimensional lines
+
+        Args:
+            **kwargs (dict): style kwargs
+        """
         return self.add_style('line', **kwargs)
 
+    @utils.kwargs_from(sphere)
     def ribbon(self, **kwargs):
         return self.add_style('cartoon', **kwargs)
-    cartoon = ribbon
+    cartoon = ribbons = ribbon
 
     def hide(self, atoms=None):
+        """ Make these atoms invisible
+
+        Args:
+            atoms (List[moldesign.Atom]): atoms to apply this style to
+               (if not passed, uses all atoms)
+        """
         return self.add_style(None,atoms=atoms)
-    invisible = hide
+    off = invisible = hide
 
     @staticmethod
     def _get_styles_for_color(colors, atoms, styles):

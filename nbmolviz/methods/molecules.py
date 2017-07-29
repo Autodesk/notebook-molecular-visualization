@@ -21,7 +21,7 @@ def draw_orbitals(mol, **kwargs):
     Returns:
         mdt.orbitals.OrbitalViewer
     """
-    from ..widgets.orbitals import OrbitalViewer
+    from ..viewers.orbital_viewer import OrbitalViewer
 
     if 'wfn' not in mol.properties:
         mol.calculate_wfn()

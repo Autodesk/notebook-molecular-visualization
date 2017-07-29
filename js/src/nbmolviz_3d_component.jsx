@@ -32,23 +32,26 @@ class Nbmolviz3dComponent extends React.Component {
         }
     }
 
+    const orbital = JSON.parse(JSON.stringify(model.get('volumetric_style')));
+    orbital.cube_file = model.get('cubefile');
+
     return {
       atomLabelsShown: model.get('atom_labels_shown'),
       backgroundColor: model.get('background_color'),
       backgroundOpacity: model.get('background_opacity'),
+      farClip: model.get('far_clip'),
       height: model.get('height'),
+      labels: model.get('labels'),
       modelData: modelData,
-      orbital: model.get('orbital'),
+      nearClip: model.get('near_clip'),
+      orbital: orbital,
+      outlineColor: model.get('outline_color'),
+      outlineWidth: model.get('outline_width'),
       selectedAtomIds: model.get('selected_atom_indices'),
       selectionType: model.get('selection_type'),
       shapes: model.get('shapes'),
       styles: model.get('styles'),
       width: model.get('width'),
-      labels: model.get('labels'),
-      nearClip: model.get('near_clip'),
-      farClip: model.get('far_clip'),
-      outlineWidth: model.get('outline_width'),
-      outlineColor: model.get('outline_color')
     };
   }
 
