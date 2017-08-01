@@ -17,8 +17,51 @@ import ipywidgets as ipy
 import traitlets
 from moldesign import utils
 
-from .components import SelBase
 from ..uielements.components import HBox
+from .components import ViewerToolBase
+
+
+class SelBase(ViewerToolBase):
+
+    def __init__(self, mol):
+        super(SelBase, self).__init__(mol)
+
+        self._atomset = collections.OrderedDict()
+
+        self.atom_listname = ipy.Label('Selected atoms:', layout=ipy.Layout(width='100%'))
+        self.atom_list = ipy.SelectMultiple(options=list(self.viewer.selected_atom_indices),
+                                            layout=ipy.Layout(height='150px'))
+        traitlets.directional_link(
+            (self.viewer, 'selected_atom_indices'),
+            (self.atom_list, 'options'),
+            self._atom_indices_to_atoms
+        )
+
+        self.select_all_atoms_button = ipy.Button(description='Select all atoms')
+        self.select_all_atoms_button.on_click(self.select_all_atoms)
+
+        self.select_none = ipy.Button(description='Clear all selections')
+        self.select_none.on_click(self.clear_selections)
+
+    @property
+    def selected_atoms(self):
+        return self._atom_indices_to_atoms(self.viewer.selected_atom_indices)
+
+    def remove_atomlist_highlight(self, *args):
+        self.atom_list.value = tuple()
+
+    @staticmethod
+    def atomkey(atom):
+        return '%s (index %d)' % (atom.name, atom.index)
+
+    def _atom_indices_to_atoms(self, atom_indices):
+        return [self.mol.atoms[atom_index] for atom_index in atom_indices]
+
+    def select_all_atoms(self, *args):
+        self.viewer.selected_atom_indices = [atom.index for atom in self.mol.atoms]
+
+    def clear_selections(self, *args):
+        self.viewer.selected_atom_indices = []
 
 
 @utils.exports
@@ -81,8 +124,13 @@ class ResidueSelector(SelBase):
     Selecting all atoms of a residue is equivalent to selecting the residue.
     A residue is not selected if only some of its atoms are selected.
     """
+
     def __init__(self, mol):
         super(ResidueSelector, self).__init__(mol)
+
+        self.representation_buttons = ipy.ToggleButtons(options=['stick','ribbon', 'auto', 'vdw'],
+                                                        value='auto')
+        self.representation_buttons.observe(self._change_representation, 'value')
 
         self.selection_type = ipy.Dropdown(description='Clicks select:',
                                            value=self.viewer.selection_type,
@@ -90,54 +138,46 @@ class ResidueSelector(SelBase):
 
         traitlets.link((self.selection_type, 'value'), (self.viewer, 'selection_type'))
 
-        self.residue_listname = ipy.HTML('<b>Selected residues:</b>')
-        self.residue_list = ipy.SelectMultiple(options=list(), height=150)
-        traitlets.directional_link((self.viewer, 'selected_atom_indices'),
-                                   (self.residue_list, 'options'), self._atoms_to_residues)
+        self.residue_listname = ipy.Label('Selected residues:', layout=ipy.Layout(width='100%'))
+        self.residue_list = ipy.SelectMultiple(options=list(), height='150px')
+        self.viewer.observe(self._update_reslist, 'selected_atom_indices')
+
         self.residue_list.observe(self.remove_atomlist_highlight, 'value')
         self.atom_list.observe(self.remove_reslist_highlight, 'value')
 
-        self.subtools.children = [HBox([self.select_all_atoms_button, self.select_none])]
+        self.subtools.children = [self.representation_buttons]
+        self.subtools.layout.flex_flow = 'column'
         self.toolpane.children = [self.selection_type,
+                                  HBox([self.select_all_atoms_button, self.select_none]),
                                   self.atom_listname,
                                   self.atom_list,
                                   self.residue_listname,
                                   self.residue_list]
 
-    # Returns a list of all residues indicated in the set of atoms
-    def _atoms_to_residues(self, selected_atom_indices):
-        # Get all residues and their total number of atoms
-        residues = dict()
-        for atom in self.mol.atoms:
-            if atom.residue.index in residues:
-                residues[atom.residue.index]['total'] += 1
-            else:
-                residues[atom.residue.index] = {
-                    'total': 1,
-                }
-
-        # Get the total number of selected atoms per residue and compare to total
-        selected_residues = set()
-        for atomIndex in selected_atom_indices:
-            atom = self.mol.atoms[atomIndex]
-            if 'selected_count' in residues[atom.residue.index]:
-                residues[atom.residue.index]['selected_count'] += 1
-            else:
-                residues[atom.residue.index]['selected_count'] = 1
-
-            if (residues[atom.residue.index]['selected_count'] >=
-                    residues[atom.residue.index]['total']):
-                selected_residues.add(atom.residue)
-
-        return list(selected_residues)
-
     @property
     def selected_residues(self):
-        return self._atoms_to_residues(self.viewer.selected_atom_indices)
+        """ List[moldesign.Residue]: A list of the selected residues.
+
+        A residue is considered selected if all of its atoms are.
+        """
+        num_selected_in_residue = collections.Counter(atom.residue for atom in self.selected_atoms)
+        reslist = [res for res, n_selected_atoms in num_selected_in_residue.items()
+                   if n_selected_atoms == res.num_atoms]
+        reslist.sort(key=lambda x:x.index)
+        return reslist
 
     @selected_residues.setter
     def selected_residues(self, residues):
-        self.viewer.select_residues(residues)
+        with self.hold_trait_notifications(), self.viewer.hold_trait_notifications():
+            newres = set(residues)
+            for residue in self.selected_residues:
+                if residue not in newres:
+                    self.toggle_residue(residue)
+            self.viewer.select_residues(residues)
+
+    def _update_reslist(self, *args):
+        self.residue_list.options = collections.OrderedDict((str(r), r)
+                                                            for r in self.selected_residues)
 
     def toggle_residue(self, residue):
         self.viewer.toggle_residues([residue])
@@ -152,3 +192,12 @@ class ResidueSelector(SelBase):
     @staticmethod
     def reskey(residue):
         return '{res.name} in chain "{res.chain.name}"'.format(res=residue)
+
+    def _change_representation(self, *args):
+        repval = self.representation_buttons.value
+        if repval == 'auto':
+            self.viewer.autostyle()
+        elif repval in ('stick', 'ribbon', 'vdw'):
+            getattr(self.viewer, repval)()
+        else:
+            assert False, 'Unknown representation "%s"' % repval

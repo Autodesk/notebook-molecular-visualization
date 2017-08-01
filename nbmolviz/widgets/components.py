@@ -87,48 +87,6 @@ class ViewerToolBase(ipy.Box):
             raise AttributeError(item)
 
 
-class SelBase(ViewerToolBase):
-    def __init__(self, mol):
-        super(SelBase, self).__init__(mol)
-
-        self._atomset = collections.OrderedDict()
-
-        self.atom_listname = ipy.HTML('<b>Selected atoms:</b>')
-        self.atom_list = ipy.SelectMultiple(options=list(self.viewer.selected_atom_indices),
-                                            layout=ipy.Layout(height='150px'))
-        traitlets.directional_link(
-            (self.viewer, 'selected_atom_indices'),
-            (self.atom_list, 'options'),
-            self._atom_indices_to_atoms
-        )
-
-        self.select_all_atoms_button = ipy.Button(description='Select all atoms')
-        self.select_all_atoms_button.on_click(self.select_all_atoms)
-
-        self.select_none = ipy.Button(description='Clear all selections')
-        self.select_none.on_click(self.clear_selections)
-
-    @property
-    def selected_atoms(self):
-        return self._atom_indices_to_atoms(self.viewer.selected_atom_indices)
-
-    def remove_atomlist_highlight(self, *args):
-        self.atom_list.value = tuple()
-
-    @staticmethod
-    def atomkey(atom):
-        return '%s (index %d)' % (atom.name, atom.index)
-
-    def _atom_indices_to_atoms(self, atom_indices):
-        return [self.mol.atoms[atom_index] for atom_index in atom_indices]
-
-    def select_all_atoms(self, *args):
-        self.viewer.selected_atom_indices = set(i for i, atom in enumerate(self.mol.atoms))
-
-    def clear_selections(self, *args):
-        self.viewer.selected_atom_indices = set()
-
-
 class ReadoutFloatSlider(VBox):
     description = traitlets.Unicode()
     value = traitlets.Float()

@@ -74,7 +74,7 @@ class GeometryViewer(BaseViewer):
     outline_width = traitlets.Float(0.0).tag(sync=True)
     positions = traitlets.List([]).tag(sync=True)
     selected_atom_indices = traitlets.List().tag(sync=True)
-    selection_type = traitlets.Unicode('Atom').tag(sync=True)
+    selection_type = traitlets.Unicode('Atom', choices=['Atom', 'Residue', 'Chain']).tag(sync=True)
     shapes = traitlets.List([]).tag(sync=True)
     styles = traitlets.Dict({}).tag(sync=True)
     volumetric_style = traitlets.Dict({}).tag(sync=True)
@@ -130,6 +130,10 @@ class GeometryViewer(BaseViewer):
         """ List[moldesign.Atom]: list of selected atoms
         """
         return [self.mol.atoms[i] for i in self.selected_atom_indices]
+
+    @selected_atoms.setter
+    def selected_atoms(self, atoms):
+        self.selected_atom_indices = [atom.index for atom in atoms]
 
     def set_outline(self, width=None, color=None):
         if width is None and not self.outline_width:  # set a default
@@ -763,9 +767,12 @@ class GeometryViewer(BaseViewer):
 
     def select_residues(self, residues):
         selected_atom_indices = set()
-        for atom in residues.atoms:
-            selected_atom_indices.add(atom.index)
-        self.selected_atom_indices = selected_atom_indices
+        if isinstance(residues, mdt.Residue):
+            residues = [residues]  # backwards compatibility
+        for residue in residues:
+            for atom in residue.atoms:
+                selected_atom_indices.add(atom.index)
+        self.selected_atom_indices = list(sorted(selected_atom_indices))
 
     def toggle_residues(self, residues):
         selected_atom_indices = set(self.selected_atom_indices)
