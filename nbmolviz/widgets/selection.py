@@ -82,7 +82,6 @@ class AtomSelector(SelBase):
                                   self.atom_list]
 
 
-
 @utils.exports
 class BondSelector(SelBase):
     def __init__(self, mol):
@@ -91,15 +90,10 @@ class BondSelector(SelBase):
         self._bondset = collections.OrderedDict()
         self._drawn_bond_state = set()
 
-        self.bond_listname = ipy.HTML('<b>Selected bonds:</b>')
+        self.bond_listname = ipy.Label('Selected bonds:', layout=ipy.Layout(width='100%'))
         self.bond_list = ipy.SelectMultiple(options=list(),
                                             layout=ipy.Layout(height='150px'))
-
-        traitlets.directional_link(
-            (self.viewer, 'selected_atom_indices'),
-            (self.bond_list, 'options'),
-            self._atoms_to_bonds
-        )
+        self.viewer.observe(self._update_bondlist, 'selected_atom_indices')
 
         self.atom_list.observe(self.remove_bondlist_highlight, 'value')
 
@@ -110,8 +104,24 @@ class BondSelector(SelBase):
                                   self.bond_listname,
                                   self.bond_list)
 
-    def _atoms_to_bonds(self, atomIndices):
-        return list(self.viewer.get_selected_bonds(atomIndices))
+    @property
+    def selected_bonds(self):
+        bonds = []
+        atom_indices = set(self.selected_atom_indices)
+        for bond in self.mol.bonds:
+            if bond.a1.index in atom_indices and bond.a2.index in atom_indices:
+                bonds.append(bond)
+        return bonds
+
+    @selected_bonds.setter
+    def selected_bonds(self, bonds):
+        atom_indices = set()
+        for b in bonds:
+            atom_indices.update((b.a1.index, b.a2.index))
+        self.selected_atom_indices = list(sorted(atom_indices))
+
+    def _update_bondlist(self, *args):
+        self.bond_list.options = self.selected_bonds
 
     def _redraw_selection_state(self):
         currentset = set(self._bondset)

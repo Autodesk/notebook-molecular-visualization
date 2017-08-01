@@ -784,11 +784,3 @@ class GeometryViewer(BaseViewer):
                     selected_atom_indices.add(atom.index)
 
         self.selected_atom_indices = selected_atom_indices
-
-    def get_selected_bonds(self):
-        bonds = []
-        atom_indices = set(self.selected_atom_indices)
-        for bond in self.mol.bonds:
-            if bond.a1.index in atom_indices and bond.a2.index in atom_indices:
-                bonds.append(bond)
-        return bonds
