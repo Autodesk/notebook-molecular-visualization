@@ -105,6 +105,7 @@ class GeometryViewer(BaseViewer):
         super().__init__(**kwargs)
         self.height = in_pixels(height)
         self.width = in_pixels(width)
+        self.atom_colors = {}
 
         # current state
         self.atom_highlights = []
@@ -164,9 +165,9 @@ class GeometryViewer(BaseViewer):
             if cartoon_atoms:
                 self.cartoon(atoms=cartoon_atoms)
                 if len(biochains) > 1:
-                    self.color_by('chain', atoms=cartoon_atoms)
+                    self.color_by('chain', atoms=cartoon_atoms, save=False)
                 else:
-                    self.color_by('residue.resname', atoms=cartoon_atoms)
+                    self.color_by('residue.resname', atoms=cartoon_atoms, save=False)
             if line_atoms:
                 self.line(atoms=line_atoms)
             if stick_atoms:
@@ -211,7 +212,6 @@ class GeometryViewer(BaseViewer):
         instring = writemol.write(format=fmt)
         return instring, fmt
 
-
     def convert_style_name(self, name):
         canonical_name = self.STYLE_SYNONYMS[name]
         if canonical_name in self.STYLE_NAMES:
@@ -230,7 +230,7 @@ class GeometryViewer(BaseViewer):
         self.background_color = color
         self.background_opacity = opacity
 
-    def set_color(self, colors, atoms=None):
+    def set_color(self, colors, atoms=None, save=True):
         """ Set atom colors
 
         May be called in several different ways:
@@ -248,6 +248,11 @@ class GeometryViewer(BaseViewer):
                from atoms to colors, or a single color for all atoms
             atoms (List[moldesign.Atom]): list of atoms (if None, assumed to be mol.atoms; ignored
                if a dict is passed for "color")
+            save (bool): always color these atoms this way (until self.unset_color is called)
+
+        See Also:
+            :method:`GeometryViewer.color_by`` - to automatically color atoms using numerical
+               and categorical data
         """
         if hasattr(colors, 'items'):
             atoms, colors = zip(*colors.items())
@@ -259,78 +264,38 @@ class GeometryViewer(BaseViewer):
         elif isinstance(colors, basestring) or not hasattr(colors, '__iter__'):
             colors = [colors for atom in atoms]
 
-        self.styles = self._get_styles_for_color(colors, atoms, self.styles)
+        for atom,color in zip(atoms, colors):
+            c = translate_color(color, '#')
+            if save:
+                self.atom_colors[atom] = c
+            self.styles[str(atom.index)]['color'] = c
+        self.send_state('styles')
 
     set_colors = set_color  # synonym
 
-    # some convenience synonyms
-    def sphere(self, atoms=None, color=None, opacity=None):
-        """ Draw as Van der Waals spheres
+    def unset_color(self, atoms=None):
+        """ Resets atoms to their default colors
 
         Args:
-            atoms (List[moldesign.Atom]): atoms to apply this style to
-               (if not passed, uses all atoms)
-            color (int or str): color as string or RGB hexadecimal
-            opacity (float): opacity of the representation (between 0 and 1.0)
+            atoms (List[moldesign.Atom]): list of atoms to color (if None, this is applied to
+               all atoms)
         """
-        return self.add_style('vdw', atoms=atoms, color=color, opacity=opacity)
-    vdw = cpk = spheres = sphere
+        if atoms is None:
+            atoms = self.mol.atoms
 
-    @utils.kwargs_from(sphere)
-    def ball_and_stick(self, **kwargs):
-        """Draw as balls and sticks
-
-        Args:
-            **kwargs (dict): style kwargs
-        """
-        return self.add_style('ball_and_stick', **kwargs)
-    balls_and_sticks = ball_and_stick
-
-    @utils.kwargs_from(sphere)
-    def licorice(self, **kwargs):
-        """Draw as 3D sticks
-
-        Args:
-            **kwargs (dict): style kwargs
-        """
-        return self.add_style('licorice', **kwargs)
-    stick = sticks = tube = tubes = licorice
-
-    @utils.kwargs_from(sphere)
-    def line(self, **kwargs):
-        """Draw as 1-dimensional lines
-
-        Args:
-            **kwargs (dict): style kwargs
-        """
-        return self.add_style('line', **kwargs)
-
-    @utils.kwargs_from(sphere)
-    def ribbon(self, **kwargs):
-        return self.add_style('cartoon', **kwargs)
-    cartoon = ribbons = ribbon
-
-    def hide(self, atoms=None):
-        """ Make these atoms invisible
-
-        Args:
-            atoms (List[moldesign.Atom]): atoms to apply this style to
-               (if not passed, uses all atoms)
-        """
-        return self.add_style(None,atoms=atoms)
-    off = invisible = hide
+        for atom in atoms:
+            self.atom_colors.pop(atom, None)
+            self.styles[str(atom.index)].pop('color', None)
+        self.send_state('styles')
 
     @staticmethod
-    def _get_styles_for_color(colors, atoms, styles):
-        """ Returns new styles after updating the given atoms with the given color
+    def _update_atom_colors(colors, atoms, styles):
+        """ Updates list of atoms with the given colors. Colors will be translated to hex.
 
         Args:
             color (List[str]): list of colors for each atom
             atoms (List[moldesign.Atom]): list of atoms to apply the colors to
             styles (dict): old style dictionary
-
-        Returns:
-
         """
         styles = dict(styles)
 
@@ -342,16 +307,67 @@ class GeometryViewer(BaseViewer):
                 styles[str(atom.index)] = dict(styles[str(atom.index)])
             else:
                 styles[str(atom.index)] = {}
-            styles[str(atom.index)]['color'] = color
+            styles[str(atom.index)]['color'] = translate_color(color, prefix='#')
 
         return styles
 
-    def unset_color(self, atoms=None):
-        if atoms is None:
-            atom_json = {}
-        else:
-            atom_json = self._atoms_to_json(atoms)
-        self.viewer('unsetAtomColor', [atom_json])  # TODO: remove calls to self.viewer
+    # some convenience synonyms
+    def sphere(self, atoms=None, color=None, opacity=None):
+        """ Draw as Van der Waals spheres
+
+        Args:
+            atoms (List[moldesign.Atom]): atoms to apply this style to
+               (if not passed, uses all atoms)
+            color (int or str): color as string or RGB hexadecimal
+            opacity (float): opacity of the representation (between 0 and 1.0)
+        """
+        return self.set_style('vdw', atoms=atoms, color=color, opacity=opacity)
+    vdw = cpk = spheres = sphere
+
+    @utils.kwargs_from(sphere)
+    def ball_and_stick(self, **kwargs):
+        """Draw as balls and sticks
+
+        Args:
+            **kwargs (dict): style kwargs
+        """
+        raise NotImplementedError()  # disabled until we do a couple fixes to the API
+    balls_and_sticks = ball_and_stick
+
+    @utils.kwargs_from(sphere)
+    def licorice(self, **kwargs):
+        """Draw as 3D sticks
+
+        Args:
+            **kwargs (dict): style kwargs
+        """
+        return self.set_style('licorice', **kwargs)
+    stick = sticks = tube = tubes = licorice
+
+    @utils.kwargs_from(sphere)
+    def line(self, **kwargs):
+        """Draw as 1-dimensional lines
+
+        Args:
+            **kwargs (dict): style kwargs
+        """
+        return self.set_style('line', **kwargs)
+    lines = line
+
+    @utils.kwargs_from(sphere)
+    def ribbon(self, **kwargs):
+        return self.set_style('cartoon', **kwargs)
+    cartoon = ribbons = ribbon
+
+    def hide(self, atoms=None):
+        """ Make these atoms invisible
+
+        Args:
+            atoms (List[moldesign.Atom]): atoms to apply this style to
+               (if not passed, uses all atoms)
+        """
+        return self.set_style(None,atoms=atoms)
+    off = invisible = hide
 
     def set_style(self, style, atoms=None, **options):
         self._change_style(style, atoms, True, options)
@@ -359,8 +375,7 @@ class GeometryViewer(BaseViewer):
     def add_style(self, style, atoms=None, **options):
         self._change_style(style, atoms, False, options)
 
-    def _change_style(self, style_string,
-                      atoms, replace, options):
+    def _change_style(self, style_string, atoms, replace, options):
         style = self.convert_style_name(style_string)
 
         # No atoms passed means all atoms
@@ -370,10 +385,16 @@ class GeometryViewer(BaseViewer):
         newstyles = self.styles.copy()
         for atom in atoms:
             new_style = {'visualization_type': style}
-            for key in ('color', 'radius', 'opacity'):
+            for key in ('radius', 'opacity'):
                 if key in options:
                     new_style[key] = options[key]
 
+            if 'color' in options and options['color'] is not None:
+                new_style['color'] = translate_color(options['color'], '#')
+                if atom in self.atom_colors and new_style['color'] != self.atom_colors[atom]:
+                    self.atom_colors.pop(atom)  # if color is overriden, get rid of it now
+            elif atom in self.atom_colors:
+                new_style['color'] = self.atom_colors[atom]
             newstyles[str(atom.index)] = new_style
 
         self.styles = newstyles
@@ -725,7 +746,8 @@ class GeometryViewer(BaseViewer):
         """
         position = self._convert_length(position)
         color = translate_color(color)
-        background = translate_color(background)
+        if background is not None:
+            background = translate_color(background)
         spec = dict(position=self._list_to_jsvec(position),
                     fontColor=color,
                     backgroundColor=background,

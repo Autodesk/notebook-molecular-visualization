@@ -19,7 +19,7 @@ from .. import colormaps
 
 
 class BaseViewer(MessageWidget):
-    def colormap(self, atomvalues, atoms=None, mplmap='auto', categorical=None):
+    def colormap(self, atomvalues, atoms=None, mplmap='auto', categorical=None, save=True):
         """ Color atoms according to categorical or numeric data
 
         Args:
@@ -33,6 +33,7 @@ class BaseViewer(MessageWidget):
             categorical (bool): If None (the default), automatically detect whether the
                data is categorical or numerical. Otherwise, use this flag to force
                interpretation of the data as categorical (True) or numerical (False)
+            save (bool): permanently color theses atoms this way (until self.unset_color is called)
 
 
         Returns:
@@ -53,7 +54,7 @@ class BaseViewer(MessageWidget):
             atomvalues = list(map(atomvalues, atoms))
 
         colors = colormaps.colormap(atomvalues, mplmap=mplmap, categorical=categorical)
-        self.set_colors(colors, atoms=atoms)
+        self.set_colors(colors, atoms=atoms, save=save)
 
         return {v:c for v,c in zip(atomvalues, colors)}
 
