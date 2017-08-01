@@ -46,7 +46,8 @@ class GeometryBuilder(ViewerToolBase):
     def __init__(self, mol):
         super(GeometryBuilder, self).__init__(mol)
 
-        self._cylinder = None
+        self._widgetshapes = {}
+        self._atom_labels = []
 
         # All numbers here are assumed angstroms and radians for now ...
         self._highlighted_bonds = []
@@ -130,7 +131,16 @@ class GeometryBuilder(ViewerToolBase):
                        atom=atom, p=atom.position.value_in(u.angstrom))
 
     def label_atoms(self, *args):
-        self.viewer.atom_labels_shown = self.label_box.value
+        with self.viewer.hold_trait_notifications():
+            if self.label_box.value and not self._atom_labels:
+                self._atom_labels = [self.viewer.draw_label(position=atom.position, text=atom.name)
+                                     for atom in self.mol.atoms]
+            else:
+                for l in self._atom_labels:
+                    self.viewer.remove(l)
+                self._atom_labels = []
+        self.viewer.send_state('labels')
+
 
     # Returns the first bond indicated by bondIndices
     @staticmethod
@@ -144,11 +154,15 @@ class GeometryBuilder(ViewerToolBase):
             Tuple(ipywidgets.BaseWidget): children of the tool panel
         """
         atoms = self.viewer.selected_atoms
-        self.viewer.remove_all_shapes()
+        with self.viewer.hold_trait_notifications():
+            for shape in self._widgetshapes.values():
+                if shape == '_axes':
+                    self.viewer.draw_axes(False)
+                else:
+                    self.viewer.remove(shape)
+            self._widgetshapes = {}
 
-        if len(atoms) == 0:
-            self.tool_holder.children = (ipy.HTML('Please click on a bond or atom'),)
-        elif len(atoms) == 1:
+        if len(atoms) == 1:
             self._setup_atom_tools(atoms)
         elif len(atoms) == 2:
             self._setup_distance_tools(atoms)
@@ -156,6 +170,8 @@ class GeometryBuilder(ViewerToolBase):
             self._setup_angle_tools(atoms)
         elif len(atoms) == 4:
             self._setup_dihedral_tools(atoms)
+        else:
+            self.tool_holder.children = (ipy.HTML('Please click on 1-4 atoms'),)
 
     def _setup_atom_tools(self, atoms):
         atom = atoms[0]
@@ -163,7 +179,8 @@ class GeometryBuilder(ViewerToolBase):
             with slider.hold_trait_notifications():
                 slider.value = val
         self.tool_holder.children = (self.atom_tools,)
-        self.viewer.draw_axes()
+        self.viewer.draw_axes(True)
+        self._widgetshapes = {'_axes': '_axes'}
 
     def set_atom_pos(self, change):
         atom = self.selected_atoms[0]
@@ -181,8 +198,9 @@ class GeometryBuilder(ViewerToolBase):
         self.viewer.shapes = []
 
         # creates a temp cylinder that will be overwritten in self.set_distance
-        self._cylinder = self.viewer.draw_cylinder(a1.position, a2.position, radius=0.3,
-                                                   opacity=0.65, color='red')
+        self._widgetshapes = {
+            'bond':self.viewer.draw_cylinder(a1.position, a2.position, radius=0.3,
+                                                        opacity=0.65, color='red')}
         self.length_slider.value = a1.distance(a2).value_in(u.angstrom)
         self.length_slider.description = BONDDESCRIPTION.format(
                 a1=a1, a2=a2, c1=self.viewer.HIGHLIGHT_COLOR)
@@ -199,12 +217,13 @@ class GeometryBuilder(ViewerToolBase):
         dist_in_angstrom = self.length_slider.value
         mdt.set_distance(a1, a2, dist_in_angstrom*u.angstrom,
                          adjustmol=self.rigid_mol_selector.value)
-        cstart = self._cylinder['start']
-        cstart['x'], cstart['y'], cstart['z'] = a1.position.value_in(u.angstrom)
-        cend = self._cylinder['end']
-        cend['x'], cend['y'], cend['z'] = a2.position.value_in(u.angstrom)
-        self.viewer.send_state('shapes')
-        self.viewer.set_positions()
+        for endpoint in (self._widgetshapes['bond']['start'],
+                         self._widgetshapes['bond']['end']):
+            endpoint['x'], endpoint['y'], endpoint['z'] = a1.position.value_in(u.angstrom)
+
+        with self.viewer.hold_trait_notifications():
+            self.viewer.send_state('shapes')
+            self.viewer.set_positions()
 
     def _setup_angle_tools(self, atoms):
         a1, a2, a3 = atoms
@@ -213,10 +232,18 @@ class GeometryBuilder(ViewerToolBase):
         # creates a temp cylinder that will be overwritten in self.set_distance
         angle_normal = np.cross(a1.position-a2.position,
                                a3.position-a2.position)
-        self._circle = self.viewer.draw_circle(a2.position,
-                                               normal=angle_normal,
-                                               radius=max(a1.distance(a2), a3.distance(a2)),
-                                               opacity=0.65, color='blue')
+
+        self._widgetshapes = {
+            'plane': self.viewer.draw_circle(a2.position, normal=angle_normal,
+                                             radius=max(a1.distance(a2), a3.distance(a2)),
+                                             opacity=0.55, color='blue'),
+            'origin': self.viewer.draw_sphere(a2.position,
+                                              radius=0.5, opacity=0.85, color='green'),
+            'b1': self.viewer.draw_cylinder(a1.position, a2.position, radius=0.3,
+                                            opacity=0.65, color='red'),
+            'b2': self.viewer.draw_cylinder(a3.position, a2.position, radius=0.3,
+                                            opacity=0.65, color='red')}
+
         self.angle_slider.value = mdt.angle(a1, a2, a3).value_in(u.degrees)
         self.angle_slider.description = ANGLEDESCRIPTION.format(
                     a1=a1, a2=a2, a3=a3,
@@ -236,16 +263,30 @@ class GeometryBuilder(ViewerToolBase):
         a1, a2, a3 = self.viewer.selected_atoms
         mdt.set_angle(a1, a2, a3,
                       self.angle_slider.value*u.pi/180.0, adjustmol=self.rigid_mol_selector.value)
-        self.viewer.set_positions()
+
+        for endpoint, atom in ((self._widgetshapes['b1']['start'], a1),
+                               (self._widgetshapes['b2']['start'], a3)):
+            endpoint['x'], endpoint['y'], endpoint['z'] = atom.position.value_in(u.angstrom)
+
+        with self.viewer.hold_trait_notifications():
+            self.viewer.send_state('shapes')
+            self.viewer.set_positions()
 
     def _setup_dihedral_tools(self, atoms):
         a1, a2, a3, a4 = atoms
-        self._cylinder = self.viewer.draw_cylinder(a2.position, a3.position, radius=0.3,
-                                                   opacity=0.65, color='red')
-
         bc = mdt.Bond(a2, a3)
         b_0 = mdt.Bond(a1, a2)
         b_f = mdt.Bond(a3, a4)
+
+        self._widgetshapes = {
+            'b1': self.viewer.draw_cylinder(a1.position, a2.position, radius=0.3,
+                                            opacity=0.65, color='red'),
+            'b3': self.viewer.draw_cylinder(a3.position, a4.position, radius=0.3,
+                                            opacity=0.65, color='red'),
+            'plane': self.viewer.draw_circle(center=bc.midpoint,
+                                             normal=a3.position-a2.position,
+                                             radius=1.5, color='blue', opacity=0.55)}
+
         self.dihedral_slider.description = DIHEDRALDESCRIPTION.format(
                 a1=a1, a2=a2, a3=a3, a4=a4,
                 c0=self.NBR1HIGHLIGHT, c1=self.viewer.HIGHLIGHT_COLOR,
@@ -261,7 +302,14 @@ class GeometryBuilder(ViewerToolBase):
         mdt.set_dihedral(a1, a2, a3, a4,
                          self.dihedral_slider.value*u.pi/180.0,
                          adjustmol=self.rigid_mol_selector.value)
-        self.viewer.set_positions()
+
+        for endpoint, atom in ((self._widgetshapes['b1']['start'], a1),
+                               (self._widgetshapes['b3']['end'], a4)):
+            endpoint['x'], endpoint['y'], endpoint['z'] = atom.position.value_in(u.angstrom)
+
+        with self.viewer.hold_trait_notifications():
+            self.viewer.send_state('shapes')
+            self.viewer.set_positions()
 
     def _highlight_atoms(self, atoms, color=None):
         color = utils.if_not_none(color, self.viewer.HIGHLIGHT_COLOR)

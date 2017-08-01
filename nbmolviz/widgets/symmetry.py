@@ -32,7 +32,7 @@ class Symmetrizer(ipy.Box):
         self.original_coords = mol.positions.copy()
 
         self.showing = ipy.HTML()
-        self.viewer = mol.draw3d()
+        self.viewer = mol.draw3d(width='650px')
         """:type viewer: moldesign.viewer.GeometryViewer"""
 
         self.description = ipy.HTML()
@@ -57,12 +57,12 @@ class Symmetrizer(ipy.Box):
         self.recalculate_button.on_click(self.coords_changed)
 
         self.symm_pane = VBox([self.description,
-                                   self.symm_selector,
-                                   HBox([self.apply_button, self.reset_button]),
-                                   self.apply_all_button,
-                                   HBox([self.tolerance_chooser, self.recalculate_button]),
-                                   self.tolerance_descrip],
-                                  layout=ipy.Layout(width='325px'))
+                               self.symm_selector,
+                               HBox([self.apply_button, self.reset_button]),
+                               self.apply_all_button,
+                               HBox([self.tolerance_chooser, self.recalculate_button]),
+                               self.tolerance_descrip],
+                              layout=ipy.Layout(width='325px'))
 
         self.symmetry = None
         self.coords_changed()
@@ -72,7 +72,7 @@ class Symmetrizer(ipy.Box):
 
     def reset_coords(self, *args):
         self.mol.positions = self.original_coords
-        self.viewer.append_frame(positions=self.original_coords)
+        self.viewer.set_positions(positions=self.original_coords)
         self.coords_changed()
 
     def coords_changed(self, *args):
@@ -96,7 +96,7 @@ class Symmetrizer(ipy.Box):
         else:
             descrip += 'RMS Error = {:.03P}'.format(self.symmetry.rms)
         self.description.value = descrip
-        self.viewer.append_frame(positions=self.symmetry.orientation)
+        self.viewer.set_positions(positions=self.symmetry.orientation)
 
     def apply_selected_symmetry(self, *args):
         idx = self.symm_selector.value.idx
@@ -104,7 +104,7 @@ class Symmetrizer(ipy.Box):
         newcoords = self.symmetry.get_symmetrized_coords(elem)
         self.mol.atoms.position = newcoords
         if not np.allclose(newcoords, self.symmetry.orientation, atol=1.0e-10):
-            self.viewer.append_frame(positions=newcoords)
+            self.viewer.set_positions(positions=newcoords)
             self.coords_changed()
 
     def show_symmetry(self, *args):
