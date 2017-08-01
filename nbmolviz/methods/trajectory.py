@@ -25,7 +25,7 @@ def draw3d(traj, **kwargs):
 draw = draw3d  # synonym for backwards compatibility
 
 
-def draw_orbitals(traj, align=True):
+def draw_orbitals(traj, align=True, **kwargs):
     """ Visualize trajectory with molecular orbitals
 
     Args:
@@ -44,7 +44,7 @@ def draw_orbitals(traj, align=True):
 
     if align:
         traj.align_orbital_phases()
-    traj._viz = TrajectoryOrbViewer(traj)
+    traj._viz = TrajectoryOrbViewer(traj, **kwargs)
     return traj._viz
 
 

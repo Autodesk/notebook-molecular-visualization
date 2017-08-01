@@ -26,6 +26,7 @@ import numpy as np
 import moldesign as mdt
 from moldesign import units as u
 from moldesign import utils
+from moldesign import mathutils
 
 from ..utils import translate_color, in_pixels
 from ..base.mdt2json import convert as convert_to_json
@@ -442,7 +443,7 @@ class GeometryViewer(BaseViewer):
                                                                     native=self.DISTANCE_UNITS))
         shapes = []
         for atom, vecarray in zip(self.mol.atoms, arrowvecs):
-            if vecarray.norm() < 0.2:
+            if mathutils.norm(vecarray) < 0.2:
                 continue
             shapes.append(self.draw_arrow(atom.position, vector=vecarray, **kwargs))
         return shapes
@@ -500,15 +501,11 @@ class GeometryViewer(BaseViewer):
         if self.atom_highlights:
             self.set_color(self.HIGHLIGHT_COLOR, self.atom_highlights, _store=False)
 
-    def redraw_orbs(self):
-        if self.orbital_is_selected:
-            self.draw_orbital(self.current_orbital, **self.orbital_spec)
-
     @property
     def orbital_is_selected(self):
         return self.current_orbital is not None and self.current_orbital[1] is not None
 
-    def _convert_units(self, obj):
+    def _convert_length(self, obj):
         try:
             return obj.value_in(self.DISTANCE_UNITS)
         except AttributeError:
@@ -516,12 +513,16 @@ class GeometryViewer(BaseViewer):
                 return np.array(obj)
             else:
                 return obj
+        except u.DimensionalityError:
+            if obj.dimensionless:
+                return obj.magnitude
+            else:
+                raise
 
-    @staticmethod
-    def _list_to_jsvec(vec):
+    def _list_to_jsvec(self, vec):
         assert len(vec) == 3
         try:
-            v = vec.value_in(u.angstrom)
+            v = self._convert_length(vec)
         except AttributeError:
             v = vec
         return dict(x=v[0], y=v[1], z=v[2])
@@ -538,8 +539,8 @@ class GeometryViewer(BaseViewer):
         Returns:
             dict: sphere spec object
         """
-        center = self._convert_units(center)
-        radius = self._convert_units(radius)
+        center = self._convert_length(center)
+        radius = self._convert_length(radius)
         color = translate_color(color)
 
         shape = {
@@ -622,9 +623,9 @@ class GeometryViewer(BaseViewer):
                             draw_start_face, draw_end_face,
                             opacity, radius):
         color = translate_color(color)
-        facestart = self._convert_units(start)
-        faceend = self._convert_units(end)
-        radius = self._convert_units(radius)
+        facestart = self._convert_length(start)
+        faceend = self._convert_length(end)
+        radius = self._convert_length(radius)
 
         shape = {
             'type': self.SHAPE_NAMES['CYLINDER'],
@@ -657,16 +658,16 @@ class GeometryViewer(BaseViewer):
         Returns:
             dict: Shape specification
         """
-        start = self._convert_units(start)
+        start = self._convert_length(start)
 
         if (end is None) == (vector is None):
             raise ValueError("Either 'end' or 'vector' should be passed, but not both.")
         if end is None:
-            end = start + self._convert_units(vector)
+            end = start + self._convert_length(vector)
         else:
-            end = self._convert_units(end)
-        facestart = self._convert_units(start)
-        faceend = self._convert_units(end)
+            end = self._convert_length(end)
+        facestart = self._convert_length(start)
+        faceend = self._convert_length(end)
         color = translate_color(color)
 
         shape = {
@@ -722,7 +723,7 @@ class GeometryViewer(BaseViewer):
         Returns:
             dict: cylinder spec object
         """
-        position = self._convert_units(position)
+        position = self._convert_length(position)
         color = translate_color(color)
         background = translate_color(background)
         spec = dict(position=self._list_to_jsvec(position),

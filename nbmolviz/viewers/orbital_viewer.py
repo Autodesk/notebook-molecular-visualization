@@ -20,6 +20,7 @@ install_aliases()
 # limitations under the License.
 import collections
 
+from IPython.display import display as display_now
 import numpy as np
 import ipywidgets as ipy
 import traitlets
@@ -40,6 +41,7 @@ class OrbitalViewer(ViewerContainer):
     Args:
         mol (mdt.Molecule): a molecule with A) orbitals, and
                             B) an energy model with calculate_orbital_grid
+        display (bool): immediately draw the viewer in the notebook
         **kwargs (dict): kwargs for the viewer
     """
     current_orbital = traitlets.Any()  # reference to the currently displayed orbital
@@ -49,15 +51,22 @@ class OrbitalViewer(ViewerContainer):
     positive_color = traitlets.Union([traitlets.Integer(), traitlets.Unicode()], default='blue')
     numpoints = traitlets.Integer(40, default=50, max=120, min=10)
 
-    def __init__(self, mol, **kwargs):
+    def __init__(self, mol, display=False, **kwargs):
+        self.type_dropdown = None
+        self.orblist = None
+        self.isoval_selector = None
+        self.opacity_selector = None
         self.viewer = GeometryViewer(mol=mol, **process_widget_kwargs(kwargs))
         self.mol = mol
         self.wfn = mol.wfn   # cache this directly because the molecule's state may change
         self._restyle_orbital()  # sets defaults for orbital spec
         self._cached_cubefiles = {}
+
         self.uipane = self._make_ui_pane(self.viewer.layout.height)
         hb = HBox([self.viewer, self.uipane])
-        super(OrbitalViewer, self).__init__([hb], viewer=self.viewer)
+        super().__init__([hb], viewer=self.viewer)
+        if display:
+            display_now(self)
 
     def draw_orbital(self, orbital):
         """Display a molecular orbital
@@ -70,6 +79,10 @@ class OrbitalViewer(ViewerContainer):
 
     @traitlets.observe('current_orbital', 'numpoints')
     def _redraw_orbital(self, *args):
+        if self.current_orbital is None:
+            self.viewer.cubefile = ''
+            return
+
         orbkey = (id(self.current_orbital), self.numpoints)
 
         if orbkey not in self._cached_cubefiles:
@@ -184,7 +197,7 @@ class OrbitalViewer(ViewerContainer):
                                                layout=ipy.Layout(width=layout.width))
         traitlets.link((self.isoval_selector, 'value'), (self, 'isoval'))
 
-        # Isovalue selector
+        # Opacity selector
         opacity_label = ipy.Label('Opacity:')
         self.opacity_selector = ipy.FloatSlider(min=0.0, max=1.0,
                                                value=0.8, step=0.01,
@@ -199,6 +212,8 @@ class OrbitalViewer(ViewerContainer):
         self.orb_resolution.value = str(self.numpoints)
         self.resolution_button = ipy.Button(description='Update resolution')
         self.resolution_button.on_click(self.change_resolution)
+        traitlets.directional_link((self, 'numpoints'), (self.orb_resolution, 'value'),
+                                   transform=str)
 
         self.uipane = ipy.VBox([orbtype_label, self.type_dropdown,
                                 orblist_label, self.orblist,
