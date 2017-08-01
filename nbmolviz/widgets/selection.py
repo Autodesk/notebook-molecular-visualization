@@ -22,9 +22,8 @@ from .components import ViewerToolBase
 
 
 class SelBase(ViewerToolBase):
-
     def __init__(self, mol):
-        super(SelBase, self).__init__(mol)
+        super().__init__(mol)
 
         self._atomset = collections.OrderedDict()
 
@@ -43,9 +42,9 @@ class SelBase(ViewerToolBase):
         self.select_none = ipy.Button(description='Clear all selections')
         self.select_none.on_click(self.clear_selections)
 
-    @property
-    def selected_atoms(self):
-        return self._atom_indices_to_atoms(self.viewer.selected_atom_indices)
+        self.representation_buttons = ipy.ToggleButtons(options=['stick','ribbon', 'auto', 'vdw'],
+                                                        value='auto')
+        self.representation_buttons.observe(self._change_representation, 'value')
 
     def remove_atomlist_highlight(self, *args):
         self.atom_list.value = tuple()
@@ -63,11 +62,31 @@ class SelBase(ViewerToolBase):
     def clear_selections(self, *args):
         self.viewer.selected_atom_indices = []
 
+    def _change_representation(self, *args):
+        repval = self.representation_buttons.value
+        if repval == 'auto':
+            self.viewer.autostyle()
+        elif repval in ('stick', 'ribbon', 'vdw'):
+            getattr(self.viewer, repval)()
+        else:
+            assert False, 'Unknown representation "%s"' % repval
+
+
+@utils.exports
+class AtomSelector(SelBase):
+    def __init__(self, mol):
+        super().__init__(mol)
+        self.subtools.children = [self.representation_buttons]
+        self.toolpane.children = [HBox([self.select_all_atoms_button, self.select_none]),
+                                  self.atom_listname,
+                                  self.atom_list]
+
+
 
 @utils.exports
 class BondSelector(SelBase):
     def __init__(self, mol):
-        super(BondSelector, self).__init__(mol)
+        super().__init__(mol)
 
         self._bondset = collections.OrderedDict()
         self._drawn_bond_state = set()
@@ -127,10 +146,6 @@ class ResidueSelector(SelBase):
 
     def __init__(self, mol):
         super(ResidueSelector, self).__init__(mol)
-
-        self.representation_buttons = ipy.ToggleButtons(options=['stick','ribbon', 'auto', 'vdw'],
-                                                        value='auto')
-        self.representation_buttons.observe(self._change_representation, 'value')
 
         self.selection_type = ipy.Dropdown(description='Clicks select:',
                                            value=self.viewer.selection_type,
@@ -193,11 +208,3 @@ class ResidueSelector(SelBase):
     def reskey(residue):
         return '{res.name} in chain "{res.chain.name}"'.format(res=residue)
 
-    def _change_representation(self, *args):
-        repval = self.representation_buttons.value
-        if repval == 'auto':
-            self.viewer.autostyle()
-        elif repval in ('stick', 'ribbon', 'vdw'):
-            getattr(self.viewer, repval)()
-        else:
-            assert False, 'Unknown representation "%s"' % repval

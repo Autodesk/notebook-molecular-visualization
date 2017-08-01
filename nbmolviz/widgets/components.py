@@ -68,6 +68,9 @@ class ViewerToolBase(ipy.Box):
     VIEWERTYPE = viewers.GeometryViewer
     VIEWERWIDTH = '600px'
 
+    selected_atom_indices = utils.Alias('viewer.selected_atom_indices')
+    selected_atoms = utils.Alias('viewer.selected_atoms')
+
     def __init__(self, mol):
         self.mol = mol
 
