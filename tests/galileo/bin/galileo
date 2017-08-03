@@ -7,8 +7,10 @@ const crypto = require('crypto');
 const os = require('os');
 const assert = require('assert');
 const urlparse = require('url-parse');
+const glob = require('glob');
 
 const glopath = path.join(__dirname, '..');
+let jupyProc = null;
 
 function runGalileo() {
     // CLI driver
@@ -84,7 +86,7 @@ function launchJupyter(serverURI, configPath, callbackWhenReady) {
         `--port=${serverURI.port} ` +
         `--config=${configPath}`;
     process.stdout.write('Launching Jupyter:\n$ ' + cmd + '\n');
-    child_process.exec(cmd, jupyterFinished);
+    jupyProc = child_process.exec(cmd, jupyterFinished);
     process.stdout.write('Waiting for Jupyter ..');
 
     function attemptConnection(){
@@ -120,7 +122,25 @@ function runNightwatch() {
     // launches the nightwatch test runner, which will actually do the real testing
     const nwexe = path.join(glopath, 'node_modules', 'nightwatch', 'bin', 'nightwatch');
     const nwconfig = path.join(glopath, 'nightwatch_config', 'nightwatch.js');
-    child_process.execSync(`${nwexe} -c ${nwconfig} --env local_chrome`, {stdio:[0,1,2]})
+    child_process.execSync(`${nwexe} -c ${nwconfig} --env local_chrome`, {stdio:[0,1,2]});
+    console.log('Nightwatch exited');
+    if(jupyProc) jupyProc.kill();
+
+    writeReportHtml()
+}
+
+function writeReportHtml() {
+    const f = 'latest_results.html';
+    fs.writeFileSync(f, `<!DOCTYPE html> <html> <head> <title>Screenshots at ${new Date()}</title></head>` +
+    '<body>');
+    const screenshots = glob.sync('latest_images/*/*.png');
+
+    screenshots.forEach((imagePath) => {
+      fs.appendFileSync(f, `<div>${path.basename(imagePath, '.png')}<img src="${imagePath}" /> </div>`);
+    });
+
+    fs.appendFileSync(f, '</body></html>')
+
 }
 
 runGalileo();
