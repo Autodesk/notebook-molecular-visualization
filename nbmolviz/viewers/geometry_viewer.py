@@ -181,7 +181,7 @@ class GeometryViewer(BaseViewer):
         if self.mol.num_atoms < 1000:
             lone = [atom for atom in self.mol.atoms if atom.num_bonds == 0]
             if lone:
-                self.vdw(atoms=lone, render=False, radius=0.5)
+                self.vdw(atoms=lone, radius=0.5)
 
     def show_unbonded(self, radius=0.5):
         """ Highlights all unbonded atoms as spheres.
@@ -316,7 +316,7 @@ class GeometryViewer(BaseViewer):
         return styles
 
     # some convenience synonyms
-    def sphere(self, atoms=None, color=None, opacity=None):
+    def sphere(self, atoms=None, color=None, opacity=None, radius=None):
         """ Draw as Van der Waals spheres
 
         Args:
@@ -324,8 +324,9 @@ class GeometryViewer(BaseViewer):
                (if not passed, uses all atoms)
             color (int or str): color as string or RGB hexadecimal
             opacity (float): opacity of the representation (between 0 and 1.0)
+            radius (float or Scalar[length]): explicit sphere radii (assumes angstrom if no units)
         """
-        return self.set_style('vdw', atoms=atoms, color=color, opacity=opacity)
+        return self.set_style('vdw', atoms=atoms, color=color, opacity=opacity, radius=radius)
     vdw = cpk = spheres = sphere
 
     @utils.kwargs_from(sphere)

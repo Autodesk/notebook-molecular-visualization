@@ -26,23 +26,9 @@ import collections
 
 import ipywidgets as ipy
 
-from moldesign import uibase
-from moldesign import utils
+from moldesign.forcefields.errors import StructureOk
 
 from ..uielements.components import HBox, VBox
-
-
-
-def show_parameterization_results(errormessages, molin, molout=None):
-    if uibase.widgets_enabled:
-        report = ParameterizationDisplay(errormessages, molin, molout)
-        uibase.display_log(report, title='ERRORS/WARNINGS', show=True)
-
-    else:
-        print('Forcefield assignment: %s' % ('Success' if molout is not None else 'Failure'))
-        for err in errormessages:
-            print(utils.html_to_text(err.desc))
-
 
 
 class ParameterizationDisplay(ipy.Box):
@@ -75,11 +61,11 @@ class ParameterizationDisplay(ipy.Box):
                                                       layout=ipy.Layout(display='flex',
                                                                         flex_flow='column'))
 
-
     def switch_display(self, d):
-        old = d['old']
-        old.unshow(self.viewer)
-        self.errmsg.value = '-'
-        new = d['new']
-        new.show(self.viewer)
-        self.errmsg.value = new.desc
+        with self.viewer.hold_trait_notifications():
+            old = d['old']
+            old.unshow(self.viewer)
+            self.errmsg.value = '-'
+            new = d['new']
+            new.show(self.viewer)
+            self.errmsg.value = new.desc
