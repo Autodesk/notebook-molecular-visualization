@@ -52,7 +52,7 @@ def draw(group, width=None, height=None, show_2dhydrogens=None, display=False,
         views = HBox([viz2d, viz3d])
     else:
         viz2d = None
-        viz3d = draw3d(group, **kwargs, display=False)
+        viz3d = draw3d(group, display=False, **kwargs)
         views = viz3d
 
     traitlets.link((viz3d, 'selected_atom_indices'),

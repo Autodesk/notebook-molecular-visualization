@@ -20,7 +20,7 @@ import ipywidgets as ipy
 
 from moldesign import utils
 from ..uielements.components import VBox
-from .. import viewers
+from . import GeometryViewer
 
 
 class ViewerContainer(VBox):
@@ -40,22 +40,22 @@ class ViewerContainer(VBox):
         self.graphviewer = graphviewer
 
 
-    @utils.args_from(viewers.GeometryViewer.set_color)
+    @utils.args_from(GeometryViewer.set_color)
     def set_color(self, *args, **kwargs):
         if self.graphviewer: self.graphviewer.set_color(*args, **kwargs)
         if self.viewer: self.viewer.set_color(*args, **kwargs)
 
-    @utils.args_from(viewers.GeometryViewer.set_color)
+    @utils.args_from(GeometryViewer.set_color)
     def color_by(self, *args, **kwargs):
         if self.graphviewer: self.graphviewer.color_by(*args, **kwargs)
         if self.viewer: self.viewer.color_by(*args, **kwargs)
 
-    @utils.args_from(viewers.GeometryViewer.set_color)
+    @utils.args_from(GeometryViewer.set_color)
     def set_colors(self, *args, **kwargs):
         if self.graphviewer: self.graphviewer.set_colors(*args, **kwargs)
         if self.viewer: self.viewer.set_colors(*args, **kwargs)
 
-    @utils.args_from(viewers.GeometryViewer.unset_color)
+    @utils.args_from(GeometryViewer.unset_color)
     def unset_color(self, *args, **kwargs):
         if self.graphviewer: self.graphviewer.unset_color(*args, **kwargs)
         if self.viewer: self.viewer.unset_color(*args, **kwargs)

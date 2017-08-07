@@ -1,7 +1,8 @@
 """ Unfortunately, the tests here do not yet test the visualizations themselves, merely
 the supporting functionality
 """
-import io
+from past.builtins import unicode
+
 import pytest
 
 from moldesign._tests.molecule_fixtures import *
@@ -20,11 +21,13 @@ def wfn_viewer(h2_rhf_augccpvdz):
 
 
 def test_generate_orbgrid_works(wfn_viewer):
-    grid, values = wfn_viewer.calc_orb_grid(0, 64, 0)
+    wfn_viewer.numpoints = 64
+    grid, values = wfn_viewer._calc_orb_grid(wfn_viewer.mol.wfn.orbitals.canonical[1])
     assert grid.xpoints == grid.ypoints == grid.zpoints == 64
 
 
 def test_generating_cubefile_works(wfn_viewer):
-    cb = wfn_viewer.get_cubefile(0, 64, 0)
-    assert isinstance(cb, str)
-
+    wfn_viewer.numpoints = 64
+    grid, values = wfn_viewer._calc_orb_grid(wfn_viewer.mol.wfn.orbitals.canonical[1])
+    cb = wfn_viewer._grid_to_cube(grid, values)
+    assert isinstance(cb, unicode)

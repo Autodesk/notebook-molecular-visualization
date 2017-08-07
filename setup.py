@@ -106,6 +106,8 @@ class NPM(Command):
 
     node_modules = os.path.join(node_root, 'node_modules')
 
+    verfile_path = os.path.join(here, 'nbmolviz', 'static', 'VERSION')
+
     targets = [
         os.path.join(here, 'nbmolviz', 'static', 'extension.js'),
         os.path.join(here, 'nbmolviz', 'static', 'index.js')
@@ -132,15 +134,11 @@ class NPM(Command):
     def run(self):
         has_npm = self.has_npm()
         if not has_npm:
-            log.error("`npm` unavailable.  If you're running this command using sudo, make sure `npm` is available to sudo")
+            log.error("`npm` unavailable. If you're running this command using sudo, "
+                      "make sure `npm` is available to sudo")
 
         env = os.environ.copy()
         env['PATH'] = npm_path
-
-        verfile_path = os.path.join(node_root, '.VERSION.json')
-        with open(verfile_path, 'w') as verfile:
-            verfile.write('{"version":"%s"}\n' % VERSION)
-        print('Wrote version "%s" to "%s"' % (VERSION, verfile_path))
 
         if self.should_run_npm_install():
             log.info("Installing build dependencies with npm.  This may take a while...")
@@ -153,6 +151,11 @@ class NPM(Command):
                 if not has_npm:
                     msg += '\nnpm is required to build a development version of nbmolviz-js'
                 raise ValueError(msg)
+
+        with open(self.verfile_path, 'w') as verfile:
+            verfile.write(VERSION)
+
+        print('Wrote version "%s" to "%s"' % (VERSION, self.verfile_path))
 
         # update package data in case this created new files
         update_package_data(self.distribution)

@@ -13,7 +13,6 @@ from __future__ import print_function
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os as _os
-from . import install as _install
 
 MDTVERSION = '0.8.0'
 
@@ -24,6 +23,7 @@ __copyright__ = "Copyright 2017 Autodesk Inc."
 __license__ = "Apache 2.0"
 
 PACKAGE_PATH = _os.path.dirname(_os.path.abspath(__file__))
+
 
 def _jupyter_nbextension_paths():
     return [{
@@ -42,5 +42,3 @@ def find_static_assets():
     the Jupyter notebook to version 4.2 or later.""")
     return []
 
-
-_install.nbextension_check()

@@ -1,9 +1,7 @@
-from __future__ import print_function
-
-import io
+from __future__ import print_function, absolute_import, division, unicode_literals
 from future.builtins import *
-from future.standard_library import install_aliases
-install_aliases()
+from future import standard_library
+standard_library.install_aliases()
 
 # Copyright 2017 Autodesk Inc.
 #
@@ -24,6 +22,7 @@ from IPython.display import display as display_now
 import numpy as np
 import ipywidgets as ipy
 import traitlets
+import io
 
 from moldesign import units as u
 from moldesign.mathutils import padded_grid
@@ -127,6 +126,15 @@ class OrbitalViewer(ViewerContainer):
 
     @staticmethod
     def _grid_to_cube(grid, values):
+        """ Given a grid of values, create a gaussian cube file
+
+        Args:
+            grid (utils.VolumetricGrid): grid of points
+            values (Iterable): iterator over grid values, in the same order as grid points
+
+        Returns:
+            str: contents of the cube file
+        """
         fobj = io.StringIO()
 
         # First two header lines
@@ -146,7 +154,7 @@ class OrbitalViewer(ViewerContainer):
         print('6 0.000 0.0 0.0 0.0', file=fobj)
 
         # Next, indicate that there's just one orbital
-        print(1, 1, file=fobj)
+        print('1\n1', file=fobj)
 
         # finally, write out all the grid values
         # ival = 0
@@ -154,12 +162,12 @@ class OrbitalViewer(ViewerContainer):
         for ix in range(grid.xpoints):
             for iy in range(grid.ypoints):
                 for iz in range(grid.zpoints):
-                    print(next(valueiter), end=' ', file=fobj)
+                    print(str(next(valueiter)), end=' ', file=fobj)
                     # ival += 1
                     # if ival%6 == 0: print >> fobj #newline
                     if iz % 6 == 5:
-                        print(file=fobj)
-                print(file=fobj)
+                        fobj.write('\n')
+                fobj.write('\n')
 
         v = fobj.getvalue()
         fobj.close()
