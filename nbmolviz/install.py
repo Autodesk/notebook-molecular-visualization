@@ -13,14 +13,27 @@
 # limitations under the License.
 import sys
 import os
-from notebook.nbextensions import install_nbextension
+import collections
+
 import nbmolviz
 
 PKGPATH = nbmolviz.__path__[0]
 
-def nbextension_check():
+
+EXTENSION_KWARGS = {'user': {'user':True},
+                    'system': {},
+                    'environment': {'sys_prefix':True}}
+
+
+NbExtVersion = collections.namedtuple('NbExtVersion', 'name installed path version'.split())
+
+
+def nbextension_check(extname, getversion):
     """ Check if the required NBExtensions are installed. If not, prompt user for action.
     """
+    import jupyter_core.paths as jupypaths
+    from notebook import nbextensions
+
     # TODO: implement the following:
     # 0. Resolve jupyter nbextension search path, find installed
     #    jupyter-js-widgets and nbmolviz-js extensions and their versions
@@ -30,27 +43,38 @@ def nbextension_check():
     #       enable the right ones
     # 4. If not installed, prompt user to install/enable in the first writeable instance of
     #       the following: sys-prefix, user-dir, systemwide
-
     # see https://github.com/ipython-contrib/jupyter_contrib_nbextensions/blob/master/src/jupyter_contrib_nbextensions/install.py
 
+    installed = {k: nbextensions.check_nbextension('nbmolviz-js', **kwargs) for k,kwargs in EXTENSION_KWARGS.items()}
+    jupyter_dir = {'user': jupypaths.jupyter_data_dir(),
+                   'environment': jupypaths.ENV_JUPYTER_PATH[0],
+                   'system': jupypaths.SYSTEM_JUPYTER_PATH[0]}
+    paths = {}
+    versions = {}
+    for k in EXTENSION_KWARGS:
+        if not installed[k]:
+            continue
 
-def in_virtualenv():
-    """
-    See https://stackoverflow.com/a/1883251/1958900
-    """
-    if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix'):
-        return True
+        paths[k] = os.path.join(jupyter_dir[k], 'nbextensions', extname)
+
+        if getversion:
+            versionfile = os.path.join(paths[k], 'VERSION')
+            if installed[k] and os.path.exists(versionfile):
+                with open(versionfile, 'r') as pfile:
+                    versions[k] = pfile.read().strip()
+            else:
+                versions[k] = 'pre-0.8'
+
+    return {k: NbExtVersion(extname, installed[k], paths.get(k, None), versions.get(k, None))
+            for k in installed}
+
+
+def find_nbmolviz_extension(extname):
+    import jupyter_core.paths as jupypaths
+    for extpath in jupypaths.jupyter_path('nbextensions'):
+        mypath = os.path.join(extpath, extname)
+        if os.path.lexists(mypath):
+            return extpath
     else:
-        return False
-
-
-def _jupyter_nbextension_paths():
-    return [dict(
-        section="notebook",
-        # the path is relative to the `my_fancy_module` directory
-        src="static",
-        # directory in the `nbextension/` namespace
-        dest="nbmolvizjs",
-        # _also_ in the `nbextension/` namespace
-        require="my_fancy_module/index")]
+        return None
 
