@@ -324,7 +324,8 @@ class GeometryViewer(BaseViewer):
                (if not passed, uses all atoms)
             color (int or str): color as string or RGB hexadecimal
             opacity (float): opacity of the representation (between 0 and 1.0)
-            radius (float or Scalar[length]): explicit sphere radii (assumes angstrom if no units)
+            radius (float or Scalar[length]): explicit sphere radii (assumes angstrom if no units);
+               default: bondi VDW radii
         """
         return self.set_style('vdw', atoms=atoms, color=color, opacity=opacity, radius=radius)
     vdw = cpk = spheres = sphere
@@ -391,7 +392,7 @@ class GeometryViewer(BaseViewer):
         for atom in atoms:
             new_style = {'visualization_type': style}
             for key in ('radius', 'opacity'):
-                if key in options:
+                if options.get(key, None) is not None:
                     new_style[key] = options[key]
 
             if 'color' in options and options['color'] is not None:
