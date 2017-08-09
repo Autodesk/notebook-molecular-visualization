@@ -134,7 +134,7 @@ class FrameInspector(ipy.HTML):
 
     def __init__(self, traj, **kwargs):
         self.traj = traj
-        super(FrameInspector, self).__init__(**process_widget_kwargs(kwargs))
+        super().__init__(**process_widget_kwargs(kwargs))
 
     @traitlets.observe('framenum')
     def update_frame_data(self, change):

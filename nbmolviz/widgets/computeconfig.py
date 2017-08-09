@@ -29,6 +29,7 @@ import moldesign as mdt
 from moldesign import compute
 
 from ..uielements import StyledTab
+from ..uielements.components import HBox
 from ..widget_utils import process_widget_kwargs
 
 
@@ -42,7 +43,7 @@ about = configure
 
 class MDTConfig(ipy.Box):
     def __init__(self):
-        super(MDTConfig, self).__init__(
+        super().__init__(
                 **process_widget_kwargs({'display':'flex', 'flex_flow':'column'}))
 
         self.compute_config = ComputeConfig()
@@ -80,7 +81,7 @@ class MDTConfig(ipy.Box):
 
 class ChangeLog(ipy.Box):
     def __init__(self):
-        super(ChangeLog, self).__init__()
+        super().__init__()
         try:
             current = version.parse(mdt.__version__)
             latest = self.version_check()
@@ -129,7 +130,7 @@ class ChangeLog(ipy.Box):
 
 class ComputeConfig(ipy.Box):
     def __init__(self):
-        super(ComputeConfig, self).__init__(**process_widget_kwargs(
+        super().__init__(**process_widget_kwargs(
                 dict(flex_flow='column')))
 
         self.engine_dropdown = ipy.Dropdown(description='Compute engine',
@@ -208,7 +209,7 @@ class ComputeConfig(ipy.Box):
 
 class RegistryConfig(ipy.Box):
     def __init__(self):
-        super(RegistryConfig, self).__init__(
+        super().__init__(
                 **process_widget_kwargs(dict(flex_flow='column')))
         self.repo_field = ipy.Text(description='Image repository')
         self.version_field = ipy.Text(description='Image version')

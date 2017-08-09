@@ -46,14 +46,14 @@ class StyledTab(ipy.Tab):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('font_size', 9)
-        super(StyledTab, self).__init__(*args, **process_widget_kwargs(kwargs))
+        super().__init__(*args, **process_widget_kwargs(kwargs))
 
 
 class ReadOnlyRepr(ipy.Box):
     """ When a value is assigned, displays its __repr__ instead
     """
     def __init__(self, *args, **kwargs):
-        super(ReadOnlyRepr, self).__init__(*args, **process_widget_kwargs(kwargs))
+        super().__init__(*args, **process_widget_kwargs(kwargs))
         self.textbox = ipy.Text()
         self.textbox.disabled = True
         self.children = [self.textbox]
@@ -87,7 +87,7 @@ class UnitText(ipy.Box):
     def __init__(self, value=None, units=None, **kwargs):
         kwargs.setdefault('display', 'flex')
         kwargs.setdefault('flex_flow','row wrap')
-        super(UnitText, self).__init__(layout=ipy.Layout(display='flex', flex_flow='row wrap'),
+        super().__init__(layout=ipy.Layout(display='flex', flex_flow='row wrap'),
                                        **process_widget_kwargs(kwargs))
         self.textbox = ipy.Text()
         self.textbox.observe(self._validate, 'value')

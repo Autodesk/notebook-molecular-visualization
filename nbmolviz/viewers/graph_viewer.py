@@ -251,7 +251,7 @@ class DistanceGraphViewer(ChemicalGraphViewer):
         super().__init__(atoms, **kwargs)
 
     def to_graph(self, atoms):
-        graph = super(DistanceGraphViewer, self).to_graph(atoms)
+        graph = super().to_graph(atoms)
 
         # Deal with covalent bonds
         for link in graph['links']:

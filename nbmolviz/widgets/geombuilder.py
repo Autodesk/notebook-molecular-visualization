@@ -1,3 +1,7 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +48,7 @@ class GeometryBuilder(ViewerToolBase):
     DEGFMT = u'{:.1f}\u00B0'
 
     def __init__(self, mol):
-        super(GeometryBuilder, self).__init__(mol)
+        super().__init__(mol)
 
         self._widgetshapes = {}
         self._atom_labels = []

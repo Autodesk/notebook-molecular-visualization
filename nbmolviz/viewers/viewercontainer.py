@@ -35,7 +35,7 @@ class ViewerContainer(VBox):
     def __init__(self, children, viewer=None, graphviewer=None, **kwargs):
         if 'layout' not in kwargs:
             kwargs['layout'] = ipy.Layout(flex_flow='column', width='100%')
-        super(ViewerContainer, self).__init__(children=children, **kwargs)
+        super().__init__(children=children, **kwargs)
         self.viewer = viewer
         self.graphviewer = graphviewer
 

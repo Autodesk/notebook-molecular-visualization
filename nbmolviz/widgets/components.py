@@ -82,7 +82,7 @@ class ViewerToolBase(ipy.Box):
         self.viewer_pane = VBox([self.viewer, self.subtools])
         self.main_pane = HBox([self.viewer_pane, self.toolpane])
 
-        super(ViewerToolBase, self).__init__([self.main_pane])
+        super().__init__([self.main_pane])
 
     def __getattr__(self, item):
         if hasattr(self.viewer, item):
@@ -113,7 +113,7 @@ class ReadoutFloatSlider(VBox):
         traitlets.link((self, 'value'), (self.slider, 'value'))
         self.description = description
         self.update_readout()
-        super(ReadoutFloatSlider, self).__init__([self.header,
+        super().__init__([self.header,
                                                   self.readout,
                                                   self.sliderbox])
 

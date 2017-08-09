@@ -1,3 +1,8 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
+
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +26,6 @@ NOTE:
     This is currently tied to ambertools and tleap! It will need to be made generic if/when
     another method for assigning forcefields is added.
 """
-from __future__ import print_function
 import collections
 
 import ipywidgets as ipy
@@ -57,9 +61,7 @@ class ParameterizationDisplay(ipy.Box):
                     HBox([self.viewer, VBox([self.listdesc, self.errorlist])]),
                     self.errmsg)
 
-        super(ParameterizationDisplay, self).__init__(children=children,
-                                                      layout=ipy.Layout(display='flex',
-                                                                        flex_flow='column'))
+        super().__init__(children=children, layout=ipy.Layout(display='flex',  flex_flow='column'))
 
     def switch_display(self, d):
         with self.viewer.hold_trait_notifications():

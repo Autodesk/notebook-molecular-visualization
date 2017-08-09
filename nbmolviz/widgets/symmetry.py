@@ -1,3 +1,7 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +72,7 @@ class Symmetrizer(ipy.Box):
         self.coords_changed()
 
         self.hbox = HBox([VBox([self.viewer, self.showing]), self.symm_pane])
-        super(Symmetrizer, self).__init__([self.hbox])
+        super().__init__([self.hbox])
 
     def reset_coords(self, *args):
         self.mol.positions = self.original_coords

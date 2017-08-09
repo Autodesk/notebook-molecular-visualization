@@ -154,7 +154,7 @@ class OrbitalViewer(ViewerContainer):
         print('6 0.000 0.0 0.0 0.0', file=fobj)
 
         # Next, indicate that there's just one orbital
-        print('1\n1', file=fobj)
+        print('1 1', file=fobj)
 
         # finally, write out all the grid values
         # ival = 0
@@ -231,10 +231,6 @@ class OrbitalViewer(ViewerContainer):
         self.new_orb_type()
         self.type_dropdown.observe(self.new_orb_type, 'value')
         return self.uipane
-
-    def handle_selection_event(self, *args):
-        # TODO: update the selected orbitals if something actually else triggers this
-        pass
 
     def new_orb_type(self, *args):
         """Create list of available orbitals when user selects a new type

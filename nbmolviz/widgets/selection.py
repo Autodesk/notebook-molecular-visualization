@@ -1,3 +1,7 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -130,7 +134,7 @@ class BondSelector(SelBase):
         to_turn_off = self._drawn_bond_state.difference(currentset)
 
         self.bond_list.options = collections.OrderedDict((self.bondkey(bond), bond) for bond in self._bondset)
-        super(BondSelector, self)._redraw_selection_state()
+        super()._redraw_selection_state()
         self._drawn_bond_state = currentset
         self.remove_atomlist_highlight()
 
@@ -142,7 +146,7 @@ class BondSelector(SelBase):
         return bond.name
 
     def clear_selections(self, *args):
-        super(BondSelector, self).clear_selections(*args)
+        super().clear_selections(*args)
 
 
 @utils.exports
@@ -155,7 +159,7 @@ class ResidueSelector(SelBase):
     """
 
     def __init__(self, mol):
-        super(ResidueSelector, self).__init__(mol)
+        super().__init__(mol)
 
         self.selection_type = ipy.Dropdown(description='Clicks select:',
                                            value=self.viewer.selection_type,
