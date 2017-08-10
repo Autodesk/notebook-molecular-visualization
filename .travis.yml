@@ -14,7 +14,7 @@ install:
  - python setup.py sdist
  - pip install dist/nbmolviz-*.tar.gz
 
-script: py.test
+script: "cd tests/py && py.test"
 
 deploy:
   provider: pypi

@@ -24,8 +24,7 @@ def convert(mol):
                     'mass_magnitude': float(atom.mass.value_in(u.amu)),
                     'residue_index': atom.residue.index,
                     'residue_name': atom.residue.name,
-                    'chain': atom.chain.name,
-                    'positions': list(atom.position.value_in(u.angstrom))}
+                    'chain': atom.chain.name}
                    for i, atom in enumerate(mol.atoms)]
 
     js['bonds'] = [{'atom1_index': bond.a1.index,

@@ -18,7 +18,7 @@ import collections
 import ipywidgets as ipy
 import yaml
 
-from .components import UnitText, ReadOnlyRepr
+from .components import UnitText, ReadOnlyRepr, VBox, HBox
 from moldesign import utils
 from moldesign.utils import exports
 
@@ -67,7 +67,7 @@ class Configurator(ipy.Box):
                                           layout=ipy.Layout(width='350px', min_height='300px',
                                                             max_height='500px',
                                                             display='flex', flex_flow='column'))
-        self.middle = ipy.HBox([ipy.VBox(list(self.selectors.values())), self.currentconfig])
+        self.middle = HBox([VBox(list(self.selectors.values())), self.currentconfig])
         self.children = [self.title, self.middle, self.buttons]
 
     def reset_values(self, *args):

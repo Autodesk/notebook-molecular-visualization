@@ -1,3 +1,8 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
+
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +17,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from builtins import str
 import ipywidgets as ipy
 from ..widget_utils import process_widget_kwargs
+
+
+class _CustomBox(ipy.Box):
+    def __init__(self, *args, **kwargs):
+        if 'layout' not in kwargs:
+            kwargs['layout'] = ipy.Layout()
+        kwargs['layout'].flex_flow = self._fflow
+        super().__init__(*args, **kwargs)
+
+
+class VBox(_CustomBox):
+    _fflow = 'column'
+
+
+class HBox(_CustomBox):
+    _fflow = 'row'
+
 
 
 class StyledTab(ipy.Tab):
@@ -25,15 +46,14 @@ class StyledTab(ipy.Tab):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('font_size', 9)
-        super(StyledTab, self).__init__(*args, **process_widget_kwargs(kwargs))
-
+        super().__init__(*args, **process_widget_kwargs(kwargs))
 
 
 class ReadOnlyRepr(ipy.Box):
     """ When a value is assigned, displays its __repr__ instead
     """
     def __init__(self, *args, **kwargs):
-        super(ReadOnlyRepr, self).__init__(*args, **process_widget_kwargs(kwargs))
+        super().__init__(*args, **process_widget_kwargs(kwargs))
         self.textbox = ipy.Text()
         self.textbox.disabled = True
         self.children = [self.textbox]
@@ -67,7 +87,7 @@ class UnitText(ipy.Box):
     def __init__(self, value=None, units=None, **kwargs):
         kwargs.setdefault('display', 'flex')
         kwargs.setdefault('flex_flow','row wrap')
-        super(UnitText, self).__init__(layout=ipy.Layout(display='flex', flex_flow='row wrap'),
+        super().__init__(layout=ipy.Layout(display='flex', flex_flow='row wrap'),
                                        **process_widget_kwargs(kwargs))
         self.textbox = ipy.Text()
         self.textbox.observe(self._validate, 'value')

@@ -1,0 +1,146 @@
+#!/usr/bin/env node
+
+const path = require('path');
+const fs = require('fs');
+const child_process = require('child_process');
+const crypto = require('crypto');
+const os = require('os');
+const assert = require('assert');
+const urlparse = require('url-parse');
+const glob = require('glob');
+
+const glopath = path.join(__dirname, '..');
+let jupyProc = null;
+
+function runGalileo() {
+    // CLI driver
+
+    let nbserver = null;
+    let nbtoken = null;
+
+    const argv = require('yargs')
+        .usage("Galileo observes Jupyter - visual regression test runner for notebooks")
+        .describe('nbserver', 'Host and port for Jupyter server, e.g. "http://hostname:8888"\n' +
+        'DEFAULT:\n - "localhost:[random port] with --launchnb flag; \n' +
+        '         - "localhost:8888" otherwise)')
+        .boolean('launchnb')
+        .describe('launchnb', 'Launch a notebook server as a child process. If --nbserver is not ' +
+            'provided, the server will listen on a random high-numbered port' +
+            ' (the hostname for nbserver is ignored.). If --nbtoken is ' +
+            'not provided, a security token will be generated. Both the port and token ' +
+            'will be displayed in output.')
+        .describe('nbtoken', 'Optional security token for connecting to Jupyter server ')
+        .help()
+        .argv;
+
+    if (argv.nbserver) {
+        nbserver = argv.nbserver;
+        if(nbserver.substring(0,4) != 'http') nbserver = 'http://' + nbserver;
+        assert(urlparse(nbserver).port,
+            `Jupyter server ${nbserver} must include a port number!`);
+    } else if (argv.launchnb) {
+        nbserver = 'http://localhost:' + Math.floor((Math.random() * (65535 - 49152)) + 49152)
+    } else {
+        nbserver = "http://localhost:8888"
+    }
+
+    let serverURI = urlparse(nbserver);
+
+    let jupyterConfigPath = '';
+
+    if(argv.nbtoken){
+        nbtoken = argv.nbtoken;
+    } else if (argv.launchnb) {
+        // Create a random token then create a config file for it
+        nbtoken = crypto.randomBytes(24).toString('hex');
+        configFile = JSON.stringify({"NotebookApp":{"token": nbtoken}});
+        const dirname = path.join(os.tmpdir(), nbtoken);
+        jupyterConfigPath = path.join(dirname, 'jupyter_config.json');
+        fs.mkdirSync(dirname);
+        fs.writeFileSync(jupyterConfigPath, configFile);
+
+        process.stdout.write(`Token for nb server '${nbserver}':\n${nbtoken}\n`)
+    } else {
+        nbtoken = undefined;
+    }
+
+    process.env.GALILEO_NBSERVER = serverURI.href;
+    if(nbtoken) process.env.GALILEO_NBTOKEN = nbtoken;
+
+    if (argv.launchnb) {
+        launchJupyter(serverURI, jupyterConfigPath, runNightwatch) }
+    else {
+        runNightwatch() }
+}
+
+function launchJupyter(serverURI, configPath, callbackWhenReady) {
+    const net = require('net');
+    const port = parseInt(serverURI.port);
+
+    let client = null;
+    let waitTime = 0;
+
+    const cmd = 'jupyter notebook ' +
+        '--no-browser ' +
+        '--ip=127.0.0.1 ' +
+        `--port=${serverURI.port} ` +
+        `--config=${configPath}`;
+    process.stdout.write('Launching Jupyter:\n$ ' + cmd + '\n');
+    jupyProc = child_process.exec(cmd, jupyterFinished);
+    process.stdout.write('Waiting for Jupyter ..');
+
+    function attemptConnection(){
+        // Polls Jupyter server until it comes online
+        if(waitTime >= 60000) throw "Timed out waiting to connect to Jupyter server";
+
+        process.stdout.write('.');
+        client = net.connect({"port": port}, connectionSuccess);
+        client.on('error', function(err){ // should really test the errors here
+            client.end();
+            setTimeout(attemptConnection, 1000)});  // poll every 1000 ms
+        waitTime += 1000;
+    }
+
+    function connectionSuccess(){
+        process.stdout.write(' connection successful.\n');
+        client.end();
+        callbackWhenReady()
+    }
+
+    attemptConnection();
+}
+
+function jupyterFinished(error, stderr, stdout){
+    process.stdout.write("jupyter server exited");
+    console.log(stderr);
+    console.log(stdout);
+    if(error) throw error;
+}
+
+
+function runNightwatch() {
+    // launches the nightwatch test runner, which will actually do the real testing
+    const nwexe = path.join(glopath, 'node_modules', 'nightwatch', 'bin', 'nightwatch');
+    const nwconfig = path.join(glopath, 'nightwatch_config', 'nightwatch.js');
+    child_process.execSync(`${nwexe} -c ${nwconfig} --env local_chrome`, {stdio:[0,1,2]});
+    console.log('Nightwatch exited');
+    if(jupyProc) jupyProc.kill();
+
+    writeReportHtml()
+}
+
+function writeReportHtml() {
+    const f = 'latest_results.html';
+    fs.writeFileSync(f, `<!DOCTYPE html> <html> <head> <title>Screenshots at ${new Date()}</title></head>` +
+    '<body>');
+    const screenshots = glob.sync('latest_images/*/*.png');
+
+    screenshots.forEach((imagePath) => {
+      fs.appendFileSync(f, `<div>${path.basename(imagePath, '.png')}<img src="${imagePath}" /> </div>`);
+    });
+
+    fs.appendFileSync(f, '</body></html>')
+
+}
+
+runGalileo();

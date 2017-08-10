@@ -1,4 +1,6 @@
 *.pyc
+*.pyo
+__pycache__
 .idea
 .ipynb_checkpoints
 /build
@@ -7,3 +9,5 @@
 .DS_Store
 npm-debug.log
 .cache/
+node_modules
+

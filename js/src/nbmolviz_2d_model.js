@@ -21,7 +21,7 @@ const Nbmolviz2dModel = widgets.DOMWidgetModel.extend({
     _view_name: 'MolWidget2DView',
     _model_module: 'nbmolviz-js',
     _view_module: 'nbmolviz-js',
-    charge: 0.0,
+    graph_layout_charge: 0.0,
     uuid: '',
     graph: {
       nodes: [

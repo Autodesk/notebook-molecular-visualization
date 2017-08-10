@@ -19,13 +19,13 @@ def draw3d(traj, **kwargs):
     Args:
         **kwargs (dict): kwargs for :class:`moldesign.widgets.trajectory.TrajectoryViewer`
     """
-    from ..widgets.trajectory import TrajectoryViewer
+    from ..viewers.trajectory_viewer import TrajectoryViewer
     traj._viz = TrajectoryViewer(traj, **kwargs)
     return traj._viz
 draw = draw3d  # synonym for backwards compatibility
 
 
-def draw_orbitals(traj, align=True):
+def draw_orbitals(traj, align=True, **kwargs):
     """ Visualize trajectory with molecular orbitals
 
     Args:
@@ -35,15 +35,16 @@ def draw_orbitals(traj, align=True):
     Returns:
         TrajectoryOrbViewer: create a trajectory visualization
     """
-    from ..widgets.trajectory import TrajectoryOrbViewer
+    from ..viewers.trajectory_viewer import TrajectoryOrbViewer
 
     for frame in traj:
         if 'wfn' not in frame:
             raise ValueError("Can't draw orbitals - orbital information missing in at least "
                              "one frame. It must be calculated with a QM method.")
 
-    if align: traj.align_orbital_phases()
-    traj._viz = TrajectoryOrbViewer(traj)
+    if align:
+        traj.align_orbital_phases()
+    traj._viz = TrajectoryOrbViewer(traj, **kwargs)
     return traj._viz
 
 

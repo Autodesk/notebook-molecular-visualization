@@ -1,3 +1,7 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +45,7 @@ class MessageWidget(widgets.DOMWidget):
         layout = make_layout(layout=kwargs.get('layout', None), **layoutargs)
         kwargs['layout'] = layout
 
-        super(MessageWidget, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.viewer_ready = False
         self.js_events = {}
         self.message_queue = []

@@ -1,4 +1,8 @@
-from __future__ import division
+from __future__ import print_function
+from future.builtins import *
+from future.standard_library import install_aliases
+install_aliases()
+
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,52 +16,50 @@ from __future__ import division
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import uuid
 
-from builtins import str
-from builtins import range
-from past.utils import old_div
-from itertools import product
-from IPython import display as dsp
-
-from ..base import MolViz2D
+from IPython.display import display as dsp
+import traitlets
+import ipywidgets as ipy
+import itertools
 
 import moldesign as mdt
 from moldesign import utils
-import moldesign.units as u
+from moldesign import units as u
 
-from . import ColorMixin
+from . import BaseViewer
+from ..utils import translate_color
 
 
-class ChemicalGraphViewer(MolViz2D, ColorMixin):
-    """ Create a JSON-format graph representing the chemical structure and draw it using the
-    NBMolViz 2D widget.
-
-    Args:
-        mol (moldesign.molecules.AtomContainer): A collection of atoms (eg a list of atoms,
-            a residue, a molecule. etc)
-        carbon_labels (bool): If True, draw atom names for carbons
-        names (List[str]): (optional) a list of strings to label the atoms in the drawing
-            (default: ``[atom.name for atom in mol.atoms]``)
-        display (bool): immediately display this drawing
+class ChemicalGraphViewer(BaseViewer):
     """
-
+    Draws 2D molecular representations with D3.js
+    """
     MAXATOMS = 200
 
-    def __init__(self, mol,
+    _view_name = traitlets.Unicode('MolWidget2DView').tag(sync=True)
+    _model_name = traitlets.Unicode('MolWidget2DModel').tag(sync=True)
+    _view_module = traitlets.Unicode('nbmolviz-js').tag(sync=True)
+    _model_module = traitlets.Unicode('nbmolviz-js').tag(sync=True)
+
+    graph_layout_charge = traitlets.Float(-150.0).tag(sync=True)
+    uuid = traitlets.Unicode().tag(sync=True)
+    graph = traitlets.Dict().tag(sync=True)
+    clicked_bond_indices = traitlets.Tuple((-1, -1)).tag(sync=True)
+    _atom_colors = traitlets.Dict({}).tag(sync=True)
+    width = traitlets.Float().tag(sync=True)
+    height = traitlets.Float().tag(sync=True)
+    selected_atom_indices = traitlets.List([]).tag(sync=True)
+
+    def __init__(self, atoms,
                  carbon_labels=True,
                  names=None,
+                 width=400, height=350,
                  display=False,
                  _forcebig=False,
                  **kwargs):
 
-        self.carbon_labels = carbon_labels
-        try:
-            self.atoms = mol.atoms
-        except AttributeError:
-            self.atoms = mdt.AtomList(mol)
-            self.mol = self.atoms
-        else:
-            self.mol = mol
+        self.atoms = getattr(atoms, 'atoms', atoms)
 
         if not _forcebig and len(self.atoms) > self.MAXATOMS:
             raise ValueError('Refusing to draw more than 200 atoms in 2D visualization. '
@@ -76,7 +78,15 @@ class ChemicalGraphViewer(MolViz2D, ColorMixin):
         self.atom_indices = {atom: i for i, atom in enumerate(self.atoms)}
         self.selection_group = None
         self.selection_id = None
-        super(ChemicalGraphViewer, self).__init__(self.atoms, **kwargs)
+        self.width = width
+        self.height = height
+        self.uuid = 'mol2d'+str(uuid.uuid4())
+        self.carbon_labels = carbon_labels
+        self._clicks_enabled = False
+        self.graph = self.to_graph(self.atoms)
+
+        super().__init__(layout=ipy.Layout(width=str(width), height=str(height)))
+
         if display: dsp.display(self)
 
     def __reduce__(self):
@@ -120,6 +130,77 @@ class ChemicalGraphViewer(MolViz2D, ColorMixin):
             self.highlight_atoms(
                 [a for a in selection['atoms'] if a in self.atom_indices])
 
+    def set_atom_style(self, atoms=None, fill_color=None, outline_color=None):
+        if atoms is None:
+            indices = list(range(len(self.atoms)))
+        else:
+            indices = list(map(self.get_atom_index, atoms))
+        spec = {}
+        if fill_color is not None: spec['fill'] = translate_color(fill_color, prefix='#')
+        if outline_color is not None: spec['stroke'] = translate_color(outline_color, prefix='#')
+        self.viewer('setAtomStyle', [indices, spec])
+
+    def set_bond_style(self, bonds, color=None, width=None, dash_length=None, opacity=None):
+        atom_pairs = [list(map(self.get_atom_index, pair)) for pair in bonds]
+        spec = {}
+        if width is not None: spec['stroke-width'] = str(width)+'px'
+        if color is not None: spec['stroke'] = color
+        if dash_length is not None: spec['stroke-dasharray'] = str(dash_length)+'px'
+        if opacity is not None: spec['opacity'] = opacity
+        if not spec: raise ValueError('No bond style specified!')
+        self.viewer('setBondStyle', [atom_pairs, spec])
+
+    def set_atom_label(self, atom, text=None, text_color=None, size=None, font=None):
+        atomidx = self.get_atom_index(atom)
+        self._change_label('setAtomLabel', atomidx, text, text_color, size, font)
+
+    def set_bond_label(self, bond, text=None, text_color=None, size=None, font=None):
+        bondids = list(map(self.get_atom_index, bond))
+        self._change_label('setBondLabel', bondids, text, text_color, size, font)
+
+    def _change_label(self, driver_function, obj_index, text,
+                      text_color, size, font):
+        spec = {}
+        if size is not None:
+            if type(size) is not str:
+                size = str(size)+'pt'
+                spec['font-size'] = size
+        if text_color is not None:
+            spec['fill'] = text_color  # this strangely doesn't always work if you send it a name
+        if font is not None:
+            spec['font'] = font
+        self.viewer(driver_function, [obj_index, text, spec])
+
+    def highlight_atoms(self, atoms):
+        indices = list(map(self.get_atom_index, atoms))
+        self.viewer('updateHighlightAtoms', [indices])
+
+    def get_atom_index(self, atom):
+        raise NotImplemented("This method must be implemented by the interface class")
+
+    def set_click_callback(self, callback=None, enabled=True):
+        """
+        :param callback: Callback can have signature (), (trait_name), (trait_name,old), or (trait_name,old,new)
+        :type callback: callable
+        :param enabled:
+        :return:
+        """
+        if not enabled: return  # TODO: FIX THIS
+        assert callable(callback)
+        self._clicks_enabled = True
+        self.on_trait_change(callback, 'selected_atom_indices')
+        self.click_callback = callback
+
+    def set_color(self, color, atoms=None, render=None):
+        self.set_atom_style(fill_color=color, atoms=atoms)
+
+    def set_colors(self, colormap):
+        """
+        Args:
+         colormap(Mapping[str,List[Atoms]]): mapping of colors to atoms
+        """
+        for color, atoms in colormap.items():
+            self.set_color(atoms=atoms, color=color)
 
 def _charge_str(q):
     q = q.value_in(u.q_e)
@@ -167,10 +248,10 @@ class DistanceGraphViewer(ChemicalGraphViewer):
         self.nonbond_strength = nonbond_weight_factor
         self.colored_residues = {}
         kwargs['charge'] = charge
-        super(DistanceGraphViewer, self).__init__(atoms,**kwargs)
+        super().__init__(atoms, **kwargs)
 
     def to_graph(self, atoms):
-        graph = super(DistanceGraphViewer, self).to_graph(atoms)
+        graph = super().to_graph(atoms)
 
         # Deal with covalent bonds
         for link in graph['links']:
@@ -190,7 +271,7 @@ class DistanceGraphViewer(ChemicalGraphViewer):
                 if distance > self.dmax: continue
 
                 strength = self.nonbond_strength * min(
-                    float((1.0 - old_div((distance - self.dmin), self.drange)) ** 2),
+                    float((1.0 -(distance - self.dmin/self.drange)) ** 2),
                     1.0)
 
                 if strength < self.minimum_bond_strength: continue
@@ -204,7 +285,7 @@ class DistanceGraphViewer(ChemicalGraphViewer):
 
     def draw_contacts(self, group1, group2, radius=2.25 * u.angstrom,
                       label=True):
-        for atom1, atom2 in product(group1, group2):
+        for atom1, atom2 in itertools.product(group1, group2):
             if atom1.index == atom2.index: continue
             if atom1 in atom2.bond_graph: continue
             skip = False

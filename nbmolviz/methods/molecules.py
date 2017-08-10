@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ..uielements.components import VBox
 
-from builtins import str
+
 def draw_orbitals(mol, **kwargs):
     """ Visualize any calculated molecular orbitals (Jupyter only).
 
     Returns:
         mdt.orbitals.OrbitalViewer
     """
-    from ..widgets.orbitals import OrbitalViewer
+    from ..viewers.orbital_viewer import OrbitalViewer
 
     if 'wfn' not in mol.properties:
         mol.calculate_wfn()
@@ -42,5 +43,5 @@ def configure_methods(mol):
     if mol.integrator:
         children.append(mol.integrator.configure())
 
-    return ipy.VBox(children)
+    return VBox(children)
 

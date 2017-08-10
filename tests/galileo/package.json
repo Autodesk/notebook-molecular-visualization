@@ -1,0 +1,28 @@
+{
+  "name": "galileo-notebook",
+  "version": "0.1.0",
+  "description": "Galileo observes Jupyter - visual regression tests for notebooks",
+  "main": "nightwatch.js",
+  "scripts": {
+    "selenium": "node ./node_modules/selenium-standalone/bin/selenium-standalone install --version=2.53.1 --drivers.chrome.version=2.30"
+  },
+  "keywords": [],
+  "author": "",
+  "engines": {
+    "node": "6.9.2",
+    "npm": "3.10.8"
+  },
+  "dependencies": {
+    "chromedriver": "^2.30.0",
+    "fs-extra": "^4.0.0",
+    "gm": "^1.23.0",
+    "nightwatch": "^0.9.16",
+    "node-glob": "^1.2.0",
+    "png-crop": "0.0.1",
+    "selenium-standalone": "5.7.2",
+    "url-parse": "^1.1.9",
+    "yargs": "^8.0.2"
+  },
+  "license": "Apache-2.0",
+  "repository": "https://github.com/autodesk/notebook-molecular-visualization"
+}

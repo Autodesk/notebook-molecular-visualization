@@ -29,6 +29,7 @@ import moldesign as mdt
 from moldesign import compute
 
 from ..uielements import StyledTab
+from ..uielements.components import HBox
 from ..widget_utils import process_widget_kwargs
 
 
@@ -42,7 +43,7 @@ about = configure
 
 class MDTConfig(ipy.Box):
     def __init__(self):
-        super(MDTConfig, self).__init__(
+        super().__init__(
                 **process_widget_kwargs({'display':'flex', 'flex_flow':'column'}))
 
         self.compute_config = ComputeConfig()
@@ -80,7 +81,7 @@ class MDTConfig(ipy.Box):
 
 class ChangeLog(ipy.Box):
     def __init__(self):
-        super(ChangeLog, self).__init__()
+        super().__init__()
         try:
             current = version.parse(mdt.__version__)
             latest = self.version_check()
@@ -129,7 +130,7 @@ class ChangeLog(ipy.Box):
 
 class ComputeConfig(ipy.Box):
     def __init__(self):
-        super(ComputeConfig, self).__init__(**process_widget_kwargs(
+        super().__init__(**process_widget_kwargs(
                 dict(flex_flow='column')))
 
         self.engine_dropdown = ipy.Dropdown(description='Compute engine',
@@ -140,7 +141,7 @@ class ComputeConfig(ipy.Box):
 
         self.engine_config_description = ipy.HTML('description')
         self.engine_config_value = ipy.Text('blank', width='500px')
-        self.engine_config = ipy.HBox([self.engine_config_description,
+        self.engine_config = HBox([self.engine_config_description,
                                        self.engine_config_value])
 
         self._reset_config_button = ipy.Button(description='Reset',
@@ -159,9 +160,9 @@ class ComputeConfig(ipy.Box):
 
         self.children = [self.engine_dropdown,
                          ipy.HTML('<hr>'),
-                         ipy.HBox([self.engine_config_description,
+                         HBox([self.engine_config_description,
                                    self.engine_config_value]),
-                         ipy.HBox([self._reset_config_button,
+                         HBox([self._reset_config_button,
                                    self._apply_changes_button,
                                    self._test_button,
                                    self._save_changes_button])
@@ -208,7 +209,7 @@ class ComputeConfig(ipy.Box):
 
 class RegistryConfig(ipy.Box):
     def __init__(self):
-        super(RegistryConfig, self).__init__(
+        super().__init__(
                 **process_widget_kwargs(dict(flex_flow='column')))
         self.repo_field = ipy.Text(description='Image repository')
         self.version_field = ipy.Text(description='Image version')
@@ -224,8 +225,8 @@ class RegistryConfig(ipy.Box):
                                        tooltip=
                                        'Download all moldesign images to the compute engine')
 
-        self.children = (ipy.HBox([self.repo_field, self.version_field]),
-                         ipy.HBox([self._reset_config_button,
+        self.children = (HBox([self.repo_field, self.version_field]),
+                         HBox([self._reset_config_button,
                                                 self._apply_changes_button,
                                                 self._pull_button]))
 

@@ -49,6 +49,7 @@ PYEXT = set('.py .pyc .pyo'.split())
 versioncmds = versioneer.get_cmdclass()
 build_py = versioncmds['build_py']
 sdist = versioncmds['sdist']
+VERSION = versioneer.get_version()
 
 
 ###################################################################
@@ -105,6 +106,8 @@ class NPM(Command):
 
     node_modules = os.path.join(node_root, 'node_modules')
 
+    verfile_path = os.path.join(here, 'nbmolviz', 'static', 'VERSION')
+
     targets = [
         os.path.join(here, 'nbmolviz', 'static', 'extension.js'),
         os.path.join(here, 'nbmolviz', 'static', 'index.js')
@@ -131,7 +134,8 @@ class NPM(Command):
     def run(self):
         has_npm = self.has_npm()
         if not has_npm:
-            log.error("`npm` unavailable.  If you're running this command using sudo, make sure `npm` is available to sudo")
+            log.error("`npm` unavailable. If you're running this command using sudo, "
+                      "make sure `npm` is available to sudo")
 
         env = os.environ.copy()
         env['PATH'] = npm_path
@@ -148,6 +152,11 @@ class NPM(Command):
                     msg += '\nnpm is required to build a development version of nbmolviz-js'
                 raise ValueError(msg)
 
+        with open(self.verfile_path, 'w') as verfile:
+            verfile.write(VERSION)
+
+        print('Wrote version "%s" to "%s"' % (VERSION, self.verfile_path))
+
         # update package data in case this created new files
         update_package_data(self.distribution)
 
@@ -158,7 +167,7 @@ class NPM(Command):
 
 args = dict(
         name=PACKAGE_NAME,
-        version=versioneer.get_version(),
+        version=VERSION,
         packages=find_packages(),
         classifiers=CLASSIFIERS,
         url='http://moldesign.bionano.autodesk.com/',

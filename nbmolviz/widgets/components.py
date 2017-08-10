@@ -1,4 +1,7 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,30 +15,31 @@ from __future__ import print_function
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import collections
-
 import ipywidgets as ipy
 import traitlets
-from moldesign import units as u
 from moldesign import utils
 
 from .. import viewers
 from ..widget_utils import process_widget_kwargs
-from .selector import Selector
+from ..uielements.components import HBox, VBox
 
 
-class AtomInspector(ipy.HTML, Selector):
-    """
-    Turn atom indices into a value to display
-    """
-    def indices_to_value(self, atom_indices, atoms):
-        indicated_atoms = [atoms[index] for index in atom_indices]
-        return self.atoms_to_value(indicated_atoms)
+class AtomInspector(ipy.HTML):
+    """ Turn atom indices into a value to display
 
+    To use this with a display widget, link its ``selected_atom_indices`` attribute to the
+    display widget's list of selected atom indices.
     """
-    Turn atom objects into a value to display
-    """
-    def atoms_to_value(self, atoms):
+    selected_atom_indices = traitlets.List([])
+
+    def __init__(self, atoms, **kwargs):
+        super().__init__(**kwargs)
+        self.atoms = atoms
+
+    @traitlets.observe('selected_atom_indices')
+    def atoms_to_value(self, change):
+        atoms = [self.atoms[idx] for idx in change['new']]
+
         if len(atoms) == 0:
             return 'No selection'
         elif len(atoms) == 1:
@@ -48,13 +52,13 @@ class AtomInspector(ipy.HTML, Selector):
             if atom.residue.type != 'placeholder':
                 lines.append("<b>Residue</b> %s, index %d<br>" % (res.name, res.index))
             lines.append("<b>Atom</b> %s (%s), index %d<br>" % (atom.name, atom.symbol, atom.index))
-            return '\n'.join(lines)
+            self.value = '\n'.join(lines)
 
         elif len(atoms) > 1:
             atstrings = ['<b>%s</b>, index %s / res <b>%s</b>, index %s / chain <b>%s</b>' %
                          (a.name, a.index, a.residue.resname, a.residue.index, a.chain.name)
                          for a in atoms]
-            return '<br>'.join(atstrings)
+            self.value = '<br>'.join(atstrings)
 
 
 class ViewerToolBase(ipy.Box):
@@ -63,18 +67,22 @@ class ViewerToolBase(ipy.Box):
     UI controls on the right, and some additional widgets underneath the viewer
     """
     VIEWERTYPE = viewers.GeometryViewer
+    VIEWERWIDTH = '600px'
+
+    selected_atom_indices = utils.Alias('viewer.selected_atom_indices')
+    selected_atoms = utils.Alias('viewer.selected_atoms')
 
     def __init__(self, mol):
         self.mol = mol
 
-        self.toolpane = ipy.VBox()
-        self.viewer = self.VIEWERTYPE(mol)
+        self.toolpane = VBox()
+        self.viewer = self.VIEWERTYPE(mol, width=self.VIEWERWIDTH)
 
         self.subtools = ipy.Box()
-        self.viewer_pane = ipy.VBox([self.viewer, self.subtools])
-        self.main_pane = ipy.HBox([self.viewer_pane, self.toolpane])
+        self.viewer_pane = VBox([self.viewer, self.subtools])
+        self.main_pane = HBox([self.viewer_pane, self.toolpane])
 
-        super(ViewerToolBase, self).__init__([self.main_pane])
+        super().__init__([self.main_pane])
 
     def __getattr__(self, item):
         if hasattr(self.viewer, item):
@@ -83,49 +91,7 @@ class ViewerToolBase(ipy.Box):
             raise AttributeError(item)
 
 
-class SelBase(ViewerToolBase):
-    def __init__(self, mol):
-        super(SelBase, self).__init__(mol)
-
-        self._atomset = collections.OrderedDict()
-
-        self.atom_listname = ipy.HTML('<b>Selected atoms:</b>')
-        self.atom_list = ipy.SelectMultiple(options=list(self.viewer.selected_atom_indices),
-                                            layout=ipy.Layout(height='150px'))
-        traitlets.directional_link(
-            (self.viewer, 'selected_atom_indices'),
-            (self.atom_list, 'options'),
-            self._atom_indices_to_atoms
-        )
-
-        self.select_all_atoms_button = ipy.Button(description='Select all atoms')
-        self.select_all_atoms_button.on_click(self.select_all_atoms)
-
-        self.select_none = ipy.Button(description='Clear all selections')
-        self.select_none.on_click(self.clear_selections)
-
-    @property
-    def selected_atoms(self):
-        return self._atom_indices_to_atoms(self.viewer.selected_atom_indices)
-
-    def remove_atomlist_highlight(self, *args):
-        self.atom_list.value = tuple()
-
-    @staticmethod
-    def atomkey(atom):
-        return '%s (index %d)' % (atom.name, atom.index)
-
-    def _atom_indices_to_atoms(self, atom_indices):
-        return [self.mol.atoms[atom_index] for atom_index in atom_indices]
-
-    def select_all_atoms(self, *args):
-        self.viewer.selected_atom_indices = set(i for i, atom in enumerate(self.mol.atoms))
-
-    def clear_selections(self, *args):
-        self.viewer.selected_atom_indices = set()
-
-
-class ReadoutFloatSlider(ipy.Box):
+class ReadoutFloatSlider(VBox):
     description = traitlets.Unicode()
     value = traitlets.Float()
 
@@ -135,19 +101,19 @@ class ReadoutFloatSlider(ipy.Box):
         max = kwargs.setdefault('max', 10.0)
         self.formatstring = format
         self.header = ipy.HTML()
-        self.readout = ipy.Text(width=100)
+        self.readout = ipy.Text(layout=ipy.Layout(width='100px'))
         self.readout.on_submit(self.parse_value)
 
         kwargs.setdefault('readout', False)
         self.slider = ipy.FloatSlider(*args, **process_widget_kwargs(kwargs))
         self.minlabel = ipy.HTML(u'<font size=1.5>{}</font>'.format(self.formatstring.format(min)))
         self.maxlabel = ipy.HTML(u'<font size=1.5>{}</font>'.format(self.formatstring.format(max)))
-        self.sliderbox = ipy.HBox([self.minlabel, self.slider, self.maxlabel])
+        self.sliderbox = HBox([self.minlabel, self.slider, self.maxlabel])
         traitlets.link((self, 'description'), (self.header, 'value'))
         traitlets.link((self, 'value'), (self.slider, 'value'))
         self.description = description
         self.update_readout()
-        super(ReadoutFloatSlider, self).__init__([self.header,
+        super().__init__([self.header,
                                                   self.readout,
                                                   self.sliderbox])
 

@@ -16,16 +16,37 @@
 import React from 'react';
 import Molecule3d from 'molecule-3d-for-react';
 import widgets from 'jupyter-js-widgets';
+import assert from 'assert';
+
 
 class Nbmolviz3dComponent extends React.Component {
   static getStateFromModel(model) {
+    const oldModelData = model.get('model_data');
+    const positions = model.get('positions');
+    const modelData = JSON.parse(JSON.stringify(oldModelData));
+
+    if (modelData.hasOwnProperty('atoms')) {
+        assert(modelData.atoms.length == positions.length);
+        for (let i = 0; i < modelData.atoms.length; i++) {
+            modelData.atoms[i].positions = positions[i];
+        }
+    }
+
+    const orbital = JSON.parse(JSON.stringify(model.get('volumetric_style')));
+    orbital.cube_file = model.get('cubefile');
+
     return {
       atomLabelsShown: model.get('atom_labels_shown'),
       backgroundColor: model.get('background_color'),
       backgroundOpacity: model.get('background_opacity'),
+      farClip: model.get('far_clip'),
       height: model.get('height'),
-      modelData: model.get('model_data'),
-      orbital: model.get('orbital'),
+      labels: model.get('labels'),
+      modelData: modelData,
+      nearClip: model.get('near_clip'),
+      orbital: orbital,
+      outlineColor: model.get('outline_color'),
+      outlineWidth: model.get('outline_width'),
       selectedAtomIds: model.get('selected_atom_indices'),
       selectionType: model.get('selection_type'),
       shapes: model.get('shapes'),

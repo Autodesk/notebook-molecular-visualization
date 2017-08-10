@@ -1,4 +1,4 @@
-var version = require('./package.json').version;
+var version = require('./.VERSION.json').version;
 
 // Custom webpack loaders are generally the same for all webpack bundles, hence
 // stored in a separate local variable.
@@ -13,6 +13,7 @@ var loaders = [
       }
     },
 ];
+
 
 
 module.exports = [

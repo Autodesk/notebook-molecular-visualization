@@ -1,3 +1,8 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
+
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,25 +26,13 @@ NOTE:
     This is currently tied to ambertools and tleap! It will need to be made generic if/when
     another method for assigning forcefields is added.
 """
-from __future__ import print_function
 import collections
 
 import ipywidgets as ipy
 
-from moldesign import uibase
-from moldesign import utils
+from moldesign.forcefields.errors import StructureOk
 
-
-def show_parameterization_results(errormessages, molin, molout=None):
-    if uibase.widgets_enabled:
-        report = ParameterizationDisplay(errormessages, molin, molout)
-        uibase.display_log(report, title='ERRORS/WARNINGS', show=True)
-
-    else:
-        print('Forcefield assignment: %s' % ('Success' if molout is not None else 'Failure'))
-        for err in errormessages:
-            print(utils.html_to_text(err.desc))
-
+from ..uielements.components import HBox, VBox
 
 
 class ParameterizationDisplay(ipy.Box):
@@ -65,18 +58,16 @@ class ParameterizationDisplay(ipy.Box):
             self.switch_display({'old': self.errorlist.value, 'new': self.errorlist.value})
         self.errorlist.observe(self.switch_display, 'value')
         children = (self.status,
-                    ipy.HBox([self.viewer, ipy.VBox([self.listdesc, self.errorlist])]),
+                    HBox([self.viewer, VBox([self.listdesc, self.errorlist])]),
                     self.errmsg)
 
-        super(ParameterizationDisplay, self).__init__(children=children,
-                                                      layout=ipy.Layout(display='flex',
-                                                                        flex_flow='column'))
-
+        super().__init__(children=children, layout=ipy.Layout(display='flex',  flex_flow='column'))
 
     def switch_display(self, d):
-        old = d['old']
-        old.unshow(self.viewer)
-        self.errmsg.value = '-'
-        new = d['new']
-        new.show(self.viewer)
-        self.errmsg.value = new.desc
+        with self.viewer.hold_trait_notifications():
+            old = d['old']
+            old.unshow(self.viewer)
+            self.errmsg.value = '-'
+            new = d['new']
+            new.show(self.viewer)
+            self.errmsg.value = new.desc

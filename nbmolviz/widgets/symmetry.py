@@ -1,3 +1,7 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +24,9 @@ import moldesign as mdt
 from moldesign import units as u
 from moldesign.utils import exports
 
+from ..uielements.components import HBox, VBox
+
+
 @exports
 class Symmetrizer(ipy.Box):
     def __init__(self, mol):
@@ -29,7 +36,7 @@ class Symmetrizer(ipy.Box):
         self.original_coords = mol.positions.copy()
 
         self.showing = ipy.HTML()
-        self.viewer = mol.draw3d()
+        self.viewer = mol.draw3d(width='650px')
         """:type viewer: moldesign.viewer.GeometryViewer"""
 
         self.description = ipy.HTML()
@@ -53,23 +60,23 @@ class Symmetrizer(ipy.Box):
         self.recalculate_button = ipy.Button(description='Recalculate')
         self.recalculate_button.on_click(self.coords_changed)
 
-        self.symm_pane = ipy.VBox([self.description,
-                                   self.symm_selector,
-                                   ipy.HBox([self.apply_button, self.reset_button]),
-                                   self.apply_all_button,
-                                   ipy.HBox([self.tolerance_chooser, self.recalculate_button]),
-                                   self.tolerance_descrip],
-                                  layout=ipy.Layout(width='325px'))
+        self.symm_pane = VBox([self.description,
+                               self.symm_selector,
+                               HBox([self.apply_button, self.reset_button]),
+                               self.apply_all_button,
+                               HBox([self.tolerance_chooser, self.recalculate_button]),
+                               self.tolerance_descrip],
+                              layout=ipy.Layout(width='325px'))
 
         self.symmetry = None
         self.coords_changed()
 
-        self.hbox = ipy.HBox([ipy.VBox([self.viewer, self.showing]), self.symm_pane])
-        super(Symmetrizer, self).__init__([self.hbox])
+        self.hbox = HBox([VBox([self.viewer, self.showing]), self.symm_pane])
+        super().__init__([self.hbox])
 
     def reset_coords(self, *args):
         self.mol.positions = self.original_coords
-        self.viewer.append_frame(positions=self.original_coords)
+        self.viewer.set_positions(positions=self.original_coords)
         self.coords_changed()
 
     def coords_changed(self, *args):
@@ -93,7 +100,7 @@ class Symmetrizer(ipy.Box):
         else:
             descrip += 'RMS Error = {:.03P}'.format(self.symmetry.rms)
         self.description.value = descrip
-        self.viewer.append_frame(positions=self.symmetry.orientation)
+        self.viewer.set_positions(positions=self.symmetry.orientation)
 
     def apply_selected_symmetry(self, *args):
         idx = self.symm_selector.value.idx
@@ -101,7 +108,7 @@ class Symmetrizer(ipy.Box):
         newcoords = self.symmetry.get_symmetrized_coords(elem)
         self.mol.atoms.position = newcoords
         if not np.allclose(newcoords, self.symmetry.orientation, atol=1.0e-10):
-            self.viewer.append_frame(positions=newcoords)
+            self.viewer.set_positions(positions=newcoords)
             self.coords_changed()
 
     def show_symmetry(self, *args):

@@ -18,20 +18,28 @@ import widgets from 'jupyter-js-widgets';
 const Nbmolviz3dModel = widgets.DOMWidgetModel.extend({
   defaults: {
     atom_labels_shown: false,
-    background_color: '#73757C',
+    background_color: '#545c85',
     background_opacity: 1.0,
+    cubefile: '',
     height: '500px',
     model_data: { atoms: [], bonds: [] },
-    orbital: {
-      cube_file: '',
+    volumetric_style: {
       iso_val: null,
       opacity: null,
+      negativeVolumetricColor: null,
+      positiveVolumetricColor: null,
     },
     styles: {},
     selected_atom_indices: [],
     selection_type: 'Atom',
     shapes: [],
-    width: '500px',
+    width: '100%',
+    labels: [],
+    positions: [],
+    near_clip: null,
+    far_clip: null,
+    outline_color: '#000000',
+    outline_width: 0.0,
   },
 });
 
