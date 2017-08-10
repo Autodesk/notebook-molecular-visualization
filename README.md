@@ -37,8 +37,10 @@ To globally enable for all users (use with caution! This may require `sudo`):
 
 2. **Remove old notebook extensions (you will be notified if it's necessary to run with `sudo`)**:
 ```bash
-    $ python -m nbmolviz clean-all
+    $ python -m nbmolviz uninstall
 ```
+
+3. Activate the notebook extension as above
 
 
 ## Examples
