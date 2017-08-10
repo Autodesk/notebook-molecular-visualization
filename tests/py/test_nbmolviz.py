@@ -2,6 +2,7 @@
 the supporting functionality
 """
 from past.builtins import unicode
+import subprocess
 
 import pytest
 
@@ -31,3 +32,7 @@ def test_generating_cubefile_works(wfn_viewer):
     grid, values = wfn_viewer._calc_orb_grid(wfn_viewer.mol.wfn.orbitals.canonical[1])
     cb = wfn_viewer._grid_to_cube(grid, values)
     assert isinstance(cb, unicode)
+
+
+def test_install_checks_doesnt_crash():
+    subprocess.check_call('python -m nbmolviz check'.split())

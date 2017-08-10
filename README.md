@@ -2,46 +2,92 @@ notebook-molecular-visualization
 ===============================
 [![PyPI version](https://badge.fury.io/py/nbmolviz.svg)](https://badge.fury.io/py/nbmolviz)
 
-A Python widgets library for 2D and 3D molecular visualization in Jupyter notebooks
+Jupyter notebook add-ons for the [Molecular Design Toolkit](https://github.com/Autodesk/molecular-design-toolkit). NBMolViz provides visualization and interactivity for 3D Molecular Structures in Jupyter notebooks.
+
+After installing it, you'll never need to use the NBMolViz package directly. It's instead called through MDT to provide enhanced functionality in notebooks. 
 
 ## Installation
+When you install `nbmolviz`, you'll need to both install the python library _and_ enable the notebook extensions. 
 
+1. **Install the python library:**
+```bash
     $ pip install nbmolviz
-    $ jupyter nbextension enable --python --system nbmolviz
-    $ jupyter nbextension enable --python --system widgetsnbextension
+```
+    
+2. **Activate notebook extensions:**
+To enable for your user account:
+```bash
+    $ python -m nbmolviz activate --user
+```
+       
+To enable within your current virtual environment:
+```bash
+    $ python -m nbmolviz activate --sys-prefix
+```
 
+To globally enable for all users (use with caution! This may require `sudo`):
+```bash
+    $ python -m nbmolviz activate --global
+```
+
+## Upgrading from older versions
+
+1. **Upgrade the library to the newest version**
+    $ pip install --upgrade nbmolviz
+
+2. **Remove old notebook extensions (you will be notified if it's necessary to run with `sudo`)**:
+```bash
+    $ python -m nbmolviz clean-all
+```
 
 
 ## Examples
 
-To draw an OpenBabel molecule:
+Draw a small molecule:
 ```python
-import nbmolviz
-import pybel
-benzene = pybel.read_string('smi','c1cccc1').next()
-nbmolviz.visualize(benzene)
+import moldesign as mdt
+mol = mdt.from_name('ethylene')
+mol.draw()
 ```
+<img src="img/smallmol.png" style="width: 600px;"/>
 
+Draw a protein:
+```python
+import moldesign as mdt
+mol = mdt.from_pdb('3aid')
+mol.draw()
+```
+<img src="img/protein.png style="width: 600px;"/>
+
+
+Interactively select atoms (the currently selected atoms will be available as `selector.selected_atoms`)
+```python
+import moldesign as mdt
+mol = mdt.from_pdb('3aid')
+selector = mdt.widgets.ResidueSelector(mol)
+selector
+```
+<img src="img/selector.png" style="width: 600px;"/>
 
 
 ## Dev install
 Requires npm.
 
-    $ git clone https://github.com/autodesk/notebook-molecular-visualization.git
+    $ git clone https://github.com/autodesk/notebook-molecular-visualization
     $ cd notebook-molecular-visualization
+    # ./set_filters.sh  # tells git to clean up notebooks before committing
     $ python setup.py jsdeps
     $ pip install -e .
     $ jupyter nbextension install --py --symlink --user nbmolviz
     $ jupyter nbextension enable --py --user nbmolviz
+    $ cd tests/galileo && npm install
     
 This will build your widgets into a folder at `notebook-molecular-visualization/nbmolviz/static`
 
 During development, to see the effects of changes to any javascript files (in notebook-molecular/visualization/js/src), run `python setup.py jsdeps` and reload any notebook browser windows.
 
-## Tests
-Run tests with:
-
-    pytest nbmolviz/_tests
+## To run visual tests
+`cd tests/nb && ../galileo/bin/galileo --launchnb`
 
 ## Releasing a new version
 Travis automatically releases commits that are tagged, so to trigger a new release, just do:
