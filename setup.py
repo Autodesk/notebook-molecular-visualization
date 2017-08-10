@@ -140,6 +140,10 @@ class NPM(Command):
         env = os.environ.copy()
         env['PATH'] = npm_path
 
+        vjson = os.path.join(node_root, '.VERSION.json')
+        with open(vjson, 'w') as vjsonfile:
+            vjsonfile.write('{"version":"%s"}\n' % VERSION)
+
         if self.should_run_npm_install():
             log.info("Installing build dependencies with npm.  This may take a while...")
             check_call(['npm', 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
