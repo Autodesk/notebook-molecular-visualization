@@ -10,4 +10,6 @@ __pycache__
 npm-debug.log
 .cache/
 node_modules
-
+VERSION
+VERSION.json
+tests/nb/gif

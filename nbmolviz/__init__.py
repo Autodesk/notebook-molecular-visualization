@@ -14,8 +14,6 @@ from __future__ import print_function
 # limitations under the License.
 import os as _os
 
-MDTVERSION = '0.8.0'
-
 # package metadata
 from nbmolviz import _version
 __version__ = _version.get_versions()['version']
