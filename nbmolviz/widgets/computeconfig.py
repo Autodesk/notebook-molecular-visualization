@@ -20,16 +20,17 @@ standard_library.install_aliases()
 import io
 import os
 import base64
-
 import collections
-import ipywidgets as ipy
+
 from pip._vendor.packaging import version
+import ipywidgets as ipy
+import traitlets
 
 import moldesign as mdt
 from moldesign import compute
 
 from ..uielements import StyledTab
-from ..uielements.components import HBox
+from ..uielements.components import HBox, VBox
 from ..widget_utils import process_widget_kwargs
 
 
@@ -41,19 +42,18 @@ def configure():
 about = configure
 
 
-class MDTConfig(ipy.Box):
+class MDTConfig(VBox):
     def __init__(self):
-        super().__init__(
-                **process_widget_kwargs({'display':'flex', 'flex_flow':'column'}))
-
-        self.compute_config = ComputeConfig()
+        self.interface_status = InterfaceStatus()
+        self.compute_config = DockerConfig()
         self.changelog = ChangeLog()
-        self.tab_list = StyledTab([ipy.Box(), self.compute_config, self.changelog])
+        self.tab_list = StyledTab([ipy.Box(), self.interface_status, self.compute_config, self.changelog])
         self.tab_list.set_title(0, '^')
-        self.tab_list.set_title(1, 'Compute configuration')
-        self.tab_list.set_title(2, "What's new")
-
+        self.tab_list.set_title(1, "Interfaces")
+        self.tab_list.set_title(2, 'Docker configuration')
+        self.tab_list.set_title(3, "What's new")
         self.children = [self.make_header(), self.tab_list]
+        super().__init__(children=self.children)
 
     def make_header(self):
         img = io.open(os.path.join(mdt.PACKAGEPATH, '_static_data/img/banner.png'), 'r+b').read()
@@ -79,6 +79,80 @@ class MDTConfig(ipy.Box):
                                                                                   text=text)
 
 
+class InterfaceStatus(VBox):
+    def __init__(self):
+        from moldesign.compute import packages
+
+        self.css = ipy.HTML('<style>'
+                            '.nbmolviz-table-header{border-bottom-style:solid;'
+                            '                       display:inline-block;'
+                            '                       border-bottom-width:1px} '
+                            '.nbmolviz-table-row{border-top-style:dotted;'
+                            '                    display:inline-block;'
+                            '                    border-top-width:1px} '
+                            '.nbmolviz-monospace{font-family:monospace} '
+                            '.nbv-width-lg{width:400px; text-align:center} '
+                            '.nbv-width-med{width:150px} '
+                            '.nbv-width-sm{width:75px} '
+                            '</style>')
+
+        self.header = ipy.HTML(
+                '<span class="nbmolviz-table-header nbv-width-med">Package</span> '
+                '<span class="nbmolviz-table-header nbv-width-sm">Local version</span> '
+                '<span class="nbmolviz-table-header nbv-width-sm">Expected version</span>'
+                '<span class="nbmolviz-table-header nbv-width-lg">Run calculations...</span>')
+        self.children = ([self.css, self.header] +
+                         [InterfaceConfigurator(p) for p in packages.packages])
+        super().__init__(children=self.children)
+
+
+class InterfaceConfigurator(ipy.HBox):
+
+    MISSING = u'\u274C'
+    INSTALLED = u"\u2705"
+
+    def __init__(self, xface):
+        self.xface = xface
+        if self.xface.is_installed():
+            version_string = xface.installed_version()
+            if not version_string:
+                version_string = 'unknown'
+
+            if version_string != xface.expectedversion:
+                version_string = '<span style="color:red">%s</span>' % version_string
+
+        self.maintext = ipy.HTML(
+                ('<span class="nbmolviz-table-row nbv-width-med nbmolviz-monospace">'
+                 '           {xface.packagename}</span> '
+                 '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
+                 '                {localversion}</span> '
+                 '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
+                 '                {xface.expectedversion}</span>')
+                    .format(localversion=version_string if self.xface.is_installed() else self.MISSING,
+                            xface=xface))
+
+        if xface.required:
+            self.selector = ipy.ToggleButtons(options=['locally'],
+                                              layout=ipy.Layout(width='400px'))
+        elif not xface.is_installed():
+            self.selector = ipy.ToggleButtons(options=['in docker'],
+                                              layout=ipy.Layout(width='400px'),
+                                              button_style='warning')
+        else:
+            self.selector = ipy.ToggleButtons(options=['locally', 'in docker'],
+                                              value='in docker' if xface.force_remote else 'locally',
+                                              button_style='info',
+                                              layout=ipy.Layout(width='400px'))
+
+        # Button style updates don't currently propagate properly
+        #traitlets.directional_link((self.selector, 'value'),
+        #                           (self.selector, 'button_style'),
+        #                           lambda val: 'info' if val == 'locally' else 'warning')
+
+        super().__init__(children=[self.maintext, self.selector],
+                         layout=ipy.Layout(width='100%'))
+
+
 class ChangeLog(ipy.Box):
     def __init__(self):
         super().__init__()
@@ -97,7 +171,7 @@ class ChangeLog(ipy.Box):
             versiontext = '<b>Failed update check</b>: %s' % e
 
         self.version = ipy.HTML(versiontext)
-        self.textarea = ipy.Textarea(width='700px', height='300px')
+        self.textarea = ipy.Textarea(layout=ipy.Layout(width='700px', height='300px'))
 
         p1 = os.path.join(mdt.PACKAGEPATH, "HISTORY.rst")
         p2 = os.path.join(mdt.PACKAGEPATH, "..", "HISTORY.rst")
@@ -128,71 +202,46 @@ class ChangeLog(ipy.Box):
         return version.parse(pypi.package_releases('moldesign')[0])
 
 
-class ComputeConfig(ipy.Box):
+class DockerConfig(VBox):
     def __init__(self):
-        super().__init__(**process_widget_kwargs(
-                dict(flex_flow='column')))
+        super().__init__()
 
-        self.engine_dropdown = ipy.Dropdown(description='Compute engine',
-                                            options=ENGINE_DISPLAY,
-                                            value=next(iter(ENGINES)),
-                                            height='30px')
-        self.engine_dropdown.observe(self.update_engine_display)
-
-        self.engine_config_description = ipy.HTML('description')
-        self.engine_config_value = ipy.Text('blank', width='500px')
-        self.engine_config = HBox([self.engine_config_description,
-                                       self.engine_config_value])
+        self.engine_config_description = ipy.HTML('Docker host with protocol and port'
+                                                  ' (e.g., "http://localhost:2375"). If blank, this'
+                                                  ' defaults to the docker engine configured at '
+                                                  'your command line.',
+                                                  layout=ipy.Layout(width='100%'))
+        self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='100%'))
 
         self._reset_config_button = ipy.Button(description='Reset',
-                                               tooltip='Reset to current configuration')
+                                               tooltip='Reset to applied value')
         self._apply_changes_button = ipy.Button(description='Apply',
                                                 tooltip='Apply for this session')
         self._save_changes_button = ipy.Button(description='Make default',
                                                tooltip='Make this the default for new sessions')
         self._test_button = ipy.Button(description='Test connection',
-                                       tooltip='Test if MDT can run jobs with the '
-                                               'current configuration')
+                                       tooltip='Test connection to docker engine')
         self._reset_config_button.on_click(self.reset_config)
         self._apply_changes_button.on_click(self.apply_config)
         self._save_changes_button.on_click(self.save_config)
         self._test_button.on_click(self.test_connection)
 
-        self.children = [self.engine_dropdown,
-                         ipy.HTML('<hr>'),
-                         HBox([self.engine_config_description,
+        self.children = [VBox([self.engine_config_description,
                                    self.engine_config_value]),
                          HBox([self._reset_config_button,
                                    self._apply_changes_button,
                                    self._test_button,
-                                   self._save_changes_button])
+                                   self._save_changes_button]),
                          ]
         self.reset_config()
-
-    def update_engine_display(self, *args):
-        self.engine_config_value.disabled = False
-        enginename = self.engine_dropdown.value
-        enginespec = ENGINES[enginename]
-
-        self.engine_config_description.value = enginespec['hostdescription'] + ':'
-        if enginename == 'free-compute-cannon':
-            self.engine_config_value.value = compute.FREE_COMPUTE_CANNON
-            self.engine_config_value.disabled = True
-        else:
-            self.engine_config_value.value = compute.config[enginespec['configkey']]
 
     def reset_config(self, *args):
         """ Reset configuration in UI widget to the stored values
         """
-        if compute.config.engine_type not in ENGINES[self.engine_dropdown.value]['aliases']:
-            self.engine_dropdown.value = compute.config.engine_type
-        else:
-            self.update_engine_display()
+        self.engine_config_value.value = compute.config['default_docker_host']
 
     def apply_config(self, *args):
-        enginename = self.engine_dropdown.value
-        compute.config.engine_type = ENGINES[enginename]['aliases'][0]
-        compute.config[ENGINES[enginename]['configkey']] = self.engine_config_value.value
+        compute.config['default_docker_host'] = self.engine_config_value.value
         compute.reset_compute_engine()
 
     def test_connection(self, *args):
@@ -204,7 +253,7 @@ class ComputeConfig(ipy.Box):
         print("SUCCESS: %s is accepting jobs" % engine)
 
     def save_config(self, *args):
-        compute.write_config()
+        compute.write_config(dockerhost=self.engine_config_value.value)
 
 
 class RegistryConfig(ipy.Box):
