@@ -24,7 +24,6 @@ import collections
 
 from pip._vendor.packaging import version
 import ipywidgets as ipy
-import traitlets
 
 import moldesign as mdt
 from moldesign import compute
@@ -40,6 +39,9 @@ def configure():
 
 # Some synonyms
 about = configure
+
+MISSING = u'\u274C'
+INSTALLED = u"\u2705"
 
 
 class MDTConfig(VBox):
@@ -61,11 +63,11 @@ class MDTConfig(VBox):
         img = '<img style="max-width:100%" src=data:image/png;base64,'+('%s>'%encoded)
         links = [self._makelink(*args) for args in
                    (("http://moldesign.bionano.autodesk.com/", 'About'),
-                    ("https://forum.bionano.autodesk.com/c/Molecular-Design-Toolkit", 'Forum'),
                     ("https://github.com/autodesk/molecular-design-toolkit/issues", 'Issues'),
                     ("http://bionano.autodesk.com/MolecularDesignToolkit/explore.html",
                      "Tutorials"),
                     ('http://autodesk.github.io/molecular-design-toolkit/', 'Documentation'),
+                    ('https://lifesciences.autodesk.com/', 'Adsk LifeSci')
                     )]
         linkbar = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.join(links)
         return ipy.HTML(("<span style='float:left;font-size:0.8em;font-weight:bold'>Version: "
@@ -83,7 +85,7 @@ class InterfaceStatus(VBox):
     def __init__(self):
         from moldesign.compute import packages
 
-        self.css = ipy.HTML('<style>'
+        self.css = ipy.HTML('<style> '
                             '.nbmolviz-table-header{border-bottom-style:solid;'
                             '                       display:inline-block;'
                             '                       border-bottom-width:1px} '
@@ -91,26 +93,45 @@ class InterfaceStatus(VBox):
                             '                    display:inline-block;'
                             '                    border-top-width:1px} '
                             '.nbmolviz-monospace{font-family:monospace} '
-                            '.nbv-width-lg{width:400px; text-align:center} '
-                            '.nbv-width-med{width:150px} '
-                            '.nbv-width-sm{width:75px} '
+                            '.nbv-width-lg{width:310px; text-align:center} '
+                            '.nbv-width-med{width:125px} '
+                            '.nbv-width-sm{width:60px} '
                             '</style>')
 
-        self.header = ipy.HTML(
+        self.toggle = ipy.ToggleButtons(options=['Python libs', 'Executables'],
+                                        value='Python libs')
+        self.toggle.observe(self.switch_pane, 'value')
+
+        self.pyheader = ipy.HTML(
                 '<span class="nbmolviz-table-header nbv-width-med">Package</span> '
                 '<span class="nbmolviz-table-header nbv-width-sm">Local version</span> '
                 '<span class="nbmolviz-table-header nbv-width-sm">Expected version</span>'
                 '<span class="nbmolviz-table-header nbv-width-lg">Run calculations...</span>')
-        self.children = ([self.css, self.header] +
-                         [InterfaceConfigurator(p) for p in packages.packages])
+        self.python_libs = ipy.VBox([self.pyheader] + [PyLibConfig(p) for p in packages.packages])
+
+        self.exeheader = ipy.HTML(
+                '<span class="nbmolviz-table-header nbv-width-med">Program</span> '
+                '<span class="nbmolviz-table-header nbv-width-sm">Local version</span> '
+                '<span class="nbmolviz-table-header nbv-width-sm">Docker version</span>'
+                '<span class="nbmolviz-table-header nbv-width-lg">Run calculations...</span>')
+        self.executables = ipy.VBox([self.exeheader] + [ExeConfig(p) for p in packages.executables])
+
+        self.children = [self.toggle, self.css, self.python_libs]
         super().__init__(children=self.children)
 
+    def switch_pane(self, *args):
+        children = list(self.children)
 
-class InterfaceConfigurator(ipy.HBox):
+        if self.toggle.value == 'Python libs':
+            children[-1] = self.python_libs
+        else:
+            assert self.toggle.value == 'Executables'
+            children[-1] = self.executables
 
-    MISSING = u'\u274C'
-    INSTALLED = u"\u2705"
+        self.children = children
 
+
+class PyLibConfig(ipy.HBox):
     def __init__(self, xface):
         self.xface = xface
         if self.xface.is_installed():
@@ -128,29 +149,86 @@ class InterfaceConfigurator(ipy.HBox):
                  '                {localversion}</span> '
                  '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
                  '                {xface.expectedversion}</span>')
-                    .format(localversion=version_string if self.xface.is_installed() else self.MISSING,
-                            xface=xface))
+                    .format(xface=xface,
+                            localversion=(version_string if self.xface.is_installed()
+                                                          else MISSING)))
 
         if xface.required:
             self.selector = ipy.ToggleButtons(options=['locally'],
-                                              layout=ipy.Layout(width='400px'))
+                                              layout=ipy.Layout(width='310px'))
         elif not xface.is_installed():
             self.selector = ipy.ToggleButtons(options=['in docker'],
-                                              layout=ipy.Layout(width='400px'),
-                                              button_style='warning')
+                                              button_style='warning',
+                                              layout=ipy.Layout(width='310px'))
         else:
             self.selector = ipy.ToggleButtons(options=['locally', 'in docker'],
                                               value='in docker' if xface.force_remote else 'locally',
                                               button_style='info',
-                                              layout=ipy.Layout(width='400px'))
+                                              layout=ipy.Layout(width='310px'))
 
-        # Button style updates don't currently propagate properly
-        #traitlets.directional_link((self.selector, 'value'),
-        #                           (self.selector, 'button_style'),
-        #                           lambda val: 'info' if val == 'locally' else 'warning')
+            self.selector.observe(self._toggle, 'value')
 
-        super().__init__(children=[self.maintext, self.selector],
+        children = [self.maintext, self.selector]
+
+        if not self.xface.required:
+            self.save_button = ipy.Button(description='Make default')
+            self.save_button.on_click(self.save_selection)
+            children.append(self.save_button)
+
+        super().__init__(children=children,
                          layout=ipy.Layout(width='100%'))
+
+    def _toggle(self, *args):
+        self.xface.force_remote = (self.selector.value == 'in docker')
+
+    def save_selection(self, *args):
+        compute.update_saved_config(
+                run_remote={self.xface.name: self.selector.value == 'in docker'})
+
+
+class ExeConfig(ipy.HBox):
+    def __init__(self, xface):
+        self.xface = xface
+
+        if xface.is_installed():
+            if xface.version_flag:
+                v = xface.get_installed_version()
+            else:
+                v = INSTALLED
+        else:
+            v = MISSING
+
+        self.maintext = ipy.HTML(
+                ('<span class="nbmolviz-table-row nbv-width-med nbmolviz-monospace">'
+                 '           {xface.name}</span> '
+                 '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
+                 '                {localversion}</span> '
+                 '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
+                 '                {xface.expectedversion}</span>')
+                    .format(xface=xface, localversion=v))
+
+        self.selector = ipy.ToggleButtons(options=['in docker', 'locally'],
+                                          value='in docker',
+                                          button_style='info')
+
+        self.selector.observe(self._toggle, 'value')
+        self.path = ipy.HTML(layout=ipy.Layout(width='150px', font_size='x-small'),
+                              value=xface.path if xface.path is not None else '',)
+
+        self.save_button = ipy.Button(description='Make default', layout=ipy.Layout(width='100px'))
+        self.save_button.on_click(self.save_selection)
+
+        children = [self.maintext, self.selector, self.save_button]
+
+        super().__init__(children=children,
+                         layout=ipy.Layout(width='100%'))
+
+    def _toggle(self, *args):
+        self.xface.run_local = (self.selector.value == 'locally')
+
+    def save_selection(self, *args):
+        compute.update_saved_config(
+                run_local={self.xface.name: self.selector.value == 'locally'})
 
 
 class ChangeLog(ipy.Box):
@@ -227,11 +305,11 @@ class DockerConfig(VBox):
         self._test_button.on_click(self.test_connection)
 
         self.children = [VBox([self.engine_config_description,
-                                   self.engine_config_value]),
+                               self.engine_config_value]),
                          HBox([self._reset_config_button,
-                                   self._apply_changes_button,
-                                   self._test_button,
-                                   self._save_changes_button]),
+                               self._apply_changes_button,
+                               self._test_button,
+                               self._save_changes_button]),
                          ]
         self.reset_config()
 
@@ -253,7 +331,7 @@ class DockerConfig(VBox):
         print("SUCCESS: %s is accepting jobs" % engine)
 
     def save_config(self, *args):
-        compute.write_config(dockerhost=self.engine_config_value.value)
+        compute.update_saved_config(dockerhost=self.engine_config_value.value)
 
 
 class RegistryConfig(ipy.Box):
