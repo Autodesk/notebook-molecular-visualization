@@ -89,13 +89,16 @@ class InterfaceStatus(VBox):
                             '.nbmolviz-table-header{border-bottom-style:solid;'
                             '                       display:inline-block;'
                             '                       border-bottom-width:1px} '
-                            '.nbmolviz-table-row{border-top-style:dotted;'
+                            '.nbmolviz-table-row{border-bottom-style:dotted;'
                             '                    display:inline-block;'
-                            '                    border-top-width:1px} '
+                            '                    border-bottom-width:1px;'
+                            '                    padding-bottom:3px} '
                             '.nbmolviz-monospace{font-family:monospace} '
-                            '.nbv-width-lg{width:310px; text-align:center} '
-                            '.nbv-width-med{width:125px} '
-                            '.nbv-width-sm{width:60px} '
+                            '.nbv-width-lg{width:310px} '
+                            '.nbv-width-med{width:125px; display:inline-block} '
+                            '.nbv-width-sm{width:60px;display:inline-block} '
+                            '.nbv-leftborder{border-left-style:solid;'
+                            '                border-left-width:2px;}'
                             '</style>')
 
         self.toggle = ipy.ToggleButtons(options=['Python libs', 'Executables'],
@@ -106,14 +109,20 @@ class InterfaceStatus(VBox):
                 '<span class="nbmolviz-table-header nbv-width-med">Package</span> '
                 '<span class="nbmolviz-table-header nbv-width-sm">Local version</span> '
                 '<span class="nbmolviz-table-header nbv-width-sm">Expected version</span>'
-                '<span class="nbmolviz-table-header nbv-width-lg">Run calculations...</span>')
+                '<span class="nbv-width-sm">&nbsp;</span>'  # empty space
+                '<span class="nbmolviz-table-header nbv-width-lg">'
+                '          Run calculations...</span>'
+                '<span class="nbmolviz-table-header nbv-width-med"> &nbsp;</span>')
         self.python_libs = ipy.VBox([self.pyheader] + [PyLibConfig(p) for p in packages.packages])
 
         self.exeheader = ipy.HTML(
                 '<span class="nbmolviz-table-header nbv-width-med">Program</span> '
                 '<span class="nbmolviz-table-header nbv-width-sm">Local version</span> '
                 '<span class="nbmolviz-table-header nbv-width-sm">Docker version</span>'
-                '<span class="nbmolviz-table-header nbv-width-lg">Run calculations...</span>')
+                '<span class="nbv-width-sm">&nbsp;</span>'  # empty space
+                '<span class="nbmolviz-table-header nbv-width-lg">'
+                '          Run calculations...</span>'
+                '<span class="nbmolviz-table-header nbv-width-med"> &nbsp;</span>')
         self.executables = ipy.VBox([self.exeheader] + [ExeConfig(p) for p in packages.executables])
 
         self.children = [self.toggle, self.css, self.python_libs]
@@ -148,35 +157,37 @@ class PyLibConfig(ipy.HBox):
                  '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
                  '                {localversion}</span> '
                  '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
-                 '                {xface.expectedversion}</span>')
+                 '                {xface.expectedversion}</span>'
+                 '<span class="nbv-width-sm nbmolviz-table-row">&nbsp;</span>'  # empty space
+                 )
                     .format(xface=xface,
                             localversion=(version_string if self.xface.is_installed()
                                                           else MISSING)))
 
         if xface.required:
-            self.selector = ipy.ToggleButtons(options=['locally'],
-                                              layout=ipy.Layout(width='310px'))
+            self.selector = ipy.ToggleButtons(options=['locally'])
         elif not xface.is_installed():
             self.selector = ipy.ToggleButtons(options=['in docker'],
-                                              button_style='warning',
-                                              layout=ipy.Layout(width='310px'))
+                                              button_style='warning')
         else:
             self.selector = ipy.ToggleButtons(options=['locally', 'in docker'],
                                               value='in docker' if xface.force_remote else 'locally',
-                                              button_style='info',
-                                              layout=ipy.Layout(width='310px'))
-
+                                              button_style='info')
             self.selector.observe(self._toggle, 'value')
+
+        self.selector.add_class('nbv-width-lg')
+        self.selector.add_class("nbmolviz-table-row")
 
         children = [self.maintext, self.selector]
 
-        if not self.xface.required:
+        if not self.xface.required and self.xface.is_installed():
             self.save_button = ipy.Button(description='Make default')
             self.save_button.on_click(self.save_selection)
+            self.save_button.add_class('nbmolviz-table-row')
             children.append(self.save_button)
 
         super().__init__(children=children,
-                         layout=ipy.Layout(width='100%'))
+                         layout=ipy.Layout(width='100%', align_items='flex-end'))
 
     def _toggle(self, *args):
         self.xface.force_remote = (self.selector.value == 'in docker')
@@ -204,12 +215,16 @@ class ExeConfig(ipy.HBox):
                  '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
                  '                {localversion}</span> '
                  '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
-                 '                {xface.expectedversion}</span>')
+                 '                {xface.expectedversion}</span>'
+                 '<span class="nbv-width-sm nbmolviz-table-row">&nbsp;</span>'  # empty space
+                 )
                     .format(xface=xface, localversion=v))
 
         self.selector = ipy.ToggleButtons(options=['in docker', 'locally'],
                                           value='in docker',
                                           button_style='info')
+        self.selector.add_class('nbv-width-lg')
+        self.selector.add_class("nbmolviz-table-row")
 
         self.selector.observe(self._toggle, 'value')
         self.path = ipy.HTML(layout=ipy.Layout(width='150px', font_size='x-small'),
@@ -217,11 +232,12 @@ class ExeConfig(ipy.HBox):
 
         self.save_button = ipy.Button(description='Make default', layout=ipy.Layout(width='100px'))
         self.save_button.on_click(self.save_selection)
+        self.save_button.add_class('nbmolviz-table-row')
 
         children = [self.maintext, self.selector, self.save_button]
 
         super().__init__(children=children,
-                         layout=ipy.Layout(width='100%'))
+                         layout=ipy.Layout(width='100%', align_items='flex-end'))
 
     def _toggle(self, *args):
         self.xface.run_local = (self.selector.value == 'locally')
