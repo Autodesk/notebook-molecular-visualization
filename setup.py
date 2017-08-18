@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from builtins import str
 import os
+import shutil
 import sys
 import versioneer
 from setuptools import setup, find_packages, Command
@@ -110,7 +111,8 @@ class NPM(Command):
 
     targets = [
         os.path.join(here, 'nbmolviz', 'static', 'extension.js'),
-        os.path.join(here, 'nbmolviz', 'static', 'index.js')
+        os.path.join(here, 'nbmolviz', 'static', 'index.js'),
+        os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css')
     ]
 
     def initialize_options(self):
@@ -143,6 +145,10 @@ class NPM(Command):
         vjson = os.path.join(node_root, '.VERSION.json')
         with open(vjson, 'w') as vjsonfile:
             vjsonfile.write('{"version":"%s"}\n' % VERSION)
+
+        # TODO: do this with NPM/webpack, not in python
+        shutil.copy(os.path.join(node_root, 'src', 'nbmolviz.css'),
+                    os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css'))
 
         if self.should_run_npm_install():
             log.info("Installing build dependencies with npm.  This may take a while...")
