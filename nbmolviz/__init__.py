@@ -15,7 +15,7 @@ from __future__ import print_function
 import os as _os
 
 # package metadata
-from nbmolviz import _version
+from . import _version
 __version__ = _version.get_versions()['version']
 __copyright__ = "Copyright 2017 Autodesk Inc."
 __license__ = "Apache 2.0"
