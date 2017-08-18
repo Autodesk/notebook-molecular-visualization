@@ -26,9 +26,10 @@ from .images import DockerImageStatus
 
 class DockerConfig(VBox):
     def __init__(self):
-        self.devmode_button = ipy.Checkbox(description='Build my own images (developer mode)',
-                                           value=mdt.compute.config.devmode,
-                                           layout=ipy.Layout(width='500px'))
+        self.devmode_label = ipy.Label('Use local docker images (developer mode)',
+                                       layout=ipy.Layout(width='100%'))
+        self.devmode_button = ipy.Checkbox(value=mdt.compute.config.devmode,
+                                           layout=ipy.Layout(width='15px'))
         self.devmode_button.observe(self.set_devmode, 'value')
 
         self.engine_config_description = ipy.HTML('Docker host with protocol and port'
@@ -38,7 +39,7 @@ class DockerConfig(VBox):
                                                   layout=ipy.Layout(width='100%'))
         self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='100%'))
 
-        self.image_box = ipy.Box()
+        self.image_box = ipy.Box(children=(DockerImageStatus(),))
 
         self._reset_config_button = ipy.Button(description='Reset',
                                                tooltip='Reset to applied value')
@@ -53,7 +54,7 @@ class DockerConfig(VBox):
         self._save_changes_button.on_click(self.save_config)
         self._test_button.on_click(self.test_connection)
 
-        self.children = [self.devmode_button,
+        self.children = [HBox([self.devmode_button, self.devmode_label],),
                          VBox([self.engine_config_description,
                                self.engine_config_value]),
                          HBox([self._reset_config_button,
@@ -69,9 +70,9 @@ class DockerConfig(VBox):
         """ Reset configuration in UI widget to the stored values
         """
         self.engine_config_value.value = mdt.compute.config['default_docker_host']
-        self.set_devmode()
 
     def set_devmode(self, *args):
+        self.image_box.children = ()
         mdt.compute.config.devmode = self.devmode_button.value
         self.image_box.children = (DockerImageStatus(),)
 

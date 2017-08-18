@@ -30,7 +30,10 @@ class DockerImageStatus(ipy.VBox):
     def __init__(self):
 
         images = self._get_images()
-        super().__init__([DockerImageView(im) for im in sorted(images)])
+        self.header = ipy.HTML(
+                '<span class="nbmolviz-table-header" style="width:950px"">Image status</span>',
+                layout=ipy.Layout(align_items='flex-end'))
+        super().__init__([self.header] + [DockerImageView(im) for im in sorted(images)])
 
     def _get_images(self):
         return set(p.get_docker_image_path()
@@ -43,16 +46,16 @@ class DockerImageView(ipy.HBox):
     def __init__(self, image):
         self._err = False
         self.image = image
+        self.status = ipy.HTML(layout=ipy.Layout(width="20px"))
         self.html = ipy.HTML(value=image, layout=ipy.Layout(width="400px"))
         self.html.add_class('nbmolviz-monospace')
-        self.msg = ipy.HTML()
+        self.msg = ipy.HTML(layout=ipy.Layout(width='300px'))
         if mdt.compute.config.devmode:
-            self.button = ipy.Button(description='Pull')
-            self.button.on_click(self.pull)
-        else:
-            self.button = ipy.Button(description='Rebuild')
+            self.button = ipy.Button(description='Rebuild', layout=ipy.Layout(width='100px'))
             self.button.on_click(self.rebuild)
-        self.status = ipy.HTML(layout=ipy.Layout(width="20px"))
+        else:
+            self.button = ipy.Button(description='Pull', layout=ipy.Layout(width='100px'))
+            self.button.on_click(self.pull)
         self._client = mdt.compute.get_engine().client
         self._set_status_value()
         super().__init__(children=[self.status, self.html, self.button, self.msg])
@@ -61,7 +64,7 @@ class DockerImageView(ipy.HBox):
         thread = threading.Thread(target=self._run_pull)
         thread.start()
 
-    def rebuild(self):
+    def rebuild(self, *args):
         raise NotImplementedError("You'll need to do this manually ...")
 
     def _run_pull(self):
