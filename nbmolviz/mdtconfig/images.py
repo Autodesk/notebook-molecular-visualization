@@ -18,6 +18,9 @@ standard_library.install_aliases()
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import threading
+import subprocess
+import sys
+import os
 import ipywidgets as ipy
 import moldesign as mdt
 
@@ -42,6 +45,7 @@ class DockerImageStatus(ipy.VBox):
 
 class DockerImageView(ipy.HBox):
     LOADER = "<div class='loader' />"
+    DMKDIR = os.path.join(os.path.dirname(os.path.dirname(mdt.__file__)), 'DockerMakefiles')
 
     def __init__(self, image):
         self._err = False
@@ -50,30 +54,64 @@ class DockerImageView(ipy.HBox):
         self.html = ipy.HTML(value=image, layout=ipy.Layout(width="400px"))
         self.html.add_class('nbmolviz-monospace')
         self.msg = ipy.HTML(layout=ipy.Layout(width='300px'))
+        self.button = ipy.Button(layout=ipy.Layout(width='100px'))
         if mdt.compute.config.devmode:
-            self.button = ipy.Button(description='Rebuild', layout=ipy.Layout(width='100px'))
             self.button.on_click(self.rebuild)
         else:
-            self.button = ipy.Button(description='Pull', layout=ipy.Layout(width='100px'))
             self.button.on_click(self.pull)
+        self._reactivate_button()
         self._client = mdt.compute.get_engine().client
         self._set_status_value()
         super().__init__(children=[self.status, self.html, self.button, self.msg])
 
-    def pull(self, *args):
-        thread = threading.Thread(target=self._run_pull)
+    def rebuild(self, *args):
+        if not os.path.isdir(self.DMKDIR):
+            raise ValueError('Could not locate the docker makefiles. '
+                             'To run MDT in development mode, '
+                             'clone the molecular-design-toolkit repository and install it using '
+                             '`pip install -e`.')
+
+        namefields = self.image.split(':')
+        assert len(namefields) == 2 and namefields[1] == 'dev'
+        self._disable_button('Rebuilding...')
+
+        thread = threading.Thread(target=self._run_rebuild, args=[namefields[0]])
         thread.start()
 
-    def rebuild(self, *args):
-        raise NotImplementedError("You'll need to do this manually ...")
+    def _run_rebuild(self, targetname):
+        try:
+            self.msg.value = 'Running <code>docker-make</code>'
+            cmd = ['docker-make', '--tag', 'dev',targetname]
+            self.status.value = self.LOADER
+            print('> %s' % ' '.join(cmd))
+            process = subprocess.Popen(cmd,
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       cwd=self.DMKDIR)
+            for line in process.stdout:
+                sys.stdout.write(line)
+        except Exception as e:
+            self._err = True
+            self.msg.value = str(e)
+            raise
+
+        finally:
+            self._reactivate_button()
+            self._set_status_value()
+            if not self._err:
+                self.msg.value = 'Rebuilt <code>%s</code> successfully.' % self.image
+
+    def pull(self, *args):
+        self.button.disabled = True
+        self._err = False
+        thread = threading.Thread(target=self._run_pull)
+        thread.start()
 
     def _run_pull(self):
         from docker import errors
         try:
-            self.button.disabled = True
-            self._err = False
+            self._disable_button('Pulling...')
             self.status.value = self.LOADER
-            self.msg.value = 'Starting pull ...'
+            self.msg.value = 'Starting download.'
 
             try:
                 response = self._client.pull(self.image, stream=True, decode=True)
@@ -82,11 +120,32 @@ class DockerImageView(ipy.HBox):
                 self._err = True
                 self.msg.value = 'ERROR: %s' % exc.explanation
 
+        except Exception as e:
+            self._err = True
+            self.msg = str(e)
+            raise
+
         finally:
             self._set_status_value()
-            self.button.disabled = False
+            self._reactivate_button()
             if not self._err:
                 self.msg.value = 'Pull successful.'
+
+    def _disable_button(self, description):
+        self.button.disabled = True
+        self.button.description = description
+        self.button.style.font_weight = '100'
+        self.button.style.button_color = 'lightgray'
+
+    def _reactivate_button(self):
+        self.button.disabled = False
+        if mdt.compute.config.devmode:
+            self.button.description = 'Rebuild image'
+        else:
+            self.button.description = 'Pull image'
+        self.button.style.font_weight = '400'
+        self.button.style.button_color = '#9feeb2'
+
 
     def _set_status_value(self):
         from docker import errors

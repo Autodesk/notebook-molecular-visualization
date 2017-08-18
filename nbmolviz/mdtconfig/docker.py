@@ -33,11 +33,13 @@ class DockerConfig(VBox):
         self.devmode_button.observe(self.set_devmode, 'value')
 
         self.engine_config_description = ipy.HTML('Docker host with protocol and port'
-                                                  ' (e.g., "http://localhost:2375"). If blank, this'
+                                                  ' (e.g., <code>http://localhost:2375</code>).'
+                                                  ' If blank, this'
                                                   ' defaults to the docker engine configured at '
                                                   'your command line.',
                                                   layout=ipy.Layout(width='100%'))
         self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='100%'))
+        self.engine_config_value.add_class('nbmolviz-monospace')
 
         self.image_box = ipy.Box(children=(DockerImageStatus(),))
 
@@ -54,15 +56,14 @@ class DockerConfig(VBox):
         self._save_changes_button.on_click(self.save_config)
         self._test_button.on_click(self.test_connection)
 
-        self.children = [HBox([self.devmode_button, self.devmode_label],),
-                         VBox([self.engine_config_description,
+        self.children = [VBox([self.engine_config_description,
                                self.engine_config_value]),
                          HBox([self._reset_config_button,
                                self._apply_changes_button,
                                self._test_button,
                                self._save_changes_button]),
-                         self.image_box
-                         ]
+                         HBox([self.devmode_button, self.devmode_label]),
+                         self.image_box]
         self.reset_config()
         super().__init__(children=self.children)
 
