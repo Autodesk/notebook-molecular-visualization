@@ -64,7 +64,8 @@ class NBExtensionConfig(VBox):
         self.warning = ipywidgets.HTML()
 
         super().__init__()
-        children = [ipywidgets.HTML("<h4>%s</h4>" % self.extname),
+        children = [ipywidgets.HTML("<h4><center>%s</center></h4>" % self.extname,
+                                    layout=ipywidgets.Layout(align_self='center')),
                     ipywidgets.HTML(self.HEADER)]
 
         for location in install.nbextension_ordered_paths():
@@ -108,7 +109,7 @@ class NBExtensionConfig(VBox):
         if not props['installed']:
             assert props['path'] is props['version'] is None
             props['version'] = MISSING
-            props['path'] = 'not installed'
+            props['path'] = '--'
 
         else:
             props['path'] = props['path'].replace("/", "/<wbr />")

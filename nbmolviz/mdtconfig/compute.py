@@ -26,8 +26,7 @@ import ipywidgets as ipy
 import moldesign as mdt
 from ..uielements import StyledTab
 from ..uielements.components import HBox, VBox
-from .docker import DockerConfig
-from .interfaces import InterfaceStatus
+
 
 
 def configure():
@@ -40,15 +39,24 @@ INSTALLED = u"\u2705"
 
 class MDTConfig(VBox):
     def __init__(self):
+        from .docker import DockerConfig
+        from .interfaces import InterfaceStatus
+        from .visualization import MdtExtensionConfig
+
         self.interface_status = InterfaceStatus()
         self.compute_config = DockerConfig()
+        self.nbextension_config = MdtExtensionConfig()
         self.changelog = ChangeLog()
-        self.tab_list = StyledTab([ipy.Box(), self.interface_status,
-                                   self.compute_config, self.changelog])
+        self.tab_list = StyledTab([ipy.Box(),
+                                   self.nbextension_config,
+                                   self.interface_status,
+                                   self.compute_config,
+                                   self.changelog])
         self.tab_list.set_title(0, '^')
-        self.tab_list.set_title(1, "Interfaces")
-        self.tab_list.set_title(2, 'Docker configuration')
-        self.tab_list.set_title(3, "What's new")
+        self.tab_list.set_title(1, 'Notebook config')
+        self.tab_list.set_title(2, "Interfaces")
+        self.tab_list.set_title(3, 'Docker config')
+        self.tab_list.set_title(4, "What's new")
         self.children = [self.make_header(), self.tab_list]
         super().__init__(children=self.children)
 
