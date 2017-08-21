@@ -24,6 +24,7 @@ from ..uielements.components import VBox, HBox
 from ..widget_utils import process_widget_kwargs
 from .images import DockerImageStatus
 
+
 class DockerConfig(VBox):
     def __init__(self):
         self.devmode_label = ipy.Label('Use local docker images (developer mode)',
@@ -39,7 +40,7 @@ class DockerConfig(VBox):
                                                   'your command line.',
                                                   layout=ipy.Layout(width='100%'))
         self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='100%'))
-        self.engine_config_value.add_class('nbmolviz-monospace')
+        self.engine_config_value.add_class('nbv-monospace')
 
         self.image_box = ipy.Box(children=(DockerImageStatus(),))
 

@@ -61,33 +61,44 @@ def get_installed_versions(extname, getversion):
 
 def activate(flags):
     try:
-        _jnbextrun('install', 'widgetsnbextension', flags)
-        _jnbextrun('enable', 'widgetsnbextension', flags)
+        activate_extension('widgetsnbextension', flags)
     except subprocess.CalledProcessError as exc:
         if exc.returncode == 2:
-            print(('ERROR - failed to enable the widget extensions with %s.' % flags) +
+            raise PermissionError(
+                    ('ERROR - failed to enable the widget extensions with %s.' % flags) +
                   ' Try rerunning the command with \"sudo\"!')
-        sys.exit(2)
+        else:
+            raise
 
-    _jnbextrun('install', 'nbmolviz', flags)
-    _jnbextrun('enable', 'nbmolviz', flags)
+    activate_extension('nbmolviz', flags)
+
+
+def activate_extension(pyname, flags):
+    _jnbextrun('install', pyname, flags)
+    _jnbextrun('enable', pyname, flags)
 
 
 def uninstall(flags):
     try:
-        _jnbextrun('disable', 'nbmolviz', flags)
-        _jnbextrun('uninstall', 'nbmolviz', flags)
+        deactivate_extension('nbmolviz', flags)
     except subprocess.CalledProcessError as exc:
         if exc.returncode == 2:
-            print(('ERROR - failed to uninstall the widget extensions with %s.' % flags) +
-                  ' Try rerunning the command with \"sudo\"!')
+            raise PermissionError(
+                    ('ERROR - failed to uninstall the widget extensions with %s.' % flags) +
+                    ' Try rerunning the command with \"sudo\"!')
         sys.exit(2)
+
+
+def deactivate_extension(pyname, flags):
+    _jnbextrun('disable', pyname, flags)
+    _jnbextrun('uninstall', pyname, flags)
 
 
 def _jnbextrun(cmd, lib, flags):
     shellcmd = ['jupyter', 'nbextension', cmd, '--py', flags, lib]
     print('> %s' % ' '.join(shellcmd))
     subprocess.check_call(shellcmd)
+    return shellcmd
 
 
 def find_nbmolviz_extension(extname):
