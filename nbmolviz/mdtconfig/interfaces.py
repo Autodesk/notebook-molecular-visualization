@@ -34,23 +34,23 @@ class InterfaceStatus(VBox):
         self.toggle.observe(self.switch_pane, 'value')
 
         self.pyheader = ipy.HTML(
-                '<span class="nbmolviz-table-header nbv-width-med">Package</span> '
-                '<span class="nbmolviz-table-header nbv-width-sm">Local version</span> '
-                '<span class="nbmolviz-table-header nbv-width-sm">Expected version</span>'
+                '<span class="nbv-table-header nbv-width-med">Package</span> '
+                '<span class="nbv-table-header nbv-width-sm">Local version</span> '
+                '<span class="nbv-table-header nbv-width-sm">Expected version</span>'
                 '<span class="nbv-width-sm">&nbsp;</span>'  # empty space
-                '<span class="nbmolviz-table-header nbv-width-lg">'
+                '<span class="nbv-table-header nbv-width-lg">'
                 '          Run calculations...</span>'
-                '<span class="nbmolviz-table-header nbv-width-med"> &nbsp;</span>')
+                '<span class="nbv-table-header nbv-width-med"> &nbsp;</span>')
         self.python_libs = ipy.VBox([self.pyheader] + [PyLibConfig(p) for p in packages.packages])
 
         self.exeheader = ipy.HTML(
-                '<span class="nbmolviz-table-header nbv-width-med">Program</span> '
-                '<span class="nbmolviz-table-header nbv-width-sm">Local version</span> '
-                '<span class="nbmolviz-table-header nbv-width-sm">Docker version</span>'
+                '<span class="nbv-table-header nbv-width-med">Program</span> '
+                '<span class="nbv-table-header nbv-width-sm">Local version</span> '
+                '<span class="nbv-table-header nbv-width-sm">Docker version</span>'
                 '<span class="nbv-width-sm">&nbsp;</span>'  # empty space
-                '<span class="nbmolviz-table-header nbv-width-lg">'
+                '<span class="nbv-table-header nbv-width-lg">'
                 '          Run calculations...</span>'
-                '<span class="nbmolviz-table-header nbv-width-med"> &nbsp;</span>')
+                '<span class="nbv-table-header nbv-width-med"> &nbsp;</span>')
         self.executables = ipy.VBox([self.exeheader] + [ExeConfig(p) for p in packages.executables])
 
         self.children = [self.toggle, self.python_libs]
@@ -80,13 +80,13 @@ class PyLibConfig(ipy.HBox):
                 version_string = '<span style="color:red">%s</span>' % version_string
 
         self.maintext = ipy.HTML(
-                ('<span class="nbmolviz-table-row nbv-width-med nbmolviz-monospace">'
+                ('<span class="nbv-table-row nbv-width-med nbv-monospace">'
                  '           {xface.packagename}</span> '
-                 '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
+                 '<span class="nbv-table-row nbv-monospace nbv-width-sm">'
                  '                {localversion}</span> '
-                 '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
+                 '<span class="nbv-table-row nbv-monospace nbv-width-sm">'
                  '                {xface.expectedversion}</span>'
-                 '<span class="nbv-width-sm nbmolviz-table-row">&nbsp;</span>'  # empty space
+                 '<span class="nbv-width-sm nbv-table-row">&nbsp;</span>'  # empty space
                  )
                     .format(xface=xface,
                             localversion=(version_string if self.xface.is_installed()
@@ -104,14 +104,14 @@ class PyLibConfig(ipy.HBox):
             self.selector.observe(self._toggle, 'value')
 
         self.selector.add_class('nbv-width-lg')
-        self.selector.add_class("nbmolviz-table-row")
+        self.selector.add_class("nbv-table-row")
 
         children = [self.maintext, self.selector]
 
         if not self.xface.required and self.xface.is_installed():
             self.save_button = ipy.Button(description='Make default')
             self.save_button.on_click(self.save_selection)
-            self.save_button.add_class('nbmolviz-table-row')
+            self.save_button.add_class('nbv-table-row')
             children.append(self.save_button)
 
         super().__init__(children=children,
@@ -138,13 +138,13 @@ class ExeConfig(ipy.HBox):
             v = MISSING
 
         self.maintext = ipy.HTML(
-                ('<span class="nbmolviz-table-row nbv-width-med nbmolviz-monospace">'
+                ('<span class="nbv-table-row nbv-width-med nbv-monospace">'
                  '           {xface.name}</span> '
-                 '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
+                 '<span class="nbv-table-row nbv-monospace nbv-width-sm">'
                  '                {localversion}</span> '
-                 '<span class="nbmolviz-table-row nbmolviz-monospace nbv-width-sm">'
+                 '<span class="nbv-table-row nbv-monospace nbv-width-sm">'
                  '                {xface.expectedversion}</span>'
-                 '<span class="nbv-width-sm nbmolviz-table-row">&nbsp;</span>'  # empty space
+                 '<span class="nbv-width-sm nbv-table-row">&nbsp;</span>'  # empty space
                  )
                     .format(xface=xface, localversion=v))
 
@@ -152,7 +152,7 @@ class ExeConfig(ipy.HBox):
                                           value='in docker',
                                           button_style='info')
         self.selector.add_class('nbv-width-lg')
-        self.selector.add_class("nbmolviz-table-row")
+        self.selector.add_class("nbv-table-row")
 
         self.selector.observe(self._toggle, 'value')
         self.path = ipy.HTML(layout=ipy.Layout(width='150px', font_size='x-small'),
@@ -160,7 +160,7 @@ class ExeConfig(ipy.HBox):
 
         self.save_button = ipy.Button(description='Make default', layout=ipy.Layout(width='100px'))
         self.save_button.on_click(self.save_selection)
-        self.save_button.add_class('nbmolviz-table-row')
+        self.save_button.add_class('nbv-table-row')
 
         children = [self.maintext, self.selector, self.save_button]
 

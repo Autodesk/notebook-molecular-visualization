@@ -34,7 +34,7 @@ class DockerImageStatus(ipy.VBox):
 
         images = self._get_images()
         self.header = ipy.HTML(
-                '<span class="nbmolviz-table-header" style="width:950px"">Image status</span>',
+                '<span class="nbv-table-header" style="width:950px"">Image status</span>',
                 layout=ipy.Layout(align_items='flex-end'))
         super().__init__([self.header] + [DockerImageView(im) for im in sorted(images)])
 
@@ -44,7 +44,7 @@ class DockerImageStatus(ipy.VBox):
 
 
 class DockerImageView(ipy.HBox):
-    LOADER = "<div class='loader' />"
+    LOADER = "<div class='nbv-loader' />"
     DMKDIR = os.path.join(os.path.dirname(os.path.dirname(mdt.__file__)), 'DockerMakefiles')
 
     def __init__(self, image):
@@ -52,7 +52,7 @@ class DockerImageView(ipy.HBox):
         self.image = image
         self.status = ipy.HTML(layout=ipy.Layout(width="20px"))
         self.html = ipy.HTML(value=image, layout=ipy.Layout(width="400px"))
-        self.html.add_class('nbmolviz-monospace')
+        self.html.add_class('nbv-monospace')
         self.msg = ipy.HTML(layout=ipy.Layout(width='300px'))
         self.button = ipy.Button(layout=ipy.Layout(width='100px'))
         if mdt.compute.config.devmode:
