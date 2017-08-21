@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
-
 from __future__ import print_function, absolute_import, division
 from future.builtins import *
 from future import standard_library
-
 standard_library.install_aliases()
-
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,16 +26,20 @@ from .. import install
 MISSING = u'\u274C'
 INSTALLED = u"\u2705"
 
+
 class MdtExtensionConfig(VBox):
     def __init__(self):
+        self.reload_msg = ipywidgets.HTML(
+                "<b>Note:</b> To see the effects of any changes, you should first "
+                "save your notebook, then reload this page.")
         self.nbv_config = NBExtensionConfig('nbmolviz-js', 'nbmolviz', True)
         self.widgets_config = NBExtensionConfig('jupyter-js-widgets', 'widgetsnbextension')
-        super().__init__(children=[self.nbv_config, self.widgets_config])
+        super().__init__(children=[self.reload_msg, self.nbv_config, self.widgets_config])
 
 
 class NBExtensionConfig(VBox):
     FLAGS = {'environment': '--sys-prefix',
-             'system': '--sys',
+             'system': '--system',
              'user': '--user'}
 
     LABELS = {'environment': 'this virtualenv',
@@ -53,39 +54,72 @@ class NBExtensionConfig(VBox):
     state = traitlets.Dict()
 
     def __init__(self, extname, pyname, getversion=False):
-        from .. import install
+        self.displays = {}
         self.extname = extname
         self.pyname = pyname
+        self.getversion = getversion
 
         self.nbv_display = VBox()
         self.widgets_display = VBox()
+        self.warning = ipywidgets.HTML()
 
         super().__init__()
-
-        self.state = install.get_installed_versions(extname, getversion)
-
         children = [ipywidgets.HTML("<h4>%s</h4>" % self.extname),
                     ipywidgets.HTML(self.HEADER)]
 
-        for key, value in self.state.items():
-            props = {f:getattr(value, f) for f in value._fields}
-            if not props['installed']:
-                assert props['path'] is props['version'] is None
-                props['version'] = MISSING
-                props['path'] = 'not installed'
+        for location in install.nbextension_ordered_paths():
+            self.state = install.get_installed_versions(self.extname, self.getversion)
+            props = self._get_props(location)
+            self.displays[location] = ExtensionInstallLocation(self, props)
+            children.append(self.displays[location])
 
-            else:
-                props['path'] = props['path'].replace("/", "/<wbr />")
-                if not props['version']:
-                    props['version'] = '??'
-
-            props.update({'label':self.LABELS.get(key, key),
-                          'pyname': pyname,
-                          'flags': self.FLAGS[key]
-                          })
-            children.append(ExtensionInstallLocation(props))
+        children.append(self.warning)
 
         self.children = children
+        self._highlight_active()
+
+    def _update_state(self):
+        self.state = install.get_installed_versions(self.extname, self.getversion)
+
+    def _highlight_active(self):
+        num_installed = 0
+        for location in install.nbextension_ordered_paths():
+            props = self._get_props(location)
+            if props['installed']:
+                if num_installed == 0:
+                    self.displays[location].layout.border = 'solid #9feeb2'
+                num_installed += 1
+            if not props['installed'] or num_installed > 1:
+                self.displays[location].layout.border = '#000000'
+                self.displays[location].layout.send_state('border')
+
+        if num_installed == 0:
+            self.warning.value = (u'⚠ %s not installed - install it in one of the locations above.'
+                                  %self.extname)
+        elif num_installed == 1:
+            self.warning.value = ''
+        elif num_installed > 1:
+            self.warning.value = ('%s is installed in more than one location. Jupyter will use the '
+                                  'location highlighted above.')%self.extname
+
+    def _get_props(self, location):
+        props = {f: getattr(self.state[location], f) for f in self.state[location]._fields}
+        props['location'] = location
+        if not props['installed']:
+            assert props['path'] is props['version'] is None
+            props['version'] = MISSING
+            props['path'] = 'not installed'
+
+        else:
+            props['path'] = props['path'].replace("/", "/<wbr />")
+            if not props['version']:
+                props['version'] = '??'
+
+        props.update({'label': self.LABELS.get(location, location),
+                      'pyname': self.pyname,
+                      'flags': self.FLAGS[location]
+                      })
+        return props
 
 
 class ExtensionInstallLocation(HBox):
@@ -93,24 +127,42 @@ class ExtensionInstallLocation(HBox):
               '<span class="nbv-width-med nbv-monospace nbv-oflow-ellipsis nbv-table-row">{version}</span>'
               '<span class="nbv-width-lg nbv-monospace nbv-table-row">{path}</span>')
 
-    def __init__(self, props):
+    def __init__(self, parent, props):
         super().__init__(layout=ipywidgets.Layout(align_items='flex-end'))
+        self.parent = parent
         self.props = props
-        self.install_button = ipywidgets.Button(description='reinstall')
+        self.install_button = ipywidgets.Button()
         self.install_button.add_class('nbv-table-row')
         self.remove_button = ipywidgets.Button(description='remove')
         self.remove_button.add_class('nbv-table-row')
+        self.html = ipywidgets.HTML()
 
-        self.children = (ipywidgets.HTML(self.RENDER.format(**self.props)),
+        self.children = (self.html,
                          self.install_button, self.remove_button)
         self.install_button.on_click(self.install)
-        self.remove_button.on_click(self.install)
+        self.remove_button.on_click(self.uninstall)
+        self.rerender()
+
+    def rerender(self):
+        self.props = self.parent._get_props(self.props['location'])
+        if self.props['installed']:
+            self.install_button.description = 'reinstall'
+        else:
+            self.install_button.description = 'install'
+        self.html.value = self.RENDER.format(**self.props)
 
     def install(self, *args):
-        install.activate_extension(self.props['pyname'], self.props.flags)
+        install.activate_extension(self.props['pyname'], self.props['flags'])
+        self.parent._update_state()
+        self.parent._highlight_active()
+        self.rerender()
 
     def uninstall(self, *args):
-        install.deactivate_extension(self.props['pyname'], self.props.flags)
+        install.deactivate_extension(self.props['pyname'], self.props['flags'])
+        self.parent._update_state()
+        self.parent._highlight_active()
+        self.rerender()
+
 
 
 

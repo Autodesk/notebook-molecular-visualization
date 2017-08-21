@@ -1,9 +1,7 @@
 from __future__ import print_function, absolute_import, division
 from future.builtins import *
 from future import standard_library
-
 standard_library.install_aliases()
-
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,8 +85,7 @@ class PyLibConfig(ipy.HBox):
                  '<span class="nbv-table-row nbv-monospace nbv-width-sm">'
                  '                {xface.expectedversion}</span>'
                  '<span class="nbv-width-sm nbv-table-row">&nbsp;</span>'  # empty space
-                 )
-                    .format(xface=xface,
+                 ).format(xface=xface,
                             localversion=(version_string if self.xface.is_installed()
                                                           else MISSING)))
 

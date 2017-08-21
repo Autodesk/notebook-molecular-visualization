@@ -20,32 +20,43 @@ import nbmolviz
 
 PKGPATH = nbmolviz.__path__[0]
 
-
 EXTENSION_KWARGS = {'user': {'user':True},
                     'system': {},
-                    'environment': {'sys_prefix':True}}
+                    'environment': {'sys_prefix':True},}
 
 
 NbExtVersion = collections.namedtuple('NbExtVersion', 'name installed path version'.split())
 
 
+def nbextension_ordered_paths():
+    import jupyter_core.paths as jupypaths
+    jupyter_searchpath = jupypaths.jupyter_path()
+
+    paths = [('user', jupypaths.jupyter_data_dir()),
+             ('environment', jupypaths.ENV_JUPYTER_PATH[0]),
+             ('system', jupypaths.SYSTEM_JUPYTER_PATH[0])]
+
+    paths.sort(key=lambda x: jupyter_searchpath.index(x[1]))
+    return collections.OrderedDict(paths)
+
+
 def get_installed_versions(extname, getversion):
     """ Check if the required NBExtensions are installed. If not, prompt user for action.
     """
-    import jupyter_core.paths as jupypaths
     from notebook import nbextensions
 
-    installed = {k: nbextensions.check_nbextension(extname, **kwargs) for k,kwargs in EXTENSION_KWARGS.items()}
-    jupyter_dir = {'user': jupypaths.jupyter_data_dir(),
-                   'environment': jupypaths.ENV_JUPYTER_PATH[0],
-                   'system': jupypaths.SYSTEM_JUPYTER_PATH[0]}
+    search_paths = nbextension_ordered_paths()
+
+    installed = {k: nbextensions.check_nbextension(extname, **EXTENSION_KWARGS[k])
+                 for k in search_paths.keys()}
+
     paths = {}
     versions = {}
     for k in EXTENSION_KWARGS:
         if not installed[k]:
             continue
 
-        paths[k] = os.path.join(jupyter_dir[k], 'nbextensions', extname)
+        paths[k] = os.path.join(search_paths[k], 'nbextensions', extname)
 
         if getversion:
             versionfile = os.path.join(paths[k], 'VERSION')

@@ -31,8 +31,6 @@ def _jupyter_nbextension_paths():
         'require': 'nbmolviz-js/extension'
     }]
 
-# TODO: all code below shouldn't be in __init__.py
-
 
 def find_static_assets():
     from warnings import warn
