@@ -20,6 +20,7 @@ standard_library.install_aliases()
 import io
 import os
 import base64
+import threading
 
 import ipywidgets as ipy
 
@@ -84,27 +85,15 @@ class MDTConfig(VBox):
                                                                                   text=text)
 
 
-class ChangeLog(ipy.Box):
+class ChangeLog(HBox):
     def __init__(self):
         from pip._vendor.packaging import version
 
         super().__init__()
-        try:
-            current = version.parse(mdt.__version__)
-            latest = self.version_check()
-            if current >= latest:
-                versiontext = 'Up to date. Latest release: %s' % latest
-            else:
-                versiontext = ('New release available! '
-                               '(Current: %s, latest: %s <br>' % (current, latest) +
-                               '<b>Install it:</b> '
-                               '<span style="font-family:monospace">pip install -U moldesign'
-                               '</span>')
-        except Exception as e:
-            versiontext = '<b>Failed update check</b>: %s' % e
 
-        self.version = ipy.HTML(versiontext)
+        self.version = ipy.HTML('<div class="nbv-loader"></div>')
         self.textarea = ipy.Textarea(layout=ipy.Layout(width='700px', height='300px'))
+        threading.Thread(target=self.version_check).start()
 
         p1 = os.path.join(mdt.PACKAGEPATH, "HISTORY.rst")
         p2 = os.path.join(mdt.PACKAGEPATH, "..", "HISTORY.rst")
@@ -124,14 +113,36 @@ class ChangeLog(ipy.Box):
         self.textarea.disabled = True
         self.children = (self.version, self.textarea)
 
-    @staticmethod
-    def version_check():
-        """
+    def version_check(self):
+        """ Checks for updates (should run in a thread to avoid blocking everything else)
+
         References:
             http://code.activestate.com/recipes/577708-check-for-package-updates-on-pypi-works-best-in-pi/
         """
-        from pip._vendor.packaging import version
-        import xmlrpc.client
-        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
-        return version.parse(pypi.package_releases('moldesign')[0])
+        try:
+            from pip._vendor.packaging import version
+            import xmlrpc.client
+            pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+            latest = version.parse(pypi.package_releases('moldesign')[0])
+            current = version.parse(mdt.__version__)
+            if current >= latest:
+                self.version.value = 'Up to date. Latest release: %s' % latest
+            else:
+                self.version.value = ''.join(('New release available! ',
+                                              '<br><b>Installed:</b> '
+                                              '<span style="font-family:monospace">%s</span>'
+                                              % current,
+                                              '<br><b>Newest</b>: '
+                                              '<span style="font-family:monospace">%s</span> '
+                                              % latest,
+                                              '<br>Install it by running '
+                                              '<span style="font-family:monospace">'
+                                              'pip install -U moldesign</span> or '
+                                              '<span style="font-family:monospace">'
+                                              'conda install -U moldesign</span>'))
+
+        except Exception as e:
+            self.version.value = '<b>Failed update check</b>: %s' % e
+
+
 

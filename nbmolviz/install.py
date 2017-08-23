@@ -24,8 +24,12 @@ EXTENSION_KWARGS = {'user': {'user':True},
                     'system': {},
                     'environment': {'sys_prefix':True},}
 
+FLAGS = {'environment': '--sys-prefix',
+         'system': '--system',
+         'user': '--user'}
 
-NbExtVersion = collections.namedtuple('NbExtVersion', 'name installed path version'.split())
+NbExtVersion = collections.namedtuple(
+        'NbExtVersion', 'name installed path version enabled active writable'.split())
 
 
 def nbextension_ordered_paths():
@@ -40,33 +44,75 @@ def nbextension_ordered_paths():
     return collections.OrderedDict(paths)
 
 
-def get_installed_versions(extname, getversion):
+def jupyter_config_dirs():
+    import jupyter_core.paths as jupypaths
+    cdirs = {'user': jupypaths.jupyter_config_dir(),
+             'environment': jupypaths.ENV_CONFIG_PATH[0],
+             'system': jupypaths.SYSTEM_CONFIG_PATH[0]}
+
+    return {k: os.path.join(v, 'nbconfig') for k,v in cdirs.items()}
+
+
+def location_writable():
+    config_paths = jupyter_config_dirs()
+    ext_paths = nbextension_ordered_paths()
+    writable = {}
+    for location in ext_paths:
+        writable[location] = (
+            os.access(config_paths[location], os.W_OK | os.X_OK) and
+            os.access(ext_paths[location], os.W_OK | os.X_OK))
+    return writable
+
+
+def get_installed_versions(pyname, getversion):
     """ Check if the required NBExtensions are installed. If not, prompt user for action.
     """
+    import importlib
     from notebook import nbextensions
 
+    spec = importlib.import_module(pyname)._jupyter_nbextension_paths()[0]
+    extname = spec['dest']
+    require = spec['require']
+    assert spec['section'] == 'notebook'
+
     search_paths = nbextension_ordered_paths()
+    writable = location_writable()
 
     installed = {k: nbextensions.check_nbextension(extname, **EXTENSION_KWARGS[k])
                  for k in search_paths.keys()}
 
+    config_dirs = jupyter_config_dirs()
     paths = {}
     versions = {}
-    for k in EXTENSION_KWARGS:
-        if not installed[k]:
+    enabled = {}
+    active = {}
+    found_active = False
+    for location in EXTENSION_KWARGS:
+        if not installed[location]:
+            active[location] = False
             continue
 
-        paths[k] = os.path.join(search_paths[k], 'nbextensions', extname)
+        active[location] = not found_active
+        found_active = True
+        paths[location] = os.path.join(search_paths[location], 'nbextensions', extname)
+        config = nbextensions.BaseJSONConfigManager(config_dir=config_dirs[location])
+        enabled[location] = require in config.get('notebook').get('load_extensions', {})
 
         if getversion:
-            versionfile = os.path.join(paths[k], 'VERSION')
-            if installed[k] and os.path.exists(versionfile):
+            versionfile = os.path.join(paths[location], 'VERSION')
+            if installed[location] and os.path.exists(versionfile):
                 with open(versionfile, 'r') as pfile:
-                    versions[k] = pfile.read().strip()
+                    versions[location] = pfile.read().strip()
             else:
-                versions[k] = 'pre-0.7'
+                versions[location] = 'pre-0.7'
 
-    return {k: NbExtVersion(extname, installed[k], paths.get(k, None), versions.get(k, None))
+    return {k: NbExtVersion(extname,
+                            installed[k],
+                            paths.get(k, None),
+                            versions.get(k, None),
+                            enabled.get(k, False),
+                            active[k],
+                            writable[k])
             for k in installed}
 
 
