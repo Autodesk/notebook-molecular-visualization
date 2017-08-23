@@ -49,38 +49,48 @@ EXTENSION_DEPS = ['widgetsnbextension', 'nbmolviz']
 
 
 def extensions_install_check():
-    from .install import get_installed_versions, FLAGS
+    from .install import get_installed_versions
 
     versions = collections.OrderedDict(
             (dep, get_installed_versions(dep, dep == 'nbmolviz'))
             for dep in EXTENSION_DEPS)
     state = {dep: {'installed': False, 'enabled': False} for dep in EXTENSION_DEPS}
-    warnings = []
 
     for dep in EXTENSION_DEPS:
-        installed = enabled = False
         for location, version in versions[dep].items():
-            if not installed and version.installed:
-                installed = location
-                state[dep]['installed'] = True
+            if not state[dep]['installed'] and version.installed:
+                state[dep]['installed'] = location
+                state[dep]['version'] = version.version
 
-            if not enabled and version.enabled:
-                enabled = location
-                state[dep]['enabled'] = True
+            if not state[dep]['enabled'] and version.enabled:
+                state[dep]['enabled'] = location
+
+    return state
+
+
+def print_extension_warnings():
+    from . import install
+    state = extensions_install_check()
+    preferred_loc = install.preferred_install_location()
+    warnings = []
+
+    for dep in ['widgetsnbextension', 'nbmolviz']:
+        installed = state[dep]['installed']
+        enabled = state[dep]['enabled']
 
         if not installed:
             warnings.append('- the "{dep}" notebook extension is not installed. To install it, run:'
-                            '\n   $ jupyter nbextension install {dep} --python --sys-prefix'
-                            .format(dep=dep))
+                            '\n   $ jupyter nbextension install {dep} --python {flag}'
+                            .format(dep=dep, flag=install.FLAGS[preferred_loc]))
 
         if not enabled:
             if installed:
-                flag = FLAGS[installed]
+                flag = install.FLAGS[installed]
                 warnings.append(
                         '- the "{dep}" notebook extension is not enabled. '
                         'To enable it, run:'.format(dep=dep))
             else:
-                flag = '--sys-prefix'
+                flag = install.FLAGS[preferred_loc]
 
             warnings[-1] += ('\n   $ jupyter nbextension enable {dep} --python {flag}'
                              .format(dep=dep, flag=flag))
@@ -93,7 +103,23 @@ def extensions_install_check():
         print('\n\n'.join(warnings))
         print('\nSave your notebook and reload the page after making these changes.')
 
-    return state
+
+def extension_version_check():
+    from .install import get_installed_versions
+    versions = get_installed_versions('nbmolviz', True)
+
+    active = None
+    for loc, vers in versions.items():
+        if vers.active:
+            active = vers
+            break
+
+    if active is None:
+        raise ValueError("No extensions are active")
+
+
+
+
 
 
 LAYOUT_PROPS = set(("height width max_height max_width min_height min_width "

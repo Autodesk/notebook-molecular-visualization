@@ -64,6 +64,37 @@ def location_writable():
     return writable
 
 
+def preferred_install_location():
+    versions = get_installed_versions('nbmolviz', True)
+    for loc in 'environment user system'.split():
+        if versions[loc].writable:
+            preferred_loc = loc
+            return preferred_loc
+    else:
+        return None
+
+
+def autoinstall():
+    """ Attempt to install and activate the notebook extensions
+
+    Raises:
+        ValueError: if there are no writable install locations
+    """
+    from . import widget_utils as wu
+    preferred = preferred_install_location()
+    if preferred is None:
+        raise ValueError("Cannot install extensions - none of the directories are writable!")
+
+    state = wu.extensions_install_check()
+    for dep in state:
+        if not state[dep]['installed'] or state[dep]['enabled'] != state[dep]['installed']:
+            print("Activating '%s' extensions:" % dep)
+            activate_extension(dep, FLAGS[preferred])
+        else:
+            print("'%s' extensions already activated." % dep)
+
+
+
 def get_installed_versions(pyname, getversion):
     """ Check if the required NBExtensions are installed. If not, prompt user for action.
     """
