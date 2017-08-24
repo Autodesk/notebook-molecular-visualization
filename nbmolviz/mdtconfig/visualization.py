@@ -92,7 +92,7 @@ class NBExtensionConfig(VBox):
 
         if num_installed == 0:
             self.warning.value = (
-                u'⚠ %s extensions not installed - install it in one of the locations above.'
+                u'⚠ %s extensions must be installed for notebook visualization.'
                 % self.pyname)
         elif num_installed == 1:
             self.warning.value = ''
@@ -113,7 +113,9 @@ class NBExtensionConfig(VBox):
         else:
             props['path'] = props['path'].replace("/", "/<wbr />")
             if not props['version']:
-                props['version'] = '??'
+                props['version'] = INSTALLED
+            else:
+                props['version'] = '%s<p>%s</p>' % (props['version'], INSTALLED)
 
             props['enabled'] = INSTALLED if props['enabled'] else MISSING
 

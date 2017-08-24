@@ -54,22 +54,24 @@ def extensions_install_check():
     versions = collections.OrderedDict(
             (dep, get_installed_versions(dep, dep == 'nbmolviz'))
             for dep in EXTENSION_DEPS)
-    state = {dep: {'installed': False, 'enabled': False} for dep in EXTENSION_DEPS}
+    state = {dep: {'installed': False, 'enabled': False, 'version': None}
+             for dep in EXTENSION_DEPS}
 
     for dep in EXTENSION_DEPS:
         for location, version in versions[dep].items():
             if not state[dep]['installed'] and version.installed:
                 state[dep]['installed'] = location
                 state[dep]['version'] = version.version
-
             if not state[dep]['enabled'] and version.enabled:
                 state[dep]['enabled'] = location
 
     return state
 
 
-def print_extension_warnings():
+def print_extension_warnings(stream=sys.stdout):
     from . import install
+    from . import __version__ as nbv_version
+
     state = extensions_install_check()
     preferred_loc = install.preferred_install_location()
     warnings = []
@@ -79,47 +81,35 @@ def print_extension_warnings():
         enabled = state[dep]['enabled']
 
         if not installed:
-            warnings.append('- the "{dep}" notebook extension is not installed. To install it, run:'
-                            '\n   $ jupyter nbextension install {dep} --python {flag}'
+            warnings.append('- the "{dep}" notebook extension is not installed.'
                             .format(dep=dep, flag=install.FLAGS[preferred_loc]))
 
         if not enabled:
             if installed:
                 flag = install.FLAGS[installed]
-                warnings.append(
-                        '- the "{dep}" notebook extension is not enabled. '
-                        'To enable it, run:'.format(dep=dep))
+                warnings.append('- the "{dep}" notebook extension is not enabled. ')
             else:
                 flag = install.FLAGS[preferred_loc]
 
-            warnings[-1] += ('\n   $ jupyter nbextension enable {dep} --python {flag}'
-                             .format(dep=dep, flag=flag))
-
-    if state['widgetsnbextension']['installed'] and state['widgetsnbextension']['enabled']:
-        warnings.append('You can also perform these tasks using `moldesign.configure()`')
+        if (dep == 'nbmolviz' and enabled and installed):
+            installed_version = state[dep]['version']
+            if installed_version != nbv_version:
+                warnings.append('- NBMolViz notebook extensions are out of date (extensions are'
+                                ' version %s, but nbmolviz expected %s)' %
+                                (installed_version, nbv_version))
 
     if warnings:
-        print('WARNING: notebook visualizations are currently disabled because:\n')
-        print('\n\n'.join(warnings))
-        print('\nSave your notebook and reload the page after making these changes.')
-
-
-def extension_version_check():
-    from .install import get_installed_versions
-    versions = get_installed_versions('nbmolviz', True)
-
-    active = None
-    for loc, vers in versions.items():
-        if vers.active:
-            active = vers
-            break
-
-    if active is None:
-        raise ValueError("No extensions are active")
-
-
-
-
+        print('WARNING: notebook visualizations may not function correctly because:',
+              file=stream)
+        print('\n'.join(warnings),
+              file=stream)
+        print('\nYou may be able to correct these issues by running this command on the command line:\n'
+              '    $ python -m nbmolviz activate\n\n'
+              'or by running the following python commands:\n'
+              '    >>> import nbmolviz.install\n'
+              '    >>> nbmolviz.install.autoinstall()\n'
+              'Afterwards, reload the notebook in your web browser.',
+              file=stream)
 
 
 LAYOUT_PROPS = set(("height width max_height max_width min_height min_width "

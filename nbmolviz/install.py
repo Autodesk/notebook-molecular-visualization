@@ -80,18 +80,32 @@ def autoinstall():
     Raises:
         ValueError: if there are no writable install locations
     """
+    from moldesign import compute
+    from . import __version__ as nbv_version
     from . import widget_utils as wu
+
     preferred = preferred_install_location()
     if preferred is None:
         raise ValueError("Cannot install extensions - none of the directories are writable!")
 
     state = wu.extensions_install_check()
     for dep in state:
+        do_install = False
         if not state[dep]['installed'] or state[dep]['enabled'] != state[dep]['installed']:
             print("Activating '%s' extensions:" % dep)
-            activate_extension(dep, FLAGS[preferred])
+            do_install = True
+        elif (dep == 'nbmolviz' and
+                  not compute.config.get('skip_nbmolviz_version_check', False) and
+                  state[dep]['installed'] and
+                  state[dep]['version'] != nbv_version):
+            print("Updating 'nbmolviz' extensions from %s to %s:" % (state[dep]['version'],
+                                                                     nbv_version))
+            do_install = True
         else:
             print("'%s' extensions already activated." % dep)
+
+        if do_install:
+            activate_extension(dep, FLAGS[preferred])
 
 
 
