@@ -77,9 +77,7 @@ def main():
 
     elif args.command == 'activate':
         if not (args.sys_prefix or args.user or args.sys):
-            print('Please indicate which environment to activate nbmolviz in.')
-            parser.print_help()
-            sys.exit(10)
+            install.autoinstall()
 
         if args.sys_prefix:
             install.activate('--sys-prefix')

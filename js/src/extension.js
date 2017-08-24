@@ -16,7 +16,19 @@ if (window.require) {
     });
 }
 
+function loadJupyterExtension () {
+    // Load CSS:
+    $('<link/>')
+        .appendTo('head')
+        .attr({
+            id: 'nbmolviz_css',
+            rel: 'stylesheet',
+            type: 'text/css',
+            href: window.require.toUrl('nbextensions/nbmolviz-js/nbmolviz.css')
+        });
+}
+
 // Export the required load_ipython_extension
 module.exports = {
-    load_ipython_extension: function() {}
+    load_ipython_extension: loadJupyterExtension
 };

@@ -14,10 +14,8 @@ from __future__ import print_function
 # limitations under the License.
 import os as _os
 
-MDTVERSION = '0.8.0'
-
 # package metadata
-from nbmolviz import _version
+from . import _version
 __version__ = _version.get_versions()['version']
 __copyright__ = "Copyright 2017 Autodesk Inc."
 __license__ = "Apache 2.0"
@@ -32,8 +30,6 @@ def _jupyter_nbextension_paths():
         'dest': 'nbmolviz-js',
         'require': 'nbmolviz-js/extension'
     }]
-
-# TODO: all code below shouldn't be in __init__.py
 
 
 def find_static_assets():

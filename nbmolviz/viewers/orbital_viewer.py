@@ -78,20 +78,27 @@ class OrbitalViewer(ViewerContainer):
 
     @traitlets.observe('current_orbital', 'numpoints')
     def _redraw_orbital(self, *args):
-        if self.current_orbital is None:
-            self.viewer.cubefile = ''
-            return
+        self.status_element.value = '<div class="nbv-loader"/>'
+        try:
+            if self.current_orbital is None:
+                self.viewer.cubefile = ''
+                return
 
-        orbkey = (id(self.current_orbital), self.numpoints)
+            orbkey = (id(self.current_orbital), self.numpoints)
 
-        if orbkey not in self._cached_cubefiles:
-            grid, values = self._calc_orb_grid(self.current_orbital)
-            cubefile = self._grid_to_cube(grid, values)
-            self._cached_cubefiles[orbkey] = cubefile
+            if orbkey not in self._cached_cubefiles:
+                grid, values = self._calc_orb_grid(self.current_orbital)
+                cubefile = self._grid_to_cube(grid, values)
+                self._cached_cubefiles[orbkey] = cubefile
+            else:
+                cubefile = self._cached_cubefiles[orbkey]
+
+            self.viewer.cubefile = cubefile
+        except Exception as e:
+            self.status_element.value = u'⚠ %s' % e
         else:
-            cubefile = self._cached_cubefiles[orbkey]
+            self.status_element.value = ''
 
-        self.viewer.cubefile = cubefile
 
     @traitlets.observe('negative_color',
                        'positive_color',
@@ -183,6 +190,7 @@ class OrbitalViewer(ViewerContainer):
         #   This is therefore disabled until we can display listboxes again. -- AMV 7/16
 
         # Orbital set selector
+        self.status_element = ipy.HTML(layout=ipy.Layout(width='inherit', height='20px'))
         orbtype_label = ipy.Label("Orbital set:")
         self.type_dropdown = ipy.Dropdown(options=list(self.wfn.orbitals.keys()))
         initialtype = 'canonical'
@@ -223,7 +231,8 @@ class OrbitalViewer(ViewerContainer):
         traitlets.directional_link((self, 'numpoints'), (self.orb_resolution, 'value'),
                                    transform=str)
 
-        self.uipane = ipy.VBox([orbtype_label, self.type_dropdown,
+        self.uipane = ipy.VBox([self.status_element,
+                                orbtype_label, self.type_dropdown,
                                 orblist_label, self.orblist,
                                 isoval_label, self.isoval_selector,
                                 opacity_label, self.opacity_selector,

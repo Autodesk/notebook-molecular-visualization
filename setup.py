@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from builtins import str
 import os
+import shutil
 import sys
 import versioneer
 from setuptools import setup, find_packages, Command
@@ -110,7 +111,9 @@ class NPM(Command):
 
     targets = [
         os.path.join(here, 'nbmolviz', 'static', 'extension.js'),
-        os.path.join(here, 'nbmolviz', 'static', 'index.js')
+        os.path.join(here, 'nbmolviz', 'static', 'index.js'),
+        os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css'),
+        verfile_path
     ]
 
     def initialize_options(self):
@@ -149,15 +152,19 @@ class NPM(Command):
             check_call(['npm', 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
             os.utime(self.node_modules, None)
 
+        # TODO: do this with NPM/webpack, not in python
+        shutil.copy(os.path.join(node_root, 'src', 'nbmolviz.css'),
+                    os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css'))
+
+        with open(self.verfile_path, 'w') as verfile:
+            verfile.write(VERSION)
+
         for t in self.targets:
             if not os.path.exists(t):
                 msg = 'Missing file: %s' % t
                 if not has_npm:
                     msg += '\nnpm is required to build a development version of nbmolviz-js'
                 raise ValueError(msg)
-
-        with open(self.verfile_path, 'w') as verfile:
-            verfile.write(VERSION)
 
         print('Wrote version "%s" to "%s"' % (VERSION, self.verfile_path))
 
