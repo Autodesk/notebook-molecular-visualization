@@ -23,8 +23,14 @@ from ..widget_utils import process_widget_kwargs
 from .images import DockerImageStatus
 
 
+SPINNER = '<div class="nbv-loader" />'
+CONNECTED = '<span style="color:green">connected</span>'
+DISCONNECTED = '<span style="color:red">disconnected</span>'
+
 class DockerConfig(VBox):
     def __init__(self):
+        self.client = None
+        self.warning = ipy.HTML(description='<b>Engine status:</b>', value=SPINNER)
         self.devmode_label = ipy.Label('Use local docker images (developer mode)',
                                        layout=ipy.Layout(width='100%'))
         self.devmode_button = ipy.Checkbox(value=mdt.compute.config.devmode,
@@ -40,7 +46,7 @@ class DockerConfig(VBox):
         self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='100%'))
         self.engine_config_value.add_class('nbv-monospace')
 
-        self.image_box = ipy.Box(children=(DockerImageStatus(),))
+        self.image_box = ipy.Box()
 
         self._reset_config_button = ipy.Button(description='Reset',
                                                tooltip='Reset to applied value')
@@ -48,23 +54,21 @@ class DockerConfig(VBox):
                                                 tooltip='Apply for this session')
         self._save_changes_button = ipy.Button(description='Make default',
                                                tooltip='Make this the default for new sessions')
-        self._test_button = ipy.Button(description='Test connection',
-                                       tooltip='Test connection to docker engine')
         self._reset_config_button.on_click(self.reset_config)
         self._apply_changes_button.on_click(self.apply_config)
         self._save_changes_button.on_click(self.save_config)
-        self._test_button.on_click(self.test_connection)
 
-        self.children = [VBox([self.engine_config_description,
+        self.children = [self.warning,
+                         VBox([self.engine_config_description,
                                self.engine_config_value]),
                          HBox([self._reset_config_button,
                                self._apply_changes_button,
-                               self._test_button,
                                self._save_changes_button]),
                          HBox([self.devmode_button, self.devmode_label]),
                          self.image_box]
         self.reset_config()
         super().__init__(children=self.children)
+        self.connect_to_engine()
 
     def reset_config(self, *args):
         """ Reset configuration in UI widget to the stored values
@@ -74,19 +78,24 @@ class DockerConfig(VBox):
     def set_devmode(self, *args):
         self.image_box.children = ()
         mdt.compute.config.devmode = self.devmode_button.value
-        self.image_box.children = (DockerImageStatus(),)
+        self.image_box.children = (DockerImageStatus(self.client),)
 
     def apply_config(self, *args):
         mdt.compute.config['default_docker_host'] = self.engine_config_value.value
-        mdt.compute.reset_compute_engine()
+        self.connect_to_engine()
 
-    def test_connection(self, *args):
-        self.apply_config()
-        engine = mdt.compute.default_engine
-        if engine is None:
-            raise ValueError('Failed to create compute engine with current configuration')
-        engine.test_connection()
-        print("SUCCESS: %s is accepting jobs" % engine)
+    def connect_to_engine(self, *args):
+        self.warning.value = SPINNER
+        self.client = None
+        try:
+            mdt.compute.reset_compute_engine()
+            self.client = mdt.compute.get_engine().client
+            self.client.ping()
+        except (mdt.exceptions.DockerError, AttributeError):
+            self.warning.value = DISCONNECTED
+        else:
+            self.image_box.children = (DockerImageStatus(self.client),)
+            self.warning.value = CONNECTED
 
     def save_config(self, *args):
         mdt.compute.update_saved_config(dockerhost=self.engine_config_value.value)

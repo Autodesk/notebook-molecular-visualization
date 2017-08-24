@@ -29,13 +29,14 @@ WARNING = u"⚠️"
 
 
 class DockerImageStatus(ipy.VBox):
-    def __init__(self):
+    def __init__(self, client):
+        self.client = client
 
         images = self._get_images()
         self.header = ipy.HTML(
                 '<span class="nbv-table-header" style="width:950px"">Image status</span>',
                 layout=ipy.Layout(align_items='flex-end'))
-        super().__init__([self.header] + [DockerImageView(im) for im in sorted(images)])
+        super().__init__([self.header] + [DockerImageView(im, client) for im in sorted(images)])
 
     def _get_images(self):
         return set(p.get_docker_image_path()
@@ -46,8 +47,9 @@ class DockerImageView(ipy.HBox):
     LOADER = "<div class='nbv-loader' />"
     DMKDIR = os.path.join(os.path.dirname(os.path.dirname(mdt.__file__)), 'DockerMakefiles')
 
-    def __init__(self, image):
+    def __init__(self, image, client):
         self._err = False
+        self._client = client
         self.image = image
         self.status = ipy.HTML(layout=ipy.Layout(width="20px"))
         self.html = ipy.HTML(value=image, layout=ipy.Layout(width="400px"))
@@ -59,7 +61,6 @@ class DockerImageView(ipy.HBox):
         else:
             self.button.on_click(self.pull)
         self._reactivate_button()
-        self._client = mdt.compute.get_engine().client
         self._set_status_value()
         super().__init__(children=[self.status, self.html, self.button, self.msg])
 
@@ -138,26 +139,34 @@ class DockerImageView(ipy.HBox):
 
     def _reactivate_button(self):
         self.button.disabled = False
-        if mdt.compute.config.devmode:
-            self.button.description = 'Rebuild image'
+        if self._client is None:
+            self.button.description = 'no connection'
+            self.button.disabled = True
+            self.button.style.button_color = '#FAFAFA'
         else:
-            self.button.description = 'Pull image'
-        self.button.style.font_weight = '400'
-        self.button.style.button_color = '#9feeb2'
+            if mdt.compute.config.devmode:
+                self.button.description = 'Rebuild image'
+            else:
+                self.button.description = 'Pull image'
+            self.button.style.font_weight = '400'
+            self.button.style.button_color = '#9feeb2'
 
 
     def _set_status_value(self):
         from docker import errors
 
-        try:
-            imginfo = self._client.inspect_image(self.image)
-        except errors.ImageNotFound:
-            if self._err:
-                self.status.value = WARNING
-            else:
-                self.status.value = MISSING
+        if self._client is None:
+            self.status.value = 'n/a'
         else:
-            self.status.value = INSTALLED
+            try:
+                imginfo = self._client.inspect_image(self.image)
+            except errors.ImageNotFound:
+                if self._err:
+                    self.status.value = WARNING
+                else:
+                    self.status.value = MISSING
+            else:
+                self.status.value = INSTALLED
 
     def _watch_pull_logs(self, stream):
         found = set()

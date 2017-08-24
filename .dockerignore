@@ -8,7 +8,7 @@
 **/.ipynb_checkpoints
 /build
 *.egg-info
-/dist
+dist
 **/.DS_Store
 **/npm-debug.log
 **/.cache/
