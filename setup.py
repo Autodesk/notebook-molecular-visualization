@@ -112,7 +112,8 @@ class NPM(Command):
     targets = [
         os.path.join(here, 'nbmolviz', 'static', 'extension.js'),
         os.path.join(here, 'nbmolviz', 'static', 'index.js'),
-        os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css')
+        os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css'),
+        verfile_path
     ]
 
     def initialize_options(self):
@@ -146,14 +147,17 @@ class NPM(Command):
         with open(vjson, 'w') as vjsonfile:
             vjsonfile.write('{"version":"%s"}\n' % VERSION)
 
-        # TODO: do this with NPM/webpack, not in python
-        shutil.copy(os.path.join(node_root, 'src', 'nbmolviz.css'),
-                    os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css'))
-
         if self.should_run_npm_install():
             log.info("Installing build dependencies with npm.  This may take a while...")
             check_call(['npm', 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
             os.utime(self.node_modules, None)
+
+        # TODO: do this with NPM/webpack, not in python
+        shutil.copy(os.path.join(node_root, 'src', 'nbmolviz.css'),
+                    os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css'))
+
+        with open(self.verfile_path, 'w') as verfile:
+            verfile.write(VERSION)
 
         for t in self.targets:
             if not os.path.exists(t):
@@ -161,9 +165,6 @@ class NPM(Command):
                 if not has_npm:
                     msg += '\nnpm is required to build a development version of nbmolviz-js'
                 raise ValueError(msg)
-
-        with open(self.verfile_path, 'w') as verfile:
-            verfile.write(VERSION)
 
         print('Wrote version "%s" to "%s"' % (VERSION, self.verfile_path))
 
