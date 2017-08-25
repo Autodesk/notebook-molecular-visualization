@@ -54,8 +54,9 @@ class DockerImageView(ipy.HBox):
         self.status = ipy.HTML(layout=ipy.Layout(width="20px"))
         self.html = ipy.HTML(value=image, layout=ipy.Layout(width="400px"))
         self.html.add_class('nbv-monospace')
+        self.html.add_class('nbv-table-row')
         self.msg = ipy.HTML(layout=ipy.Layout(width='300px'))
-        self.button = ipy.Button(layout=ipy.Layout(width='100px'))
+        self.button = ipy.Button(layout=ipy.Layout(width='150px'))
         if mdt.compute.config.devmode:
             self.button.on_click(self.rebuild)
         else:

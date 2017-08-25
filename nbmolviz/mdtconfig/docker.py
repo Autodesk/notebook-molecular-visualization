@@ -23,18 +23,18 @@ from ..widget_utils import process_widget_kwargs
 from .images import DockerImageStatus
 
 
-SPINNER = '<div class="nbv-loader" />'
-CONNECTED = '<span style="color:green">connected</span>'
-DISCONNECTED = '<span style="color:red">disconnected</span>'
+SPINNER = '<b>Engine status:</b> <div class="nbv-loader" />'
+CONNECTED = '<b>Engine status:</b> <span style="color:green">connected</span>'
+DISCONNECTED = '<b>Engine status:</b> <span style="color:red">disconnected</span>'
+
 
 class DockerConfig(VBox):
     def __init__(self):
         self.client = None
-        self.warning = ipy.HTML(description='<b>Engine status:</b>', value=SPINNER)
-        self.devmode_label = ipy.Label('Use local docker images (developer mode)',
-                                       layout=ipy.Layout(width='100%'))
+        self.warning = ipy.HTML(value=SPINNER)
         self.devmode_button = ipy.Checkbox(value=mdt.compute.config.devmode,
-                                           layout=ipy.Layout(width='15px'))
+                                           description="Use local docker images (developer mode)",
+                                           layout=ipy.Layout(width='100%'))
         self.devmode_button.observe(self.set_devmode, 'value')
 
         self.engine_config_description = ipy.HTML('Docker host with protocol and port'
@@ -64,7 +64,7 @@ class DockerConfig(VBox):
                          HBox([self._reset_config_button,
                                self._apply_changes_button,
                                self._save_changes_button]),
-                         HBox([self.devmode_button, self.devmode_label]),
+                         self.devmode_button,
                          self.image_box]
         self.reset_config()
         super().__init__(children=self.children)
