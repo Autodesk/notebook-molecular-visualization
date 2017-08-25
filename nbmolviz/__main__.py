@@ -51,7 +51,7 @@ def main():
 
     if args.command == 'check':
         print('Expected version:', _version.get_versions()['version'])
-        versions = install.get_installed_versions('nbmolviz-js', True)
+        versions = install.get_installed_versions('nbmolviz', True)
         foundone = False
         for key, vers in versions.items():
             if vers.installed:
