@@ -85,10 +85,14 @@ class UnitText(ipy.Box):
     VALID = u"\u2705"
 
     def __init__(self, value=None, units=None, **kwargs):
+        from moldesign import units as u
+
         kwargs.setdefault('display', 'flex')
         kwargs.setdefault('flex_flow','row wrap')
-        super().__init__(layout=ipy.Layout(display='flex', flex_flow='row wrap'),
-                                       **process_widget_kwargs(kwargs))
+        layout = kwargs.pop('layout', ipy.Layout())
+        layout.display = 'flex'
+        layout.flex_flow = 'row wrap'
+        super().__init__(layout=layout, **kwargs)
         self.textbox = ipy.Text()
         self.textbox.observe(self._validate, 'value')
         self._error_msg = None
@@ -106,6 +110,8 @@ class UnitText(ipy.Box):
             self.value = value
 
     def _validate(self, change):
+        from moldesign import units as u
+
         import pint
 
         self._validated_value = None
