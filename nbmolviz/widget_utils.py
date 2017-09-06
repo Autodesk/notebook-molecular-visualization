@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import, division
-
+from future.builtins import *
 from future import standard_library
-
 standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
@@ -70,7 +69,7 @@ def extensions_install_check():
 
 def print_extension_warnings(stream=sys.stdout):
     import pkg_resources
-    from moldesign import widgets as mdtwidgets
+    from moldesign import _NBMOLVIZ_EXPECTED_VERSION
     from . import install
     from . import __version__ as nbv_version
 
@@ -91,7 +90,7 @@ def print_extension_warnings(stream=sys.stdout):
                 warnings.append('- the "{dep}" notebook extension is not enabled. ')
 
         if dep == 'nbmolviz':
-            expected_py_version = pkg_resources.parse_version(mdtwidgets.NBMOLVIZ_EXPECTED_VERSION)
+            expected_py_version = pkg_resources.parse_version(_NBMOLVIZ_EXPECTED_VERSION)
             installed_py_version = pkg_resources.parse_version(nbv_version)
             if expected_py_version != installed_py_version:
                 warnings.append(

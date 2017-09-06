@@ -1,3 +1,7 @@
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -180,7 +184,7 @@ def lift_iopub_rate_limit():
         print("Creating jupyter config file at %s" % nbcfgfile)
         cmd = "jupyter notebook --generate-config"
         print(" > %s" % cmd)
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd.split())
     else:
         for i in range(100):
             # if "jupyter_notebook_config.py.bak.N" exists for N=0...99, we'll overwrite # 99
@@ -192,9 +196,6 @@ def lift_iopub_rate_limit():
         print('Previous configuration file saved to %s' % bakfile)
 
     os.rename(nbcfgfile, bakfile)
-
-    print('Adding these lines to the bottom of %s:' % nbcfgfile)
-    print(textwrap.indent(IOPUB_LINES, ' >   '), end='')
 
     with open(bakfile, 'r') as bakstream, open(nbcfgfile, 'w') as modstream:
         found = False
@@ -216,7 +217,9 @@ def lift_iopub_rate_limit():
         if not found:
             modstream.write(IOPUB_LINES)
 
-    print('These changes will take effect the next time the Jupyter server is started.')
+    print('The following lines lines were added to the bottom of %s:' % nbcfgfile)
+    print(textwrap.indent(IOPUB_LINES, ' >   '), end='')
+    print("\nThese changes will take effect the next time Jupyter is launched.")
 
 
 def activate(flags):
