@@ -46,7 +46,7 @@ class Configurator(ipy.Box):
         self.paramlist = paramlist
         self.paramdefs = paramdefs
 
-        self.apply_button = ipy.Button(description='Apply')
+        self.apply_button = ipy.Button(description='Apply', button_style='primary')
         self.apply_button.on_click(self.apply_values)
 
         self.reset_button = ipy.Button(description='Reset')
