@@ -95,8 +95,13 @@ class Configurator(ipy.Box):
         def cleanse(v):
             if isinstance(v, (float,int)): return v
             else: return str(v)
-        return yaml.dump({k: cleanse(v) for k, v in self.paramlist.items()},
-                         default_flow_style=False)
+
+        to_print = {}
+        for k, s in self.selectors.items():
+            if s.paramdef.relevance is None or s.paramdef.relevance(self.paramlist):
+                to_print[k] = cleanse(self.paramlist[k])
+
+        return yaml.dump(to_print, default_flow_style=False)
 
     def show_relevant_fields(self):
         for s in self.selectors.values():

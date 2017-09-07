@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import, division
+from __future__ import print_function, absolute_import, division, unicode_literals
 from future.builtins import *
 from future import standard_library
 standard_library.install_aliases()
@@ -170,8 +170,9 @@ c.NotebookApp.iopub_data_rate_limit = 100000000000
 
 
 def lift_iopub_rate_limit():
-    import textwrap
     from jupyter_core import paths as jupypaths
+    from .utils import indent
+
     config_dir = jupypaths.jupyter_config_dir()
     nbcfgfile = os.path.join(config_dir, 'jupyter_notebook_config.py')
     backup_basepath = nbcfgfile+'.bak'
@@ -218,7 +219,7 @@ def lift_iopub_rate_limit():
             modstream.write(IOPUB_LINES)
 
     print('The following lines lines were added to the bottom of %s:' % nbcfgfile)
-    print(textwrap.indent(IOPUB_LINES, ' >   '), end='')
+    print(indent(IOPUB_LINES, ' >   '), end='')
     print("\nThese changes will take effect the next time Jupyter is launched.")
 
 
@@ -229,7 +230,7 @@ def activate(flags):
         if exc.returncode == 2:
             raise PermissionError(
                     ('ERROR - failed to enable the widget extensions with %s.' % flags) +
-                  ' Try rerunning the command with \"sudo\"!')
+                    ' Try rerunning the command with \"sudo\"!')
         else:
             raise
 
