@@ -160,6 +160,7 @@ class ResidueSelector(SelBase):
 
     def __init__(self, mol):
         super().__init__(mol)
+        self.viewer.selection_type = 'Residue'
 
         self.selection_type = ipy.Dropdown(description='Clicks select:',
                                            value=self.viewer.selection_type,
