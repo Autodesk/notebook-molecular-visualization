@@ -87,7 +87,8 @@ def print_extension_warnings(stream=sys.stdout):
 
         if not enabled:
             if installed:
-                warnings.append('- the "{dep}" notebook extension is not enabled. ')
+                warnings.append('- the "{dep}" notebook extension is not enabled.'
+                                .format(dep=dep))
 
         if dep == 'nbmolviz':
             expected_py_version = pkg_resources.parse_version(_NBMOLVIZ_EXPECTED_VERSION)

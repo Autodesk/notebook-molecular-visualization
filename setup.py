@@ -1,8 +1,6 @@
 # Adapted from https://github.com/jupyter/widget-cookiecutter
 
 from __future__ import print_function
-
-from builtins import str
 import os
 import shutil
 import sys
@@ -201,7 +199,6 @@ args = dict(
         author_email='moleculardesigntoolkit@autodesk.com',
         description='Notebook Molecular Visualization: '
                     'ipywidgets-based molecular visualization for molecular structures',
-        keywords=KEYWORDS
-)
+        keywords=KEYWORDS)
 
 setup(**args)
