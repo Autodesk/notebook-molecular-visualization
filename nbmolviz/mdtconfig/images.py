@@ -152,22 +152,13 @@ class DockerImageView(ipy.HBox):
             self.button.style.font_weight = '400'
             self.button.style.button_color = '#9feeb2'
 
-
     def _set_status_value(self):
-        from docker import errors
-
+        from moldesign.compute import image_present
         if self._client is None:
             self.status.value = 'n/a'
         else:
-            try:
-                imginfo = self._client.inspect_image(self.image)
-            except errors.ImageNotFound:
-                if self._err:
-                    self.status.value = WARNING
-                else:
-                    self.status.value = MISSING
-            else:
-                self.status.value = INSTALLED
+            installed = image_present(self._client, self.image)
+            self.status.value = INSTALLED if installed else WARNING
 
     def _watch_pull_logs(self, stream):
         found = set()

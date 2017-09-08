@@ -32,9 +32,10 @@ class DockerConfig(VBox):
     def __init__(self):
         self.client = None
         self.warning = ipy.HTML(value=SPINNER)
+        self.devmode_label = ipy.Label("Use local docker images (developer mode)",
+                                       layout=ipy.Layout(width='fit-content'))
         self.devmode_button = ipy.Checkbox(value=mdt.compute.config.devmode,
-                                           description="Use local docker images (developer mode)",
-                                           layout=ipy.Layout(width='100%'))
+                                           layout=ipy.Layout(width='fit-content'))
         self.devmode_button.observe(self.set_devmode, 'value')
 
         self.engine_config_description = ipy.HTML('Docker host with protocol and port'
@@ -64,7 +65,7 @@ class DockerConfig(VBox):
                          HBox([self._reset_config_button,
                                self._apply_changes_button,
                                self._save_changes_button]),
-                         self.devmode_button,
+                         HBox([self.devmode_label, self.devmode_button]),
                          self.image_box]
         self.reset_config()
         super().__init__(children=self.children)
