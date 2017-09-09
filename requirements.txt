@@ -1,6 +1,7 @@
 future
 ipywidgets >= 7.0
 ipython >= 5.0
+markdown
 moldesign  # no version specified here so that we don't overwrite user's installed version
 notebook >= 4.2
 matplotlib >= 2.0
