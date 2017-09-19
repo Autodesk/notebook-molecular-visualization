@@ -1,0 +1,6 @@
+- name: build
+  service: builder
+  type: serial
+  steps:
+    - name: build_sdist
+      command: python setup.py sdist

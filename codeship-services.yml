@@ -1,0 +1,5 @@
+builder:
+  build:
+    dockerfile: ./deployment/Dockerfile.build
+    context: ./
+
