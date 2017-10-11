@@ -42,9 +42,8 @@ class DockerConfig(VBox):
                                                   ' (e.g., <code>http://localhost:2375</code>).'
                                                   ' If blank, this'
                                                   ' defaults to the docker engine configured at '
-                                                  'your command line.',
-                                                  layout=ipy.Layout(width='100%'))
-        self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='100%'))
+                                                  'your command line.')
+        self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='80%'))
         self.engine_config_value.add_class('nbv-monospace')
 
         self.image_box = ipy.Box()
@@ -65,7 +64,7 @@ class DockerConfig(VBox):
                          HBox([self._reset_config_button,
                                self._apply_changes_button,
                                self._save_changes_button]),
-                         HBox([self.devmode_label, self.devmode_button]),
+                         HBox([self.devmode_button, self.devmode_label]),
                          self.image_box]
         self.reset_config()
         super().__init__(children=self.children)

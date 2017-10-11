@@ -3,10 +3,10 @@ FROM continuumio/miniconda3:4.3.14
 # Install requirements
 RUN conda install -c openbabel openbabel
 RUN conda install -c omnia biopython parmed
-RUN conda install jupyter
-RUN pip install "moldesign==0.8.0b3"
+RUN conda install jupyter git
 
 ADD requirements.txt /opt/requirements.txt
+RUN pip install --pre moldesign  # probably need to invalidate cache at this level
 RUN pip install -r /opt/requirements.txt
 
 # This disables notebook security until we can figure out a way to pass runtime tokens
@@ -26,3 +26,5 @@ RUN jupyter nbextension install --sys-prefix --py widgetsnbextension \
  && jupyter nbextension enable --sys-prefix --py nbmolviz
 
 EXPOSE 8888
+
+ENTRYPOINT deployment/run_notebook.sh

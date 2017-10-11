@@ -65,13 +65,19 @@ def location_writable():
         confpath = config_paths[pathname]
         extpath = ext_paths[pathname]
 
-        confpath = confpath if os.path.exists(confpath) else os.path.dirname(confpath)
-        extpath = extpath if os.path.exists(extpath) else os.path.dirname(extpath)
+        confpath = _get_first_parent_directory(confpath)
+        extpath = _get_first_parent_directory(extpath)
 
         writable[pathname] = (
             os.access(confpath, os.W_OK | os.X_OK) and
             os.access(extpath, os.W_OK | os.X_OK))
     return writable
+
+
+def _get_first_parent_directory(path):
+    while not os.path.exists(path):
+        path = os.path.dirname(path)
+    return path
 
 
 def preferred_install_location():

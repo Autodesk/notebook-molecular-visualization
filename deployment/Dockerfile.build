@@ -6,5 +6,3 @@ RUN conda install git nodejs
 # Finally, install the actual package
 ADD . /opt/notebook-molecular-visualization
 WORKDIR /opt/notebook-molecular-visualization
-RUN cd js && npm install
-RUN python setup.py jsdeps
