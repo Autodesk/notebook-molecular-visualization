@@ -5,7 +5,7 @@ RUN apt-get update \
 
 # Install requirements
 RUN conda install git nodejs
-RUN pip install moldesign==0.8.0rc4
+RUN pip install moldesign==0.8.0rc4 twine
 
 # Finally, install the actual package
 ADD . /opt/notebook-molecular-visualization
