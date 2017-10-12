@@ -2,6 +2,7 @@ FROM continuumio/miniconda3:4.3.14
 
 # Install requirements
 RUN conda install git nodejs
+RUN pip install moldesign==0.8.0rc4
 
 # Finally, install the actual package
 ADD . /opt/notebook-molecular-visualization
