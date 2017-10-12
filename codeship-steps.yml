@@ -6,7 +6,7 @@
       command: python setup.py sdist
 
 - name: publish
-  service: builder
+  service: publisher
   # matches tags that are valid PEP440 versions
   tag: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)((a|rc|b)(0|[1-9]\d*))?$'
   command: deployment/publish.sh

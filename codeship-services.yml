@@ -3,3 +3,8 @@ builder:
     dockerfile: ./deployment/Dockerfile.build
     context: ./
 
+publisher:
+  encrypted_env_file: deployment/tokens.crypt
+  build:
+    dockerfile: ./deployment/Dockerfile.build
+    context: ./
