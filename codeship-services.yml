@@ -2,9 +2,13 @@ builder:
   build:
     dockerfile: ./deployment/Dockerfile.build
     context: ./
+  volumes:
+  - ./nbmv-dist:/opt/nbmv-dist
 
 publisher:
   encrypted_env_file: deployment/tokens.crypt
   build:
     dockerfile: ./deployment/Dockerfile.build
     context: ./
+  volumes:
+  - ./nbmv-dist:/opt/nbmv-dist

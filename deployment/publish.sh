@@ -10,12 +10,20 @@ set -e
 
 PKG='nbmolviz'
 
-pyversion=$(python -c "import ${PKG}; print(${PKG}.__version__)" | tail -n 1)
-
 if [[ -z ${CI_BRANCH} ]]; then
   echo "Variable \"\$CI_BRANCH\" not set - cannot publish"
   exit 2
 fi
+
+ARTIFACT=/opt/nbmv-dist/dist/${PKG}-${CI_BRANCH}.tar.gz
+
+if [ ! -f $ARTIFACT ]; then
+  echo "No build artifact found! Expected ${ARTIFACT}"
+  exit 3
+fi
+
+pip install ${ARTIFACT}
+pyversion=$(python -c "import ${PKG}; print(${PKG}.__version__)" | tail -n 1)
 
 if [ "${pyversion}" == "${CI_BRANCH}" ]; then
   echo "Deploying version ${CI_BRANCH}"
@@ -25,4 +33,4 @@ else
 fi
 
 echo "Uploading version ${CI_BRANCH} to PyPI:"
-twine upload -u ${PYPI_USER} -p ${PYPI_PASSWORD} dist/${PKG}-${pyversion}.tar.gz
+twine upload -u ${PYPI_USER} -p ${PYPI_PASSWORD} ${ARTIFACT}

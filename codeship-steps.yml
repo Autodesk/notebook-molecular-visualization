@@ -1,9 +1,6 @@
 - name: build
   service: builder
-  type: serial
-  steps:
-    - name: build_sdist
-      command: python setup.py sdist
+  command: bash -c "python setup.py sdist && cp -r dist /opt/nbmv-dist"
 
 - name: publish
   service: publisher
