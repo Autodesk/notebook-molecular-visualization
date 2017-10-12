@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, absolute_import, division
+from __future__ import print_function, absolute_import, division, unicode_literals
 from future.builtins import *
 from future import standard_library
 standard_library.install_aliases()
@@ -54,8 +54,9 @@ class DockerImageView(ipy.HBox):
         self.status = ipy.HTML(layout=ipy.Layout(width="20px"))
         self.html = ipy.HTML(value=image, layout=ipy.Layout(width="400px"))
         self.html.add_class('nbv-monospace')
+        self.html.add_class('nbv-table-row')
         self.msg = ipy.HTML(layout=ipy.Layout(width='300px'))
-        self.button = ipy.Button(layout=ipy.Layout(width='100px'))
+        self.button = ipy.Button(layout=ipy.Layout(width='150px'))
         if mdt.compute.config.devmode:
             self.button.on_click(self.rebuild)
         else:
@@ -151,22 +152,13 @@ class DockerImageView(ipy.HBox):
             self.button.style.font_weight = '400'
             self.button.style.button_color = '#9feeb2'
 
-
     def _set_status_value(self):
-        from docker import errors
-
+        from moldesign.compute import image_present
         if self._client is None:
             self.status.value = 'n/a'
         else:
-            try:
-                imginfo = self._client.inspect_image(self.image)
-            except errors.ImageNotFound:
-                if self._err:
-                    self.status.value = WARNING
-                else:
-                    self.status.value = MISSING
-            else:
-                self.status.value = INSTALLED
+            installed = image_present(self._client, self.image)
+            self.status.value = INSTALLED if installed else WARNING
 
     def _watch_pull_logs(self, stream):
         found = set()

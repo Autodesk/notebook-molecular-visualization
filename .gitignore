@@ -13,3 +13,6 @@ node_modules
 VERSION
 VERSION.json
 tests/nb/gif
+codeship.aes
+deployment/tokens
+

@@ -23,7 +23,6 @@ import traitlets
 import ipywidgets as ipy
 import itertools
 
-import moldesign as mdt
 from moldesign import utils
 from moldesign import units as u
 
@@ -62,8 +61,8 @@ class ChemicalGraphViewer(BaseViewer):
         self.atoms = getattr(atoms, 'atoms', atoms)
 
         if not _forcebig and len(self.atoms) > self.MAXATOMS:
-            raise ValueError('Refusing to draw more than 200 atoms in 2D visualization. '
-                             'Override this with _forcebig=True')
+            raise ValueError('Refusing to draw more than %s atoms in 2D ' % self.MAXATOMS +
+                             ' visualization. Override this with _forcebig=True')
 
         if names is None:
             names = []
@@ -87,7 +86,7 @@ class ChemicalGraphViewer(BaseViewer):
 
         super().__init__(layout=ipy.Layout(width=str(width), height=str(height)))
 
-        if display: dsp.display(self)
+        if display: dsp(self)
 
     def __reduce__(self):
         """These don't get passed around,
@@ -136,8 +135,10 @@ class ChemicalGraphViewer(BaseViewer):
         else:
             indices = list(map(self.get_atom_index, atoms))
         spec = {}
-        if fill_color is not None: spec['fill'] = translate_color(fill_color, prefix='#')
-        if outline_color is not None: spec['stroke'] = translate_color(outline_color, prefix='#')
+        if fill_color is not None:
+            spec['fill'] = translate_color(fill_color, prefix='#')
+        if outline_color is not None:
+            spec['stroke'] = translate_color(outline_color, prefix='#')
         self.viewer('setAtomStyle', [indices, spec])
 
     def set_bond_style(self, bonds, color=None, width=None, dash_length=None, opacity=None):
@@ -175,9 +176,6 @@ class ChemicalGraphViewer(BaseViewer):
         indices = list(map(self.get_atom_index, atoms))
         self.viewer('updateHighlightAtoms', [indices])
 
-    def get_atom_index(self, atom):
-        raise NotImplemented("This method must be implemented by the interface class")
-
     def set_click_callback(self, callback=None, enabled=True):
         """
         :param callback: Callback can have signature (), (trait_name), (trait_name,old), or (trait_name,old,new)
@@ -201,6 +199,7 @@ class ChemicalGraphViewer(BaseViewer):
         """
         for color, atoms in colormap.items():
             self.set_color(atoms=atoms, color=color)
+
 
 def _charge_str(q):
     q = q.value_in(u.q_e)
@@ -300,6 +299,17 @@ class DistanceGraphViewer(ChemicalGraphViewer):
                 if label:
                     self.set_bond_label([atom1, atom2],
                                         text='%.1f ang'%dst.value_in('angstrom'),size=8)
+
+    def draw_3d_distances(self, color='purple', max_opacity=1.0):
+        with self.hold_trait_notifications():
+            for edge in self.graph['links']:
+                a1 = self.atoms[edge['source']]
+                a2 = self.atoms[edge['target']]
+                distance = a1.distance(a2)
+                self.set_bond_style([[a1,a2]],
+                                    width=1, opacity=max_opacity * self.dmax / distance,
+                                    color=color)
+        self.send_state('graph')
 
 
 def make_contact_view(entity, view_radius=5.0*u.angstrom,

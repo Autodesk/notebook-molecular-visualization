@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import, division, unicode_literals
 from future.builtins import *
 from future import standard_library
@@ -27,8 +28,7 @@ import io
 from moldesign import units as u
 from moldesign.mathutils import padded_grid
 
-from ..viewers import GeometryViewer, translate_color
-from ..widget_utils import process_widget_kwargs
+from ..viewers import GeometryViewer
 from ..uielements.components import HBox, VBox
 from . import ViewerContainer
 
@@ -43,7 +43,7 @@ class OrbitalViewer(ViewerContainer):
         display (bool): immediately draw the viewer in the notebook
         **kwargs (dict): kwargs for the viewer
     """
-    current_orbital = traitlets.Any()  # reference to the currently displayed orbital
+    current_orbital = traitlets.Tuple(allow_none=True)
     isoval = traitlets.Float(0.01)
     orb_opacity = traitlets.Float(0.8)
     negative_color = traitlets.Union([traitlets.Integer(), traitlets.Unicode()], default='red')
@@ -55,7 +55,8 @@ class OrbitalViewer(ViewerContainer):
         self.orblist = None
         self.isoval_selector = None
         self.opacity_selector = None
-        self.viewer = GeometryViewer(mol=mol, **process_widget_kwargs(kwargs))
+        kwargs.setdefault('width', '600px')
+        self.viewer = GeometryViewer(mol=mol, **kwargs)
         self.mol = mol
         self.wfn = mol.wfn   # cache this directly because the molecule's state may change
         self._restyle_orbital()  # sets defaults for orbital spec
@@ -67,27 +68,21 @@ class OrbitalViewer(ViewerContainer):
         if display:
             display_now(self)
 
-    def draw_orbital(self, orbital):
-        """Display a molecular orbital
-
-        Args:
-            orbital (moldesign.orbitals.Orbital): orbital to draw
-        """
-        # This triggers self._redraw_orbital
-        self.current_orbital = orbital
-
     @traitlets.observe('current_orbital', 'numpoints')
     def _redraw_orbital(self, *args):
+        if self.current_orbital is None:
+            self.viewer.cubefile = ''
+            return
+
         self.status_element.value = '<div class="nbv-loader"/>'
         try:
-            if self.current_orbital is None:
-                self.viewer.cubefile = ''
-                return
-
-            orbkey = (id(self.current_orbital), self.numpoints)
+            orbtype, orbindex = self.current_orbital
+            orbital = self.wfn.orbitals[orbtype][orbindex]
+            # Hash orbitals by object ID to support trajectories (where a given orbital may change)
+            orbkey = (id(orbital), self.numpoints)
 
             if orbkey not in self._cached_cubefiles:
-                grid, values = self._calc_orb_grid(self.current_orbital)
+                grid, values = self._calc_orb_grid(orbital)
                 cubefile = self._grid_to_cube(grid, values)
                 self._cached_cubefiles[orbkey] = cubefile
             else:
@@ -98,7 +93,6 @@ class OrbitalViewer(ViewerContainer):
             self.status_element.value = u'⚠ %s' % e
         else:
             self.status_element.value = ''
-
 
     @traitlets.observe('negative_color',
                        'positive_color',
@@ -231,12 +225,12 @@ class OrbitalViewer(ViewerContainer):
         traitlets.directional_link((self, 'numpoints'), (self.orb_resolution, 'value'),
                                    transform=str)
 
-        self.uipane = ipy.VBox([self.status_element,
-                                orbtype_label, self.type_dropdown,
-                                orblist_label, self.orblist,
-                                isoval_label, self.isoval_selector,
-                                opacity_label, self.opacity_selector,
-                                resolution_label, self.orb_resolution, self.resolution_button])
+        self.uipane = VBox([self.status_element,
+                            orbtype_label, self.type_dropdown,
+                            orblist_label, self.orblist,
+                            isoval_label, self.isoval_selector,
+                            opacity_label, self.opacity_selector,
+                            resolution_label, self.orb_resolution, self.resolution_button])
         self.new_orb_type()
         self.type_dropdown.observe(self.new_orb_type, 'value')
         return self.uipane
@@ -248,27 +242,40 @@ class OrbitalViewer(ViewerContainer):
         newtype = self.type_dropdown.value
         neworbs = wfn.orbitals[newtype]
         orblist = collections.OrderedDict()
+        prev_val = self.orblist.value
+        found_prev_value = False
 
-        orblist[None] = None
-        for i, orb in enumerate(neworbs):
-            if hasattr(orb, 'unicode_name'):
-                orbname = orb.unicode_name
-            else:
-                orbname = orb.name
+        with self.hold_trait_notifications():
+            orblist[None] = None
+            for i, orb in enumerate(neworbs):
+                if hasattr(orb, 'unicode_name'):
+                    orbname = orb.unicode_name
+                else:
+                    orbname = orb.name
 
-            meta = ''
-            if orb.energy is not None:
-                meta = '{:.02fP}'.format(orb.energy.defunits())
-            if orb.occupation is not None:
-                if meta: meta += ', '
-                meta += 'occ %.2f' % orb.occupation
-            if meta:
-                desc = '%d. %s   (%s)' % (i, orbname, meta)
+                meta = ''
+                if orb.energy is not None:
+                    meta = '{:.02fP}'.format(orb.energy.defunits())
+                if orb.occupation is not None:
+                    if meta:
+                        meta += ', '
+                    meta += 'occ %.2f' % orb.occupation
+                if meta:
+                    desc = '%d. %s   (%s)' % (i, orbname, meta)
+                else:
+                    desc = '%d. %s' % (i, orbname)
+
+                orbkey = (self.type_dropdown.value, orb.index)
+                orblist[desc] = orbkey
+                if prev_val == orbkey:
+                    found_prev_value = True
+
+            self.orblist.options = orblist
+            if found_prev_value:
+                self.orblist.value = prev_val
             else:
-                desc = '%d. %s' % (i, orbname)
-            orblist[desc] = orb
-        self.orblist.value = None
-        self.orblist.options = orblist
+                self.orblist.value = None
+            self._redraw_orbital()
 
     def change_resolution(self, *args):
         self.numpoints = int(self.orb_resolution.value)

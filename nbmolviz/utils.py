@@ -1,4 +1,7 @@
-from __future__ import division
+from __future__ import print_function, absolute_import, division
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +15,8 @@ from __future__ import division
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from builtins import zip
-from builtins import str
 from past.builtins import basestring
-from past.utils import old_div
-from builtins import object
 import uuid
-
 import webcolors
 
 
@@ -70,6 +68,25 @@ def translate_color(color, prefix='0x'):
         raise ValueError('Unrecognized color %s of type %s' % (color, type(color)))
 
     return color
+
+
+def indent(text, prefix, predicate=None):
+    """Adds 'prefix' to the beginning of selected lines in 'text'.
+    If 'predicate' is provided, 'prefix' will only be added to the lines
+    where 'predicate(line)' is True. If 'predicate' is not provided,
+    it will default to adding 'prefix' to all non-empty lines that do not
+    consist solely of whitespace characters.
+
+    BACKPORTED from python 3.7 without modification.
+    """
+    if predicate is None:
+        def predicate(line):
+            return line.strip()
+
+    def prefixed_lines():
+        for line in text.splitlines(True):
+            yield (prefix + line if predicate(line) else line)
+    return ''.join(prefixed_lines())
 
 
 class JSObject(object):
@@ -126,8 +143,8 @@ class Measure(object):
     __rmul__ = __mul__
 
     def __div__(self,other):
-        newnumber = int( old_div(float(self.number), other))
-        return Measure( '%d%s'%(newnumber,self.unit))
+        newnumber = int(float(self.number) / other)
+        return Measure('%d%s'%(newnumber,self.unit))
 
 
 BENZENE_SDF = """241

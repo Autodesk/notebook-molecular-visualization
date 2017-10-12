@@ -132,7 +132,6 @@ if widgets_enabled:
             self.objs = OrderedDict(objects)
             super(LoggingTabs, self).__init__(list(objects.values()),
                                               **wu.process_widget_kwargs(kwargs))
-            self.selected_index = -1
             for ikey, key in enumerate(objects.keys()):
                 self.set_title(ikey, key)
             self._displayed = False

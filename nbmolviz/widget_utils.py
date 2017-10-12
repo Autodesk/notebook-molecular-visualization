@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import, division
-
+from future.builtins import *
 from future import standard_library
-
 standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
@@ -69,6 +68,8 @@ def extensions_install_check():
 
 
 def print_extension_warnings(stream=sys.stdout):
+    import pkg_resources
+    from moldesign import _NBMOLVIZ_EXPECTED_VERSION
     from . import install
     from . import __version__ as nbv_version
 
@@ -86,17 +87,23 @@ def print_extension_warnings(stream=sys.stdout):
 
         if not enabled:
             if installed:
-                flag = install.FLAGS[installed]
-                warnings.append('- the "{dep}" notebook extension is not enabled. ')
-            else:
-                flag = install.FLAGS[preferred_loc]
+                warnings.append('- the "{dep}" notebook extension is not enabled.'
+                                .format(dep=dep))
 
-        if (dep == 'nbmolviz' and enabled and installed):
-            installed_version = state[dep]['version']
-            if installed_version != nbv_version:
-                warnings.append('- NBMolViz notebook extensions are out of date (extensions are'
-                                ' version %s, but nbmolviz expected %s)' %
-                                (installed_version, nbv_version))
+        if dep == 'nbmolviz':
+            expected_py_version = pkg_resources.parse_version(_NBMOLVIZ_EXPECTED_VERSION)
+            installed_py_version = pkg_resources.parse_version(nbv_version)
+            if expected_py_version != installed_py_version:
+                warnings.append(
+                        '- MDT expected nbmolviz version "%s" but version "%s" is installed' %
+                        (expected_py_version, installed_py_version))
+
+            if enabled and installed:
+                installed_ext_version = state[dep]['version']
+                if installed_ext_version != nbv_version:
+                    warnings.append('- NBMolViz notebook extensions are out of date (extensions are'
+                                    ' version %s, but nbmolviz expected %s)' %
+                                    (installed_ext_version, nbv_version))
 
     if warnings:
         print('WARNING: notebook visualizations may not function correctly because:',

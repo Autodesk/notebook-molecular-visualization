@@ -58,7 +58,8 @@ class ParameterizationDisplay(ipy.Box):
             self.switch_display({'old': self.errorlist.value, 'new': self.errorlist.value})
         self.errorlist.observe(self.switch_display, 'value')
         children = (self.status,
-                    HBox([self.viewer, VBox([self.listdesc, self.errorlist])]),
+                    self.viewer,
+                    VBox([self.listdesc, self.errorlist]),
                     self.errmsg)
 
         super().__init__(children=children, layout=ipy.Layout(display='flex',  flex_flow='column'))

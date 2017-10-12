@@ -1,0 +1,9 @@
+- name: build
+  service: builder
+  command: bash -c "python setup.py sdist && cp -r dist /opt/nbmv-dist"
+
+- name: publish
+  service: publisher
+  # matches tags that are valid PEP440 versions
+  tag: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)((a|rc|b)(0|[1-9]\d*))?$'
+  command: deployment/publish.sh

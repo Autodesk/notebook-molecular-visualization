@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import, division
+from __future__ import print_function, absolute_import, division, unicode_literals
 from future.builtins import *
 from future import standard_library
 standard_library.install_aliases()
@@ -27,7 +27,6 @@ import ipywidgets as ipy
 import moldesign as mdt
 from ..uielements import StyledTab
 from ..uielements.components import HBox, VBox
-
 
 
 def configure():
@@ -62,7 +61,8 @@ class MDTConfig(VBox):
         super().__init__(children=self.children)
 
     def make_header(self):
-        img = io.open(os.path.join(mdt.PACKAGEPATH, '_static_data/img/banner.png'), 'r+b').read()
+        with io.open(os.path.join(mdt.PACKAGEPATH, '_static_data/img/banner.png'), 'rb') as imfile:
+            img = imfile.read()
         encoded = base64.b64encode(img).decode('ascii')
         img = '<img style="max-width:100%" src=data:image/png;base64,'+('%s>'%encoded)
         links = [self._makelink(*args) for args in
@@ -85,32 +85,21 @@ class MDTConfig(VBox):
                                                                                   text=text)
 
 
-class ChangeLog(HBox):
+class ChangeLog(VBox):
     def __init__(self):
-        from pip._vendor.packaging import version
+        import markdown
 
         super().__init__()
 
         self.version = ipy.HTML('<div class="nbv-loader"></div>')
-        self.textarea = ipy.Textarea(layout=ipy.Layout(width='700px', height='300px'))
+        self.textarea = ipy.HTML(layout=ipy.Layout(width='700px', height='300px'))
         threading.Thread(target=self.version_check).start()
 
-        p1 = os.path.join(mdt.PACKAGEPATH, "HISTORY.rst")
-        p2 = os.path.join(mdt.PACKAGEPATH, "..", "HISTORY.rst")
-        if os.path.exists(p1):
-            path = p1
-        elif os.path.exists(p2):
-            path = p2
-        else:
-            path = None
+        path = os.path.join(mdt.PACKAGEPATH, "HISTORY.md")
+        with open(path, 'r') as infile:
+            html = markdown.markdown(infile.read())
+            self.textarea.value = '<span style="line-height:1.75;">%s</html>' % html
 
-        if path is not None:
-            with open(path, 'r') as infile:
-                self.textarea.value = infile.read()
-        else:
-            self.textarea.value = 'HISTORY.rst not found'
-
-        self.textarea.disabled = True
         self.children = (self.version, self.textarea)
 
     def version_check(self):
@@ -126,9 +115,11 @@ class ChangeLog(HBox):
             latest = version.parse(pypi.package_releases('moldesign')[0])
             current = version.parse(mdt.__version__)
             if current >= latest:
-                self.version.value = 'Up to date. Latest release: %s' % latest
+                self.version.value = (INSTALLED +
+                                      u'<b>You\'re using an up-to-date release of MDT.</b>'
+                                      u' Latest release: %s <hr/>' % latest)
             else:
-                self.version.value = ''.join(('New release available! ',
+                self.version.value = ''.join(('There\'s a newer version of MDT available! ',
                                               '<br><b>Installed:</b> '
                                               '<span style="font-family:monospace">%s</span>'
                                               % current,
@@ -136,10 +127,8 @@ class ChangeLog(HBox):
                                               '<span style="font-family:monospace">%s</span> '
                                               % latest,
                                               '<br>Install it by running '
-                                              '<span style="font-family:monospace">'
-                                              'pip install -U moldesign</span> or '
-                                              '<span style="font-family:monospace">'
-                                              'conda install -U moldesign</span>'))
+                                              '<code>pip install moldesign==%s</code> or ' % latest,
+                                              '<code>conda install -U moldesign</code><hr />'))
 
         except Exception as e:
             self.version.value = '<b>Failed update check</b>: %s' % e

@@ -46,7 +46,7 @@ class Configurator(ipy.Box):
         self.paramlist = paramlist
         self.paramdefs = paramdefs
 
-        self.apply_button = ipy.Button(description='Apply')
+        self.apply_button = ipy.Button(description='Apply', button_style='primary')
         self.apply_button.on_click(self.apply_values)
 
         self.reset_button = ipy.Button(description='Reset')
@@ -55,19 +55,22 @@ class Configurator(ipy.Box):
                                layout=ipy.Layout(align_self='center'))
 
         self.selectors = collections.OrderedDict([(p.name, ParamSelector(p)) for p in paramdefs])
+        for v in self.selectors.values():
+            v.add_class('nbv-table-row')
         self.reset_values()
 
         title = utils.if_not_none(title, 'Configuration')
         self.title = ipy.HTML('<center><h4>%s</h4></center><hr>' % title,
                               align_self='center')
 
-        self.currentconfig = ipy.Textarea(description='<i>Current params</i>',
-                                          disabled=True,
+        self.currentlabel = ipy.Label('Current parameter values:')
+        self.currentconfig = ipy.Textarea(disabled=True,
                                           value=self._pretty_print_config(),
                                           layout=ipy.Layout(width='350px', min_height='300px',
                                                             max_height='500px',
                                                             display='flex', flex_flow='column'))
-        self.middle = HBox([VBox(list(self.selectors.values())), self.currentconfig])
+        self.middle = HBox([VBox(list(self.selectors.values())),
+                            VBox([self.currentlabel, self.currentconfig])])
         self.children = [self.title, self.middle, self.buttons]
 
     def reset_values(self, *args):
@@ -92,8 +95,13 @@ class Configurator(ipy.Box):
         def cleanse(v):
             if isinstance(v, (float,int)): return v
             else: return str(v)
-        return yaml.dump({k: cleanse(v) for k, v in self.paramlist.items()},
-                         default_flow_style=False)
+
+        to_print = {}
+        for k, s in self.selectors.items():
+            if s.paramdef.relevance is None or s.paramdef.relevance(self.paramlist):
+                to_print[k] = cleanse(self.paramlist[k])
+
+        return yaml.dump(to_print, default_flow_style=False)
 
     def show_relevant_fields(self):
         for s in self.selectors.values():
@@ -123,7 +131,7 @@ class ParamSelector(ipy.Box):
         if paramdef.choices:
             self.selector = ipy.Dropdown(options=paramdef.choices, **self.WIDGETKWARGS)
         elif paramdef.type == bool:
-            self.selector = ipy.ToggleButtons(options=[True, False], **self.WIDGETKWARGS)
+            self.selector = ipy.Checkbox(**self.WIDGETKWARGS)
         elif paramdef.units:
             self.selector = UnitText(units=paramdef.units, **self.WIDGETKWARGS)
         elif paramdef.type == float:

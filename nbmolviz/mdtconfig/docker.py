@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import, division
+from __future__ import print_function, absolute_import, division, unicode_literals
 from future.builtins import *
 from future import standard_library
 standard_library.install_aliases()
@@ -23,27 +23,27 @@ from ..widget_utils import process_widget_kwargs
 from .images import DockerImageStatus
 
 
-SPINNER = '<div class="nbv-loader" />'
-CONNECTED = '<span style="color:green">connected</span>'
-DISCONNECTED = '<span style="color:red">disconnected</span>'
+SPINNER = '<b>Engine status:</b> <div class="nbv-loader" />'
+CONNECTED = '<b>Engine status:</b> <span style="color:green">connected</span>'
+DISCONNECTED = '<b>Engine status:</b> <span style="color:red">disconnected</span>'
+
 
 class DockerConfig(VBox):
     def __init__(self):
         self.client = None
-        self.warning = ipy.HTML(description='<b>Engine status:</b>', value=SPINNER)
-        self.devmode_label = ipy.Label('Use local docker images (developer mode)',
-                                       layout=ipy.Layout(width='100%'))
+        self.warning = ipy.HTML(value=SPINNER)
+        self.devmode_label = ipy.Label("Use local docker images (developer mode)",
+                                       layout=ipy.Layout(width='fit-content'))
         self.devmode_button = ipy.Checkbox(value=mdt.compute.config.devmode,
-                                           layout=ipy.Layout(width='15px'))
+                                           layout=ipy.Layout(width='fit-content'))
         self.devmode_button.observe(self.set_devmode, 'value')
 
         self.engine_config_description = ipy.HTML('Docker host with protocol and port'
                                                   ' (e.g., <code>http://localhost:2375</code>).'
                                                   ' If blank, this'
                                                   ' defaults to the docker engine configured at '
-                                                  'your command line.',
-                                                  layout=ipy.Layout(width='100%'))
-        self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='100%'))
+                                                  'your command line.')
+        self.engine_config_value = ipy.Text('blank', layout=ipy.Layout(width='80%'))
         self.engine_config_value.add_class('nbv-monospace')
 
         self.image_box = ipy.Box()

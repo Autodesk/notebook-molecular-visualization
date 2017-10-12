@@ -1,3 +1,7 @@
+from __future__ import print_function, absolute_import, division, unicode_literals
+from future.builtins import *
+from future import standard_library
+standard_library.install_aliases()
 # Copyright 2017 Autodesk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,11 +61,23 @@ def location_writable():
     config_paths = jupyter_config_dirs()
     ext_paths = nbextension_ordered_paths()
     writable = {}
-    for location in ext_paths:
-        writable[location] = (
-            os.access(config_paths[location], os.W_OK | os.X_OK) and
-            os.access(ext_paths[location], os.W_OK | os.X_OK))
+    for pathname in ext_paths:
+        confpath = config_paths[pathname]
+        extpath = ext_paths[pathname]
+
+        confpath = _get_first_parent_directory(confpath)
+        extpath = _get_first_parent_directory(extpath)
+
+        writable[pathname] = (
+            os.access(confpath, os.W_OK | os.X_OK) and
+            os.access(extpath, os.W_OK | os.X_OK))
     return writable
+
+
+def _get_first_parent_directory(path):
+    while not os.path.exists(path):
+        path = os.path.dirname(path)
+    return path
 
 
 def preferred_install_location():
@@ -75,13 +91,19 @@ def preferred_install_location():
 
 
 def autoinstall():
-    """ Attempt to install and activate the notebook extensions
+    """ Attempt to install and activate the notebook extensions.
+
+    If a given extension is already installed, this will install the latest version into the
+    same location.
+
+    Otherwise, it will install into the first writable location in the following list:
+      1. virtual environment extensions directory
+      2. current user's extensions directory
+      3. global extensions directory
 
     Raises:
         ValueError: if there are no writable install locations
     """
-    from moldesign import compute
-    from . import __version__ as nbv_version
     from . import widget_utils as wu
 
     preferred = preferred_install_location()
@@ -90,23 +112,10 @@ def autoinstall():
 
     state = wu.extensions_install_check()
     for dep in state:
-        do_install = False
-        if not state[dep]['installed'] or state[dep]['enabled'] != state[dep]['installed']:
-            print("Activating '%s' extensions:" % dep)
-            do_install = True
-        elif (dep == 'nbmolviz' and
-                  not compute.config.get('skip_nbmolviz_version_check', False) and
-                  state[dep]['installed'] and
-                  state[dep]['version'] != nbv_version):
-            print("Updating 'nbmolviz' extensions from %s to %s:" % (state[dep]['version'],
-                                                                     nbv_version))
-            do_install = True
-        else:
-            print("'%s' extensions already activated." % dep)
-
-        if do_install:
-            activate_extension(dep, FLAGS[preferred])
-
+        install_location = state[dep]['installed'] if state[dep]['installed'] else preferred
+        activate_extension(dep, FLAGS[install_location])
+    print()
+    lift_iopub_rate_limit()
 
 
 def get_installed_versions(pyname, getversion):
@@ -160,6 +169,65 @@ def get_installed_versions(pyname, getversion):
                             writable[k])
             for k in installed}
 
+IOPUB_LINES = """### MOLDESIGN modification
+c.NotebookApp.iopub_data_rate_limit = 100000000000
+### END MOLDESIGN MODIFICATION
+"""
+
+
+def lift_iopub_rate_limit():
+    from jupyter_core import paths as jupypaths
+    from .utils import indent
+
+    config_dir = jupypaths.jupyter_config_dir()
+    nbcfgfile = os.path.join(config_dir, 'jupyter_notebook_config.py')
+    backup_basepath = nbcfgfile+'.bak'
+    bakfile = backup_basepath
+
+    print("Disabling Jupyter rate limits to allow visualization "
+          "(see https://github.com/jupyter/notebook/issues/2287 )")
+
+    if not os.path.exists(nbcfgfile):
+        print("Creating jupyter config file at %s" % nbcfgfile)
+        cmd = "jupyter notebook --generate-config"
+        print(" > %s" % cmd)
+        subprocess.check_call(cmd.split())
+    else:
+        for i in range(100):
+            # if "jupyter_notebook_config.py.bak.N" exists for N=0...99, we'll overwrite # 99
+            # Feel free to submit a PR if you're not OK with this :)
+            if os.path.exists(bakfile):
+                bakfile = backup_basepath+('.%d' % i)
+            else:
+                break
+        print('Previous configuration file saved to %s' % bakfile)
+
+    os.rename(nbcfgfile, bakfile)
+
+    with open(bakfile, 'r') as bakstream, open(nbcfgfile, 'w') as modstream:
+        found = False
+        lineiter = iter(bakstream)
+        while True:
+            try:
+                line = next(lineiter)
+            except StopIteration:
+                break
+
+            if line.strip() == "### MOLDESIGN modification":
+                found = True
+                modstream.write(IOPUB_LINES)
+                for i in range(2):  # remove the next two lines
+                    next(lineiter)
+            else:
+                modstream.write(line)
+
+        if not found:
+            modstream.write(IOPUB_LINES)
+
+    print('The following lines lines were added to the bottom of %s:' % nbcfgfile)
+    print(indent(IOPUB_LINES, ' >   '), end='')
+    print("\nThese changes will take effect the next time Jupyter is launched.")
+
 
 def activate(flags):
     try:
@@ -168,7 +236,7 @@ def activate(flags):
         if exc.returncode == 2:
             raise PermissionError(
                     ('ERROR - failed to enable the widget extensions with %s.' % flags) +
-                  ' Try rerunning the command with \"sudo\"!')
+                    ' Try rerunning the command with \"sudo\"!')
         else:
             raise
 

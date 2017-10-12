@@ -15,7 +15,6 @@ install_aliases()
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import ipywidgets as ipy
 import traitlets
 
@@ -40,6 +39,7 @@ class TrajectoryViewer(ViewerContainer):
     def __init__(self, trajectory, display=False, **kwargs):
         from IPython.display import display as displaynow
 
+        self.playbar = None
         self.playbutton = None
         self.slider = None
         self.viewer = None
@@ -89,8 +89,8 @@ class TrajectoryViewer(ViewerContainer):
 
         traitlets.link((self.playbutton, 'value'), (self.slider, 'value'))
         traitlets.link((self.slider, 'value'), (self, 'current_frame'))
-        return VBox((self.annotation,
-                     HBox((self.playbutton, self.slider, self.readout))))
+        self.playbar = HBox((self.playbutton, self.slider, self.readout))
+        return VBox((self.annotation, self.playbar))
 
     @traitlets.observe('current_frame')
     def _change_frame(self, change):
@@ -104,29 +104,78 @@ class TrajectoryViewer(ViewerContainer):
 
 
 class TrajectoryOrbViewer(TrajectoryViewer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._caching = False
+        self.cache_orbital_button = ipy.Button()
+        self.cache_orbital_button.on_click(self.cache_orbitals)
+        self.viewcontainer.observe(self.handle_orb_update, 'current_orbital')
+        self.pane.children += (self.cache_orbital_button,)
+        self.handle_orb_update({'new':None})
+
+    def show_frame(self, framenum):
+        wfn = self.traj.frames[framenum].wfn
+        self.viewcontainer.wfn = wfn
+
+        with self.hold_trait_notifications(), \
+             self.viewcontainer.orblist.hold_sync(), \
+             self.viewcontainer.hold_trait_notifications(), \
+             self.viewcontainer.viewer.hold_trait_notifications(), \
+             self.viewcontainer.viewer.hold_sync():
+
+            super().show_frame(framenum)
+            self.viewcontainer.new_orb_type()
+
+    def cache_orbitals(self, *args):
+        import threading
+        self.cache_orbital_button.disabled = True
+        self._caching = True
+        threading.Thread(target=self._cache_orbital_thread).start()
+
+    def _cache_orbital_thread(self):
+        try:
+            self.cache_orbital_button.button_style = 'info'
+            self.enable_controls(False)
+            for fnum in range(self.traj.num_frames):
+                self.cache_orbital_button.description = 'Calculating frame %d' % fnum
+                self.show_frame(fnum)
+        except Exception:
+            self.cache_orbital_button.description = 'Orbital calc failed'
+            self.cache_orbital_button.button_style = 'warning'
+            self.cache_orbital_button.disabled = False
+            raise
+        else:
+            self.cache_orbital_button.description = 'Animation ready.'
+            self.cache_orbital_button.button_style = 'success'
+            self.cache_orbital_button.disabled = True
+        finally:
+            self.enable_controls(True)
+            self._caching = False
+
+    def handle_orb_update(self, change):
+        if self._caching:
+            return
+        if change['new'] is None:
+            self.cache_orbital_button.description = '--'
+            self.cache_orbital_button.button_style = ''
+            self.cache_orbital_button.disabled = True
+            self.playbutton.interval = 100
+        elif change['old'] != change['new']:
+            self.cache_orbital_button.description = 'Prep animation'
+            self.cache_orbital_button.button_style = 'primary'
+            self.cache_orbital_button.disabled = False
+            self.playbutton.interval = 500
+
+    def enable_controls(self, enabled):
+        self.viewcontainer.orblist.disabled = not enabled
+        self.viewcontainer.type_dropdown.disabled = not enabled
+        self.slider.disabled = not enabled
+        self.playbutton.disabled = not enabled
+
     def _get_viewer_container(self):
         orbviewer = self.traj._tempmol.draw_orbitals()
         self.viewer = orbviewer.viewer
         return orbviewer
-
-    def show_frame(self, framenum):
-        wfn = self.traj.frames[framenum].wfn
-        oldorbital = self.current_orbital
-        if oldorbital:
-            orbtype = self.viewcontainer.type_dropdown.value
-            neworb = wfn.orbitals[orbtype][oldorbital.index]
-
-        self.viewcontainer.wfn = wfn
-
-        with self.hold_trait_notifications(), \
-             self.viewcontainer.hold_trait_notifications(), \
-             self.viewcontainer.viewer.hold_trait_notifications(), \
-             self.viewcontainer.orblist.hold_trait_notifications():
-
-            super().show_frame(framenum)
-            self.viewcontainer.new_orb_type()
-            if oldorbital:
-                self.orblist.value = neworb
 
 
 class FrameInspector(ipy.HTML):

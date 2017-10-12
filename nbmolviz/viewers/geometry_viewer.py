@@ -161,9 +161,7 @@ class GeometryViewer(BaseViewer):
                     cartoon_atoms.extend(residue.atoms)
                 elif residue.type in ('water', 'solvent'):
                     line_atoms.extend(residue.atoms)
-                elif residue.type in ('dna', 'rna') and self.mol.num_atoms > 1000:
-                    cartoon_atoms.extend(residue.atoms)
-                else:  # includes DNA, RNA if molecule is small enough
+                else:  # includes DNA, RNA - ribbon representation currently doesn't work for these
                     stick_atoms.extend(residue.atoms)
 
             if cartoon_atoms:
