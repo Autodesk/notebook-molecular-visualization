@@ -10,7 +10,12 @@ set -e
 
 PKG='nbmolviz'
 
-pyversion=$(python -m ${PKG} version | tail -n 1)
+pyversion=$(python -c "import ${PKG}; print(${PKG}.__version__)" | tail -n 1)
+
+if [[ -z ${CI_BRANCH} ]]; then
+  echo "Variable \"\$CI_BRANCH\" not set - cannot publish"
+  exit 2
+fi
 
 if [ "${pyversion}" == "${CI_BRANCH}" ]; then
   echo "Deploying version ${CI_BRANCH}"
