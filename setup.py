@@ -7,7 +7,7 @@ import sys
 import versioneer
 from setuptools import setup, find_packages, Command
 from setuptools.command.egg_info import egg_info
-from subprocess import check_call
+from subprocess import check_call, CalledProcessError
 
 from distutils import log
 
@@ -111,8 +111,7 @@ class NPM(Command):
         os.path.join(here, 'nbmolviz', 'static', 'extension.js'),
         os.path.join(here, 'nbmolviz', 'static', 'index.js'),
         os.path.join(here, 'nbmolviz', 'static', 'nbmolviz.css'),
-        verfile_path
-    ]
+        verfile_path]
 
     def initialize_options(self):
         pass
@@ -124,13 +123,8 @@ class NPM(Command):
         try:
             check_call(['npm', '--version'])
             return True
-        except:
+        except (OSError, CalledProcessError):
             return False
-
-    def should_run_npm_install(self):
-        package_json = os.path.join(node_root, 'package.json')
-        node_modules_exists = os.path.exists(self.node_modules)
-        return self.has_npm()
 
     def run(self):
         has_npm = self.has_npm()
@@ -145,9 +139,10 @@ class NPM(Command):
         with open(vjson, 'w') as vjsonfile:
             vjsonfile.write('{"version":"%s"}\n' % VERSION)
 
-        if self.should_run_npm_install():
+        if self.has_npm():
             log.info("Installing build dependencies with npm.  This may take a while...")
-            check_call(['npm', 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
+            check_call(['npm', 'install', '--unsafe-perm'],
+                       cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
             os.utime(self.node_modules, None)
 
         # TODO: do this with NPM/webpack, not in python
