@@ -29,7 +29,6 @@ from ..uielements import StyledTab
 from ..uielements.components import HBox, VBox
 
 
-
 def configure():
     from IPython.display import display
     display(MDTConfig())
@@ -62,7 +61,8 @@ class MDTConfig(VBox):
         super().__init__(children=self.children)
 
     def make_header(self):
-        img = io.open(os.path.join(mdt.PACKAGEPATH, '_static_data/img/banner.png'), 'r+b').read()
+        with io.open(os.path.join(mdt.PACKAGEPATH, '_static_data/img/banner.png'), 'rb') as imfile:
+            img = imfile.read()
         encoded = base64.b64encode(img).decode('ascii')
         img = '<img style="max-width:100%" src=data:image/png;base64,'+('%s>'%encoded)
         links = [self._makelink(*args) for args in
